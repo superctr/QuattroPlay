@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="QuattroPlay" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/QuattroPlay" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Option parameters="dirtdash" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/QuattroPlay" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Option parameters="ncv2" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DRELEASE" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add option="-lmingw32 -lSDL2main -lSDL2 -static-libgcc" />
+		</Linker>
+		<Unit filename="audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="audio.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="c352.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="c352.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/enum.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/helper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/helper.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/quattro.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/quattro.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/struct.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/tables.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/tables.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/track.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/track.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/track_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/track_cmd.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/update.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/update.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/voice.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/voice.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="drv/voice_env.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/voice_lfo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/voice_pan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/voice_pitch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/wave.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="drv/wave.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="fileio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="fileio.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="ini.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ini.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="loader.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ui.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="ui_infobar.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ui_menu.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ui_menu.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="ui_pattern.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="vgm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="vgm.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
