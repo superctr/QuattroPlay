@@ -1,0 +1,7 @@
+/bin/*
+/obj/*
+*.depend
+*.layout
+*.out
+QuattroPlay.cbp.mak
+qp_log.wav
