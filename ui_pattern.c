@@ -63,6 +63,7 @@ void ui_pattern_disp(int TrackNo)
     uint32_t substack[Q_MAX_SUB_STACK], repstack[Q_MAX_REPEAT_STACK], loopstack[Q_MAX_LOOP_STACK];
     uint8_t repcount[Q_MAX_REPEAT_STACK], loopcount[Q_MAX_LOOP_STACK];
     uint8_t transpose[Q_MAX_TRKCHN];
+    int maxcommands = 50000;
 
     trackpattern_length = 0;
     Q_Track* T = &QDrv->Track[TrackNo];
@@ -102,8 +103,9 @@ void ui_pattern_disp(int TrackNo)
     while(trackpattern_length < 32)
     {
         cmd = pattern_arg_byte(&pos);
+        maxcommands--;
 
-        if(cmd<0x80)
+        if(cmd<0x80 && maxcommands)
         {
             skip=0;
             switch(cmd&0x3f)
@@ -407,6 +409,9 @@ void ui_pattern_disp(int TrackNo)
         }
         else
         {
+            if(maxcommands == 0)
+                cmd = 0x7f;
+
             // empty row
             cmd &= 0x7f;
             cmd++;
