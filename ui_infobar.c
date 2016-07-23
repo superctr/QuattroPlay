@@ -23,7 +23,7 @@ void ui_info_track(int id,int ypos)
 
     Q_Track * T = &QDrv->Track[id];
 
-    set_color(ypos,44,6,40,COLOR_D_BLUE,COLOR_L_GREY);
+    set_color(ypos,44,6,35,COLOR_D_BLUE,COLOR_L_GREY);
     // todo: print subs...
 
     if(QDrv->ParentSong[id] == id)
@@ -34,7 +34,7 @@ void ui_info_track(int id,int ypos)
             if(i != id && QDrv->ParentSong[i] == id)
             {
                 if(j==0)
-                    x = snprintf(&text[ypos][44],20,"Subs:  ");
+                    x = snprintf(&text[ypos][44],20,"Subs: ");
 
                 j += snprintf(&text[ypos][44+x+j],6,"%c%02x",j==0 ? ' ' : ',', i);
             }
@@ -42,7 +42,7 @@ void ui_info_track(int id,int ypos)
     }
     else if(QDrv->ParentSong[id] != Q_MAX_TRACKS)
     {
-        snprintf(&text[ypos][44],40,"Sub of: %02x",QDrv->ParentSong[id]);
+        snprintf(&text[ypos][44],40,"Sub of %02x",QDrv->ParentSong[id]);
     }
     ypos++;
 
@@ -52,39 +52,39 @@ void ui_info_track(int id,int ypos)
         bpm = (double)115200/ (T->BaseTempo*T->Tempo);
 
     //                        .............
-    snprintf(&text[ypos][44],40,"Pos:    %06x  BPM:%7.2f",T->Position,bpm);
+    snprintf(&text[ypos][44],40,"Pos:   %06x  BPM:%7.2f  Vol:%3d",T->Position,bpm,T->GlobalVolume);
     ypos++;
 
     if(T->SubStackPos)
     {
         //                            ........
-        j = snprintf(&text[ypos][44],20,"Stack:  %06x",T->SubStack[T->SubStackPos-1]);
+        j = snprintf(&text[ypos][44],20,"Stack: %06x",T->SubStack[T->SubStackPos-1]);
         if(T->SubStackPos > 1)
-            j += snprintf(&text[ypos][44+j],20,",    %06x",T->SubStack[T->SubStackPos-2]);
+            j += snprintf(&text[ypos][44+j],20,",   %06x",T->SubStack[T->SubStackPos-2]);
         if(T->SubStackPos > 2)
-            j += snprintf(&text[ypos][44+j],3," +%02x",T->SubStackPos-2);
+            j += snprintf(&text[ypos][44+j],3," +%2d",T->SubStackPos-2);
     }
     ypos++;
 
     if(T->RepeatStackPos)
     {
         //                            ........
-        j = snprintf(&text[ypos][44],20,"Repeat: %02x %06x",T->RepeatCount[T->RepeatStackPos-1],T->RepeatStack[T->RepeatStackPos-1]);
+        j = snprintf(&text[ypos][44],20,"Repeat:%2d %06x",T->RepeatCount[T->RepeatStackPos-1],T->RepeatStack[T->RepeatStackPos-1]);
         if(T->RepeatStackPos > 1)
-            j += snprintf(&text[ypos][44+j],20,",%02x %06x",T->RepeatCount[T->RepeatStackPos-2],T->RepeatStack[T->RepeatStackPos-2]);
+            j += snprintf(&text[ypos][44+j],20,",%2d %06x",T->RepeatCount[T->RepeatStackPos-2],T->RepeatStack[T->RepeatStackPos-2]);
         if(T->RepeatStackPos > 2)
-            j += snprintf(&text[7][44+j],3," +%02x",T->RepeatStackPos-2);
+            j += snprintf(&text[7][44+j],3," +%2d",T->RepeatStackPos-2);
     }
     ypos++;
 
     if(T->LoopStackPos)
     {
         //                            ........
-        j = snprintf(&text[ypos][44],20,"Loop:   %02x %06x",T->LoopCount[T->LoopStackPos-1],T->LoopStack[T->LoopStackPos-1]);
+        j = snprintf(&text[ypos][44],20,"Loop:  %2d %06x",T->LoopCount[T->LoopStackPos-1],T->LoopStack[T->LoopStackPos-1]);
         if(T->LoopStackPos > 1)
-            j += snprintf(&text[ypos][44+j],20,",%02x %06x",T->LoopCount[T->LoopStackPos-2],T->LoopStack[T->LoopStackPos-2]);
+            j += snprintf(&text[ypos][44+j],20,",%2d %06x",T->LoopCount[T->LoopStackPos-2],T->LoopStack[T->LoopStackPos-2]);
         if(T->LoopStackPos > 2)
-            j += snprintf(&text[ypos][44+j],3," +%02x",T->LoopStackPos-2);
+            j += snprintf(&text[ypos][44+j],3," +%2d",T->LoopStackPos-2);
     }
     ypos+=2;
 
@@ -97,7 +97,59 @@ void ui_info_track(int id,int ypos)
         if(!trackpattern_length)
             break;
 
-        snprintf(&text[ypos][44],4,"Cur");
+        ypos++;
+
+        snprintf(&text[ypos][44],4,"No.");
+        for(i=0;i<Q_MAX_TRKCHN;i++)
+        {
+            c1 = COLOR_BLACK;
+            c2 = COLOR_WHITE;
+            x = 48+(i*4);
+            if(T->Channel[i].Enabled)
+            {
+                c1 = COLOR_D_BLUE;
+                snprintf(&text[ypos][x+1],4,"%02x",T->Channel[i].VoiceNo);
+            }
+            set_color(ypos,x,1,3,c1,c2);
+        }
+        ypos++;
+
+        // wave/volume
+        // display modes to be added later:
+        // envelope/pan
+        // lfo/pitch env
+        // detune/porta
+        // delay/length
+
+        snprintf(&text[ypos][44],4,"Wav");
+        for(i=0;i<Q_MAX_TRKCHN;i++)
+        {
+            x = 48+(i*4);
+            // hex/dec display toggle?
+            snprintf(&text[ypos][x],4,"%03x",T->Channel[i].WaveNo & 0xfff);
+
+            c1 = COLOR_BLACK;
+            if(!T->Channel[i].Enabled)
+                c2 = COLOR_D_GREY;
+            else if(T->Channel[i].Voice->Enabled)
+                c2 = COLOR_L_GREY;
+            else
+                c2 = COLOR_N_GREY;
+
+            set_color(ypos,x,2,3,c1,c2);
+        }
+        ypos++;
+
+        snprintf(&text[ypos][44],4,"Vol");
+        for(i=0;i<Q_MAX_TRKCHN;i++)
+        {
+            x = 48+(i*4);
+            snprintf(&text[ypos][x],4,"%03d",T->Channel[i].Enabled && T->Channel[i].Voice->Enabled ?
+                     T->Channel[i].Voice->Volume : T->Channel[i].Volume);
+        }
+        ypos++;
+
+        snprintf(&text[ypos][44],4,"Frq");
         for(i=0;i<Q_MAX_TRKCHN;i++)
         {
             c1 = COLOR_BLACK;
@@ -107,7 +159,10 @@ void ui_info_track(int id,int ypos)
             {
                 j = T->Channel[i].KeyOnType & 0x7f;
 
-                note = T->Channel[i].KeyOnNote+T->Channel[i].Transpose;
+                note = T->Channel[i].KeyOnNote;
+                if(j!=0 || note > 0x7f)
+                    note = T->Channel[i].BaseNote;
+                note += T->Channel[i].Transpose;
                 oct = (note-3)/12;
                 note %= 12;
 
@@ -115,12 +170,12 @@ void ui_info_track(int id,int ypos)
                     snprintf(&text[ypos][x],4,"---");
                 else if(j == 0 && T->Channel[i].KeyOnNote == 0x7f)
                     snprintf(&text[ypos][x],4,"===");
-                else if(j == 0 && T->Channel[i].KeyOnNote > 0x7f)
-                    snprintf(&text[ypos][x],4,"w%02x",T->Channel[i].KeyOnNote&0x7f);
-                else if(j == 0)
+                //else if(j == 0 && T->Channel[i].KeyOnNote > 0x7f)
+                //    snprintf(&text[ypos][x],4,"w%02x",T->Channel[i].KeyOnNote&0x7f);
+                else// if(j == 0)
                     snprintf(&text[ypos][x],4,"%s%d",Q_NoteNames[note],oct);
-                else
-                    snprintf(&text[ypos][x],4,"%3d",T->Channel[i].KeyOnNote);
+                //else
+                //    snprintf(&text[ypos][x],4,"%3d",T->Channel[i].KeyOnNote);
                 c1 = COLOR_D_BLUE;
             }
             set_color(ypos,x,1,3,c1,c2);
