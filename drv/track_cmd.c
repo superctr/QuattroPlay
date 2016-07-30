@@ -735,7 +735,7 @@ TRACKCOMMAND(tc_SetReg)
             reg/=source;
         break;
     case 6: // randomize
-        reg = Q_GetRandom(&Q->LFSR1);
+        reg = Q_GetRandom(&Q->LFSR1); // followed by modulo
     case 5: // modulo
         if(source)
             reg%=source;
@@ -777,17 +777,17 @@ TRACKCOMMAND(tc_CJump)
     switch(mode&0x0f)
     {
     default:
-    case 0:
+    case 0: // equal
         res = op1 == op2;break;
-    case 1:
+    case 1: // not equal
         res = op1 != op2;break;
-    case 2:
+    case 2: // greater or equal
         res = op1 >= op2;break;
-    case 3:
+    case 3: // lessser or equal
         res = op1 <= op2;break;
-    case 4:
+    case 4: // greater than
         res = op1 > op2;break;
-    case 5:
+    case 5: // lesser than
         res = op1 < op2;break;
     case 6: // carry clear
         res = ~Q->SetRegFlags&1;break;

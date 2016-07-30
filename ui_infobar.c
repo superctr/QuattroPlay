@@ -126,7 +126,8 @@ void ui_info_track(int id,int ypos)
         {
             x = 48+(i*4);
             // hex/dec display toggle?
-            snprintf(&text[ypos][x],4,"%03x",T->Channel[i].WaveNo & 0xfff);
+            snprintf(&text[ypos][x],4,"%03x",T->Channel[i].Enabled && T->Channel[i].Voice->Enabled ?
+                     T->Channel[i].Voice->WaveNo & 0xfff : T->Channel[i].WaveNo & 0xfff);
 
             c1 = COLOR_BLACK;
             if(!T->Channel[i].Enabled)
@@ -157,23 +158,29 @@ void ui_info_track(int id,int ypos)
             x = 48+(i*4);
             if(T->Channel[i].Enabled)
             {
-                j = T->Channel[i].KeyOnType & 0x7f;
+                y = T->Channel[i].ChannelLink ? (T->Channel[i].ChannelLink-1)&7 : i;
 
-                note = T->Channel[i].KeyOnNote;
-                if(j!=0 || note > 0x7f)
-                    note = T->Channel[i].BaseNote;
-                note += T->Channel[i].Transpose;
-                oct = (note-3)/12;
-                note %= 12;
+                note = T->Channel[y].KeyOnNote;
+                j = T->Channel[y].KeyOnType & 0x7f;
 
-                if(~T->Channel[i].KeyOnType & 0x80)
+                if(~T->Channel[y].KeyOnType & 0x80)
                     snprintf(&text[ypos][x],4,"---");
-                else if(j == 0 && T->Channel[i].KeyOnNote == 0x7f)
+                else if(j == 0 && note == 0x7f)
                     snprintf(&text[ypos][x],4,"===");
+                else
+                {
+                    if(j!=0 || note > 0x7f)
+                        note = T->Channel[i].BaseNote;
+                    note += T->Channel[i].Transpose;
+                    oct = (note-3)/12;
+                    note %= 12;
+                    snprintf(&text[ypos][x],4,"%s%d",Q_NoteNames[note],oct);
+                }
+
                 //else if(j == 0 && T->Channel[i].KeyOnNote > 0x7f)
                 //    snprintf(&text[ypos][x],4,"w%02x",T->Channel[i].KeyOnNote&0x7f);
-                else// if(j == 0)
-                    snprintf(&text[ypos][x],4,"%s%d",Q_NoteNames[note],oct);
+                //else if(j == 0)
+                //    snprintf(&text[ypos][x],4,"%s%d",Q_NoteNames[y],oct);
                 //else
                 //    snprintf(&text[ypos][x],4,"%3d",T->Channel[i].KeyOnNote);
                 c1 = COLOR_D_BLUE;

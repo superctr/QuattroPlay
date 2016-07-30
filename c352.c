@@ -110,8 +110,8 @@ void C352_fetch_sample(C352 *c, int i)
     if(v->flags & C352_FLG_NOISE)
     {
         c->random = (c->random>>1) ^ ((-(c->random&1)) & 0xfff6);
-        v->sample = (c->random&4) ? 0xc000 : 0x3fff;
-		//v->last_sample = v->sample;
+        // don't know what is most accurate here...
+        v->sample = c->random; // (c->random&4) ? 0xc000 : 0x3fff;
 	}
 	else
 	{
@@ -178,11 +178,6 @@ int16_t C352_update_voice(C352 *c, int i)
 		v->counter &= 0xffff;
 		C352_fetch_sample(c,i);
 	}
-
-    //int32_t temp = v->sample;
-    //if((v->flags & C352_FLG_FILTER) == 0)
-    //    temp = (v->sample + v->last_sample)/2;
-    //v->last_sample = temp;
 
 	int32_t temp = v->sample;
 	// Interpolate samples

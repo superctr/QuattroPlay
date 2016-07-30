@@ -14,7 +14,9 @@ void Q_UpdateTracks(Q_State *Q)
     for(TrackNo=0;TrackNo<Q->TrackCount;TrackNo++)
     {
         if(Q->SongRequest[TrackNo] & Q_TRACK_STATUS_START)
+        {
             Q_TrackInit(Q,TrackNo);
+        }
         else if(Q->Track[TrackNo].Flags & Q_TRACK_STATUS_BUSY)
         {
             Q->Track[TrackNo].Flags = Q->SongRequest[Q->ParentSong[TrackNo]];

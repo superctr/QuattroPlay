@@ -97,7 +97,7 @@ void Q_TrackStop(Q_State* Q,int TrackNo)
 // source: 0x4fc4
 void Q_TrackUpdate(Q_State* Q,int TrackNo)
 {
-    Q->SongTimer[TrackNo] += 1.0d/120.0d;
+    Q->SongTimer[TrackNo] += 1.0/120.0;
 
     Q_Track* T = &Q->Track[TrackNo];
     uint8_t Command;
@@ -177,13 +177,14 @@ void Q_TrackUpdate(Q_State* Q,int TrackNo)
                 T->TempoSeqPos=T->TempoSeqStart;
                 T->TempoMode=0xfe; // endless
             }
-        }
-        while(Command == 0xff);
+        } while(Command == 0xff);
         T->Tempo = Command;
         T->UpdateTime += T->Tempo*T->BaseTempo;
     }
     else
+    {
         T->UpdateTime += T->Tempo*T->BaseTempo;
+    }
 
     //printf("next update: %04x (Tempo:%d, BaseTempo:%d)\n",T->UpdateTime,T->Tempo,T->BaseTempo);
 
@@ -209,7 +210,9 @@ void Q_TrackCalcVolume(Q_State* Q,int TrackNo)
             return;
         }
         else
+        {
             vol += (T->Fadeout>>8);
+        }
     }
 
     // Fix overflow
@@ -243,30 +246,36 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
             // skip any remaining events
             c->Voice->CurrEvent = c->Voice->LastEvent;
 
-            // don't know the exact cutoff here
+            // older MCUs seem to have different behavior for cutoff mode.
+            // don't know exactly when this was changed though
             if(Q->McuVer < Q_MCUVER_Q00)
             {
-                // older MCUs seem to work differently here... this works well for Air Combat 22.
+                // based on airco22b.
+                // envelope key off
                 if(c->Voice->EnvNo && !(c->CutoffMode & 0x7f))
                 {
                     c->Voice->GateTimeLeft=1;
                 }
                 else
                 {
+                    // turn off voice if looped. otherwise we let the loop play to the end.
                     if(Q->Chip.v[c->VoiceNo].flags & C352_FLG_LOOP)
                         Q->Chip.v[c->VoiceNo].flags = 0;
                 }
             }
-            // "rough" cutoff: disable output entirely
-            else if(c->CutoffMode & 0x7f)
-                Q->Chip.v[c->VoiceNo].flags = 0;
-            // "smooth" cutoff for non-enveloped samples: just disable loop
-            else if(c->Voice->EnvNo == 0)
-                Q->Chip.v[c->VoiceNo].flags &= ~(C352_FLG_LOOP);
-            // "smooth" cutoff for enveloped samples: Set note length left to 0
             else
-                c->Voice->GateTimeLeft=1;
-
+            {
+                // based on sws2000
+                // "rough" cutoff: disable output entirely
+                if(c->CutoffMode & 0x7f)
+                    Q->Chip.v[c->VoiceNo].flags = 0;
+                // "smooth" cutoff for non-enveloped samples: just disable loop
+                else if(c->Voice->EnvNo == 0)
+                    Q->Chip.v[c->VoiceNo].flags &= ~(C352_FLG_LOOP);
+                // "smooth" cutoff for enveloped samples: Set note length left to 0
+                else
+                    c->Voice->GateTimeLeft=1;
+            }
             Q_VoiceClearChannel(Q,c->VoiceNo);
 
             // Switch to next track on the voice
@@ -275,7 +284,7 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
             if(Q_VoiceGetPriority(Q,c->VoiceNo,&next_track,&next_channel))
             {
                 Q_DEBUG("Voice %02x free, Now enabling trk %02x ch %02x\n",c->VoiceNo,next_track,next_channel);
-                Q_ChannelEnable(Q,next_track,next_channel);
+                Q_VoiceSetChannel(Q,c->VoiceNo,next_track,next_channel);
             }
         }
     }
@@ -298,12 +307,4 @@ void Q_ChannelClear(Q_State *Q,int TrackNo,int ChannelNo)
 
     memset(C,0,sizeof(Q_Channel));
     C->VoiceNo = VoiceNo;
-}
-
-// Call 0x14 - enable channel
-// source: 0x4e78 (this also looks up and returns the address of a pointer which we don't need to)
-void Q_ChannelEnable(Q_State *Q,int TrackNo,int ChannelNo)
-{
-    Q->Track[TrackNo].Channel[ChannelNo].Enabled = 1;
-
 }

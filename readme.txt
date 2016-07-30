@@ -1,3 +1,9 @@
+Build instructions:
+
+	Only dependency is SDL2 (sudo apt-get install libsdl2-dev)
+	The makefile is tested on Linux Mint and Ubuntu.
+	For windows, use the codeblocks project file instead.
+
 Usage:
 	put configs and ROMs in the configs and roms directory respectively.
 	then run it from command line / terminal:

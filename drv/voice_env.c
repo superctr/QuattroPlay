@@ -110,9 +110,10 @@ void Q_VoiceEnvUpdate(Q_State *Q,int VoiceNo,Q_Voice *V)
                 return;
             }
             else if(d!=0xfe)
+            {
                 V->EnvPos++;
-        }
-        while(d != 0xfe);
+            }
+        } while(d != 0xfe);
         break;
     }
 

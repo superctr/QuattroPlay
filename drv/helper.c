@@ -312,7 +312,9 @@ void Q_LoopDetectionCheck(Q_State *Q,int TrackNo,int stopped)
         *data = loopid;
     }
     else if (*data != loopid)
+    {
         *data = loopid;
+    }
 }
 
 // disable loop detection for tracks that overlap

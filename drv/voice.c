@@ -8,7 +8,7 @@
 #include "tables.h"
 
 // Call 0x08 - Allocate a voice to a channel and disables previous channel on voice.
-// source: 0x4dd6
+// source: 0x4dd6 (call 0x14 at 0x4e78 has a similar function)
 void Q_VoiceSetChannel(Q_State *Q,int VoiceNo,int TrackNo,int ChannelNo)
 {
     //printf("Trk %02x.%02x, Allocate voice %02x\n",TrackNo,ChannelNo,VoiceNo);
@@ -124,7 +124,9 @@ void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
     case Q_EVENTMODE_VOL:
     case Q_EVENTMODE_PAN:
         if(mode == Q_EVENTMODE_VOL)
+        {
             V->Volume = E->Value;
+        }
         else if(mode == Q_EVENTMODE_PAN)
         {
             V->Pan = E->Value;
@@ -139,7 +141,9 @@ void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
             Q_WaveSet(Q,VoiceNo,V,C->WaveNo);
         }
         else if(V->WaveLinkFlag && !(E->Mode&Q_EVENTMODE_LEGATO))
+        {
             Q_WaveReset(Q,VoiceNo,V);
+        }
         break;
     }
 
@@ -215,7 +219,6 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
 
     Q_VoiceEnvUpdate(Q,VoiceNo,V);
     Q_VoicePitchEnvUpdate(Q,VoiceNo,V);
-    //Q_VoicePortaUpdate
     V->PitchTarget = (V->BaseNote<<8) | V->Detune;
 
     if(V->Portamento)
@@ -224,10 +227,11 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
         V->Pitch = V->PitchTarget;
     Q_VoiceLfoUpdate(Q,VoiceNo,V);
 
-    // temporary
+    // calculate pitch
     pitch = V->Pitch+V->PitchEnvMod+V->LfoMod+Q->BasePitch;
     pitch += V->WaveTranspose;
 
+    // get frequencies from table
     freq1 = Q_PitchTable[pitch>>8];
     freq2 = Q_PitchTable[(pitch>>8)+1];
     freq1 += ((uint16_t)(freq2-freq1)*(pitch&0xff))>>8;
