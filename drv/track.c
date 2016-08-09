@@ -51,7 +51,6 @@ void Q_TrackInit(Q_State* Q, int TrackNo)
     memset(T->LoopStack,0,sizeof(T->LoopStack));
 
     T->SkipTrack = Q->BootSong > 1 ? 1 : 0;
-    Q->BootSong = 0;
 
     T->UpdateTime = Q->FrameCnt;
     T->Fadeout = 0;
@@ -292,7 +291,7 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
     T->TicksLeft = 0;
 
     Q_DEBUG("Track %02x terminated\n",TrackNo);
-
+    Q->BootSong = 0; // disable boot song flag
 }
 
 // Call 0x28 - clear channel
