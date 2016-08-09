@@ -127,7 +127,8 @@ void Q_TrackUpdate(Q_State* Q,int TrackNo)
             if(Command&0x80)
             {
                 T->RestCount = Command&0x7f;
-                break;
+                if(!T->SkipTrack)
+                    break;
             }
             else
             {
