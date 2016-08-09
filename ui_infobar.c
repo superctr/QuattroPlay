@@ -309,7 +309,7 @@ void ui_info_voice(int id,int ypos)
              "VolF",    QDrv->Chip.v[id].vol_f,
              "VolR",    QDrv->Chip.v[id].vol_r);
     snprintf(&text[ypos++][44],40,"%6s:%06x%6s:%04x (%5.0f Hz)",
-             "Pos",     QDrv->Chip.v[id].pos,
+             "Pos",     QDrv->Chip.v[id].pos & 0xffffff,
              "Freq",    QDrv->Chip.v[id].freq,
              ((double)QDrv->Chip.v[id].freq/0x10000)*QDrv->Chip.rate);
     snprintf(&text[ypos++][44],40,"%6s:%02x%04x%6s:%04x%6s:%04x",

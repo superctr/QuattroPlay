@@ -14,6 +14,9 @@ typedef struct {
 
     Q_State *QDrv;
 
+    // temporary home for this variable until i find a better place.
+    int AutoPlaySong;
+
     int UpdateRequest;
 
     uint32_t SampleRate;

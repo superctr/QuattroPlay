@@ -53,8 +53,9 @@ typedef struct {
     // this will be moved somewhere else later.
     Q_State *QDrv;
     audio_t *Audio;
-    //QP_PlaylistState *pl;
 
+    int bootsong;
+    //QP_PlaylistState *pl;
 
     int muterear;
     float gain;

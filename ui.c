@@ -220,7 +220,6 @@ void ui_main()
                 running=0;
                 break;
             case SDL_KEYDOWN:
-
                 ui_handleinput(&event.key.keysym);
                 break;
             default:

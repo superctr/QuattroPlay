@@ -20,10 +20,12 @@ int main(int argc, char *argv[])
 //    static char datapath[128];
     static char gamename[128];
 
+    int wavlog = 0;
+    int autoplay_song = -1;
 #ifdef DEBUG
-    int bootsong = 0;
+    bootsong = 0;
 #else
-    int bootsong = 1;
+    bootsong = 1;
 #endif
 
     QDrv = (Q_State*)malloc(sizeof(Q_State));
@@ -75,9 +77,36 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    int i, standard_args=0;
+    for(i=1;i<argc;i++)
+    {
+        if((!strcmp(argv[i],"-a") || !strcmp(argv[i],"--autoplay")) && i<argc)
+        {
+            i++;
+            autoplay_song = (int)strtol(argv[i],NULL,0);
+        }
+        else if(!strcmp(argv[i],"-w") || !strcmp(argv[i],"--wavlog"))
+        {
+            wavlog=1;
+        }
+        else
+        {
+            if(standard_args == 0)
+                strcpy(gamename, argv[i]);
+            else if(standard_args == 1)
+                autoplay_song = (int)strtol(argv[i],NULL,0);
+            else
+                break;
+            standard_args++;
+        }
+
+    }
+    /*
     if(argc>1)
         strcpy(gamename, argv[1]);
-
+    if(argc>2)
+        autoplay_song = strtol(argv[2],NULL,0);
+    */
     if(LoadGame(QDrv,gamename))
     {
         SDL_Quit();
@@ -89,15 +118,30 @@ int main(int argc, char *argv[])
 
     QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,1024,NULL);
 
-    //..
+    if(autoplay_song >= 0)
+        QDrv->BootSong=2;
+
+    Audio->state.AutoPlaySong = autoplay_song;
+
+    if(wavlog)
+    {
+        QPAudio_WavOpen(Audio,"qp_log.wav");
+    }
+
     ui_main();
+
+    if(Audio->state.FileLogging)
+    {
+        SDL_LockAudioDevice(Audio->dev);
+        QPAudio_WavClose(Audio);
+        SDL_UnlockAudioDevice(Audio->dev);
+    }
+
     QPAudio_Close(Audio);
     SDL_Quit();
-
     UnloadGame(QDrv);
-
     free(QDrv);
-    return 0;
 
+    return 0;
 }
 

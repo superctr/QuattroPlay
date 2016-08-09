@@ -28,7 +28,7 @@
 
  Examples of good test cases:
   dirtdash - song 0x03 (reg 0x04=0x30 and reg 0x80=0x02)
-  pacapp   - song 0x03 (reg 0x01 selects wave number)
+  pacapp   - song 0x02 (reg 0x01 selects wave number)
 */
 
 uint16_t Q_EnvelopeRateTable[0xa0] = {
@@ -57,7 +57,8 @@ uint16_t Q_EnvelopeRateTable[0xa0] = {
 
 };
 
-
+// taken from rom, but you can generate a similar table with:
+// f(n) = 0x80*pow(1.0594631,n)+0.5
 uint16_t Q_PitchTable[0x90] = {
     0x0088, 0x0090, 0x0098, 0x00A1, 0x00AB, 0x00B5, 0x00C0, 0x00CB, // 00
     0x00D7, 0x00E4, 0x00F2, 0x0100, 0x010F, 0x011F, 0x0130, 0x0143,

@@ -50,11 +50,8 @@ void Q_TrackInit(Q_State* Q, int TrackNo)
     T->LoopStackPos=0;
     memset(T->LoopStack,0,sizeof(T->LoopStack));
 
-    if(Q->BootSong > 1)
-    {
-        Q->BootSong--;
-        T->SkipTrack=1;
-    }
+    T->SkipTrack = Q->BootSong > 1 ? 1 : 0;
+    Q->BootSong = 0;
 
     T->UpdateTime = Q->FrameCnt;
     T->Fadeout = 0;

@@ -256,6 +256,7 @@ void ui_handleinput(SDL_Keysym *ks)
         break;
     case SDLK_F3:
         SDL_LockAudioDevice(Audio->dev);
+        QDrv->BootSong=bootsong;
         Q_Reset(QDrv);
         SDL_UnlockAudioDevice(Audio->dev);
         break;
