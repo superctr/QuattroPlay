@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
 //    static char wavepath[128];
 //    static char datapath[128];
     static char gamename[128];
+    static char filename[FILENAME_MAX];
 
     int wavlog = 0;
     int autoplay_song = -1;
@@ -125,7 +126,12 @@ int main(int argc, char *argv[])
 
     if(wavlog)
     {
-        QPAudio_WavOpen(Audio,"qp_log.wav");
+        strcpy(filename,"qp_log.wav");
+        if(autoplay_song >= 0)
+        {
+            sprintf(filename,"%s_%03x.wav",gamename,autoplay_song&0x7ff);
+        }
+        QPAudio_WavOpen(Audio,filename);
     }
 
     ui_main();

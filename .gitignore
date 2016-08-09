@@ -5,3 +5,5 @@
 *.out
 QuattroPlay.cbp.mak
 qp_log.wav
+*.wav
+
