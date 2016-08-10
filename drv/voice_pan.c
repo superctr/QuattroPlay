@@ -193,7 +193,7 @@ void Q_VoicePanSet(Q_State *Q,int VoiceNo,Q_Voice* V)
 // source: 0x6c50
 void Q_VoiceSetVolume(Q_State* Q,int VoiceNo,Q_Voice* V, uint16_t VolumeF, uint16_t VolumeR)
 {
-    C352_Voice *CV = &Q->Chip.v[VoiceNo];
+    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
 
     uint8_t CFL,CFR,CRL,CRR;
     CFL=CFR=CRL=CRR=0;
@@ -216,8 +216,8 @@ void Q_VoiceSetVolume(Q_State* Q,int VoiceNo,Q_Voice* V, uint16_t VolumeF, uint1
         CRR=Q_VolumeTable[RR];
 
     // write to chip
-    CV->vol_f = (CFL<<8)|(CFR&0xff);
-    CV->vol_r = (CRL<<8)|(CRR&0xff);
+    Q_C352_W(Q,VoiceNo,C352_VOL_FRONT,(CFL<<8)|(CFR&0xff));
+    Q_C352_W(Q,VoiceNo,C352_VOL_REAR, (CRL<<8)|(CRR&0xff));
 }
 
 // write volume (for pan envelopes)

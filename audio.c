@@ -10,6 +10,7 @@
 
 #include "drv/quattro.h"
 #include "audio.h"
+#include "vgm.h"
 
 void QPAudio_Callback(void* data,Uint8* astream,int len)
 {
@@ -35,6 +36,11 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
             while(S->DriverUpdate > 1)
             {
                 Q_UpdateTick(S->QDrv);
+
+                if(S->QDrv->Chip.vgm_log)
+                {
+                    vgm_delay(441000/120);
+                }
                 S->DriverUpdate-=1;
             }
 

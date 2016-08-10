@@ -98,7 +98,7 @@ void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
         {
             // no envelope - cutoff
             V->Enabled = 0;
-            Q->Chip.v[VoiceNo].flags = 0;
+            Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
         }
         return;
     }
@@ -169,9 +169,8 @@ void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
 // source: 0x649c
 void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
 {
-    C352_Voice *CV = &Q->Chip.v[VoiceNo];
-
-    CV->flags = 0;
+    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
+    //CV->flags = 0;
 
     Q_VoicePitchEnvSet(Q,VoiceNo,V);
 
@@ -183,20 +182,21 @@ void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
     Q_VoicePanSet(Q,VoiceNo,V);
     Q_VoiceLfoSet(Q,VoiceNo,V);
 
-    CV->wave_bank = V->WaveBank;
-    CV->flags = V->WaveFlags |= C352_FLG_KEYON;
+    //CV->wave_bank = V->WaveBank;
+    //CV->flags = V->WaveFlags |= C352_FLG_KEYON;
+    Q_C352_W(Q,VoiceNo,C352_WAVE_BANK,V->WaveBank);
+    Q_C352_W(Q,VoiceNo,C352_FLAGS,    V->WaveFlags|C352_FLG_KEYON);
+
 }
 
 // Call 0x0c - voice update
 // source: 0x6aae
 void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
 {
-    C352_Voice *CV = &Q->Chip.v[VoiceNo];
-
-    uint16_t flags = CV->flags;
+    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
+    uint16_t flags = Q_C352_R(Q,VoiceNo,C352_FLAGS);
     uint16_t pitch;
     uint16_t freq1, freq2, vol;
-
 
     if(flags & C352_FLG_BUSY)
     {
@@ -240,7 +240,8 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
     if(pitch >= 0x6b00 && Q->EnablePitchOverflow)
         freq1 = Q->PitchOverflow;
 
-    CV->freq = freq1;
+    Q_C352_W(Q,VoiceNo,C352_FREQUENCY,freq1);
+    //CV->freq = freq1;
     V->FreqReg = freq1;
 
     vol = V->Volume + (V->EnvValue>>8) + (*V->TrackVol);

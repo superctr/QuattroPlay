@@ -254,6 +254,8 @@ int LoadGame(Q_State *Q, char *gamename)
     memset(&Q->Chip,0,sizeof(Q->Chip));
 
     C352_init(&Q->Chip,chipfreq);
+    Q->Chip.vgm_log = 0;
+
     //C352_write(&Q->Chip,0x07,0x1234);
 
 //    Q->GameHacks = 0;

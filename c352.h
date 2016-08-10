@@ -12,6 +12,17 @@
 #define C352_VOICES 32
 
 enum {
+    C352_VOL_FRONT  = 0,
+    C352_VOL_REAR   = 1,
+    C352_FREQUENCY  = 2,
+    C352_FLAGS      = 3,
+    C352_WAVE_BANK  = 4,
+    C352_WAVE_START = 5,
+    C352_WAVE_END   = 6,
+    C352_WAVE_LOOP  = 7,
+};
+
+enum {
     C352_FLG_BUSY       = 0x8000,   // channel is busy
     C352_FLG_KEYON      = 0x4000,   // Keyon
     C352_FLG_KEYOFF     = 0x2000,   // Keyoff
@@ -71,6 +82,7 @@ typedef struct {
     // special
     uint32_t mute_mask;
     uint8_t mute_rear;
+    int vgm_log;
 
 } C352;
 

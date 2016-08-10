@@ -227,6 +227,7 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
     Q_Track* T = &Q->Track[TrackNo];
     Q_Channel* c;
     int i;
+    uint16_t cflags;
     for(i=0;i<Q_MAX_VOICES;i++)
     {
         Q->ChannelPriority[i][TrackNo].channel = 0;
@@ -242,6 +243,7 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
 
             // skip any remaining events
             c->Voice->CurrEvent = c->Voice->LastEvent;
+            cflags = Q_C352_R(Q,c->VoiceNo,C352_FLAGS);
 
             // older MCUs seem to have different behavior for cutoff mode.
             // don't know exactly when this was changed though
@@ -256,8 +258,8 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
                 else
                 {
                     // turn off voice if looped. otherwise we let the loop play to the end.
-                    if(Q->Chip.v[c->VoiceNo].flags & C352_FLG_LOOP)
-                        Q->Chip.v[c->VoiceNo].flags = 0;
+                    if(cflags & C352_FLG_LOOP)
+                        Q_C352_W(Q,c->VoiceNo,C352_FLAGS,0);
                 }
             }
             else
@@ -265,10 +267,10 @@ void Q_TrackDisable(Q_State *Q,int TrackNo)
                 // based on sws2000
                 // "rough" cutoff: disable output entirely
                 if(c->CutoffMode & 0x7f)
-                    Q->Chip.v[c->VoiceNo].flags = 0;
+                    Q_C352_W(Q,c->VoiceNo,C352_FLAGS,0);
                 // "smooth" cutoff for non-enveloped samples: just disable loop
                 else if(c->Voice->EnvNo == 0)
-                    Q->Chip.v[c->VoiceNo].flags &= ~(C352_FLG_LOOP);
+                    Q_C352_W(Q,c->VoiceNo,C352_FLAGS,cflags & ~(C352_FLG_LOOP));
                 // "smooth" cutoff for enveloped samples: Set note length left to 0
                 else
                     c->Voice->GateTimeLeft=1;

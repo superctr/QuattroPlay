@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     static char filename[FILENAME_MAX];
 
     int wavlog = 0;
+    int vgmlog = 0;
     int autoplay_song = -1;
 #ifdef DEBUG
     bootsong = 0;
@@ -90,6 +91,10 @@ int main(int argc, char *argv[])
         {
             wavlog=1;
         }
+        else if(!strcmp(argv[i],"-v") || !strcmp(argv[i],"--vgmlog"))
+        {
+            vgmlog=1;
+        }
         else
         {
             if(standard_args == 0)
@@ -112,6 +117,18 @@ int main(int argc, char *argv[])
     {
         SDL_Quit();
         return -1;
+    }
+
+    if(vgmlog)
+    {
+        strcpy(filename,"qp_log.vgm");
+        if(autoplay_song >= 0)
+        {
+            sprintf(filename,"%s_%03x.vgm",gamename,autoplay_song&0x7ff);
+        }
+        vgm_open(filename);
+        vgm_datablock(0x92,0x1000000,QDrv->Chip.wave,0x1000000,QDrv->Chip.wave_mask,0);
+        QDrv->Chip.vgm_log = 1;
     }
 
     QDrv->BootSong=bootsong;
@@ -143,7 +160,19 @@ int main(int argc, char *argv[])
         SDL_UnlockAudioDevice(Audio->dev);
     }
 
+    if(QDrv->Chip.vgm_log)
+    {
+        SDL_LockAudioDevice(Audio->dev);
+        QDrv->Chip.vgm_log = 0;
+        vgm_poke32(0xdc,QDrv->ChipClock | Audio->state.MuteRear<<31);
+        vgm_stop();
+        vgm_write_tag(strlen(L_GameTitle) ? L_GameTitle : gamename,autoplay_song);
+        vgm_close();
+        SDL_UnlockAudioDevice(Audio->dev);
+    }
+
     QPAudio_Close(Audio);
+
     SDL_Quit();
     UnloadGame(QDrv);
     free(QDrv);

@@ -11,7 +11,7 @@
 #include "string.h"
 #include "math.h"
 #include "c352.h"
-
+#include "vgm.h"
 
 void C352_generate_mulaw(C352 *c)
 {
@@ -62,6 +62,9 @@ uint16_t C352RegMap[8] = {
 
 void C352_write(C352 *c, uint16_t addr, uint16_t data)
 {
+    if(c->vgm_log)
+        vgm_write(0xe1,0,addr,data);
+
     int i;
 
     if(addr < 0x100)
