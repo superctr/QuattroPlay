@@ -79,7 +79,7 @@ void vgm_open(char* fname)
     data = vgmdata;
     buffer_size = VGM_BUFFER;
 
-    memset(data, 0, 10000000);
+    memset(data, 0, VGM_BUFFER);
 
     // vgm magic
     memcpy(data, "Vgm ", 4);
@@ -159,10 +159,16 @@ void vgm_write(uint8_t command, uint8_t port, uint16_t reg, uint16_t value)
         *data++ = (value&0xff);
     }
 
-    if((vgmdata - data - buffer_size) < 1000000)
+    if(buffer_size-(data-vgmdata) < 1000000)
     {
+        uint8_t* temp;
         buffer_size *= 2;
-        realloc(vgmdata,buffer_size);
+        temp = realloc(vgmdata,buffer_size);
+        if(temp)
+        {
+            data = temp+(data-vgmdata);
+            vgmdata = temp;
+        }
     }
 }
 

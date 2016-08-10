@@ -1,6 +1,8 @@
 #ifndef VGM_H_INCLUDED
 #define VGM_H_INCLUDED
 
+#include "stdint.h"
+
 // samplerom, samplelen, rom_offset
 //void vgm_open(char* fname, uint8_t* datablock, uint32_t dbsize, uint32_t startoffset);
 void vgm_open(char* fname);
