@@ -60,6 +60,10 @@ int read_file(char* filename, uint8_t* dataptr, uint32_t load_size, uint32_t loa
     fseek(sourcefile,0,SEEK_END);
     filesize = ftell(sourcefile);
 
+    // filesize limit (for sanity checks)
+    if(fsize && *fsize != 0 && filesize > *fsize)
+        filesize = *fsize;
+
     if(load_offset >= filesize)
     {
         //strcpy(fileio_error,"Read offset exceeds file size  );
@@ -85,7 +89,7 @@ int read_file(char* filename, uint8_t* dataptr, uint32_t load_size, uint32_t loa
         fseek(sourcefile,load_offset,SEEK_SET);
 
     int32_t res = fread(dataptr,1,load_size,sourcefile);
-    if(res != filesize)
+    if(res != load_size)
     {
         strcpy(fileio_error,"Read error");
         fputs(fileio_error,stderr);
@@ -95,7 +99,7 @@ int read_file(char* filename, uint8_t* dataptr, uint32_t load_size, uint32_t loa
 
     if(byteswap)
     {
-        for(cnt=0;cnt<filesize;cnt+=2)
+        for(cnt=0;cnt<load_size;cnt+=2)
         {
             temp = dataptr[cnt];
             dataptr[cnt] = dataptr[cnt+1];
@@ -104,7 +108,7 @@ int read_file(char* filename, uint8_t* dataptr, uint32_t load_size, uint32_t loa
     }
 
     if(fsize)
-        *fsize = filesize;
+        *fsize = load_size;
 
     fclose(sourcefile);
 

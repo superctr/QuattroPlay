@@ -1,3 +1,6 @@
+/*
+    VGM writing
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,6 +12,7 @@
 #include "vgm.h"
 #include "fileio.h"
 
+// has to be larger than ~20MB
 #define VGM_BUFFER 50000000
 
     uint32_t buffer_size;
@@ -41,19 +45,15 @@ void add_delay(uint8_t** dest, int delay)
 {
     samplecnt += delay;
 
-    int i;
-
     int commandcount = floor(delay/65535);
     uint16_t finalcommand = delay%65535;
 
-    if(commandcount)
+    while(commandcount)
     {
-        for(i=0;i<commandcount;i++)
-        {
-            **dest = 0x61;*dest+=1;
-            **dest = 0xff;*dest+=1;
-            **dest = 0xff;*dest+=1;
-        }
+        **dest = 0x61;*dest+=1;
+        **dest = 0xff;*dest+=1;
+        **dest = 0xff;*dest+=1;
+        commandcount--;
     }
 
     if(finalcommand > 16)
@@ -75,10 +75,10 @@ void vgm_open(char* fname)
     delayq=0;
     loop_set=0;
 
+    // create initial buffer
     vgmdata=(uint8_t*)malloc(VGM_BUFFER);
     data = vgmdata;
     buffer_size = VGM_BUFFER;
-
     memset(data, 0, VGM_BUFFER);
 
     // vgm magic
@@ -92,22 +92,14 @@ void vgm_open(char* fname)
     //data offset
     *(uint32_t*)(vgmdata+0x34)=0x100-0x34;
 
-    // YMF278B
-    //*(uint32_t*)(vgmdata+0x60)= 33868800;
-
     data=vgmdata+0x100;
 }
 
-// *(uint32_t*)(vgmdata+0x60)= 33868800;
 void vgm_poke32(int32_t offset, uint32_t d)
 {
     *(uint32_t*)(vgmdata+offset)= d;
 }
 
-/*
-    add_datablockcmd(&data, 0x84, dbsize, 0x400000, startoffset);
-    my_memcpy(&data, datablock, dbsize);
-*/
 // notice: start offset was replaced with ROM mask.
 void vgm_datablock(uint8_t dbtype, uint32_t dbsize, uint8_t* datablock, uint32_t maxsize, uint32_t mask, int32_t flags)
 {
@@ -120,10 +112,9 @@ void vgm_datablock(uint8_t dbtype, uint32_t dbsize, uint8_t* datablock, uint32_t
     //my_memcpy(&data, datablock, dbsize);
 }
 
-
-
 void vgm_setloop()
 {
+    // add delays
     if(delayq/10 > 1)
     {
         add_delay(&data,delayq/10);
@@ -142,7 +133,7 @@ void vgm_write(uint8_t command, uint8_t port, uint16_t reg, uint16_t value)
         delayq=delayq%10;
     }
 
-// todo: command types ...
+// todo: need to handle command types if using other chips
     *data++ = command;
 
     if(command == 0xe1) // C352
@@ -159,19 +150,21 @@ void vgm_write(uint8_t command, uint8_t port, uint16_t reg, uint16_t value)
         *data++ = (value&0xff);
     }
 
+    // resize buffer if needed
     if(buffer_size-(data-vgmdata) < 1000000)
     {
         uint8_t* temp;
-        buffer_size *= 2;
-        temp = realloc(vgmdata,buffer_size);
+        temp = realloc(vgmdata,buffer_size*2);
         if(temp)
         {
+            buffer_size *= 2;
             data = temp+(data-vgmdata);
             vgmdata = temp;
         }
     }
 }
 
+// delay is in VGM samples*10.
 void vgm_delay(uint32_t delay)
 {
     delayq+=delay;
@@ -241,10 +234,8 @@ void vgm_stop()
         *(uint32_t*)(vgmdata+0x20)= samplecnt-loop_set;
 }
 
-
 void vgm_close()
 {
-
     // EoF offset
     *(uint32_t*)(vgmdata+0x04)= data-vgmdata-4;
 

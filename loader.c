@@ -31,6 +31,7 @@ int LoadGame(Q_State *Q, char *gamename)
     int wave_pos[16];
     int wave_length[16];
     int wave_offset[16];
+    unsigned int wave_maxlen; // max length of wave roms.
     int chipfreq = 0;
 
     int patchtype_set = 0;
@@ -173,7 +174,8 @@ int LoadGame(Q_State *Q, char *gamename)
         strcpy(path,gamename);
 
     L_WaveMask=0;
-    L_Data = (uint8_t*)malloc(0x80000);
+    L_DataSize = 0x80000;
+    L_Data = (uint8_t*)malloc(L_DataSize);
 
 #ifdef DEBUG
     printf("Game title: '%s'\n",L_GameTitle);
@@ -196,9 +198,9 @@ int LoadGame(Q_State *Q, char *gamename)
 
         if(patchaddr[i]+patchtype[i] > L_DataSize)
             printf("patch address out of bounds\n");
-        else if(patchtype[i] == 1)
+        else if(patchtype[i] == 1) // byte
             *(uint8_t*)(L_Data+patchaddr[i]) = patchdata[i];
-        else if(patchtype[i] == 3)
+        else if(patchtype[i] == 3) // song table
         {
             patchaddr_set = patchaddr[i];
             if(!strcmp(mcutype,"H8")) // for most cases....
@@ -217,7 +219,7 @@ int LoadGame(Q_State *Q, char *gamename)
             *(uint16_t*)(L_Data+patchaddr_set) = patchdata_set&0xffff;
             *(uint8_t*)(L_Data+patchaddr_set+2) = patchdata_set>>16;
         }
-        else //if (patchtype[i] == 2)
+        else //if (patchtype[i] == 2) // word
             *(uint16_t*)(L_Data+patchaddr[i]) = patchdata[i];
     }
 
@@ -232,8 +234,9 @@ int LoadGame(Q_State *Q, char *gamename)
         printf("\tLength: %06x\n",wave_length[i]);
         printf("\tOffset: %06x\n",wave_offset[i]);
 #endif
+        wave_maxlen = 0x1000000 - wave_pos[i];
         snprintf(filename,127,"%s/%s/%s",L_WavePath,path,wave_filename[i]);
-        if(read_file(filename,L_WaveData+wave_pos[i],wave_length[i],wave_offset[i],0,NULL))
+        if(read_file(filename,L_WaveData+wave_pos[i],wave_length[i],wave_offset[i],0,&wave_maxlen))
             strcat(msgstring,my_strerror(filename));
         else
             L_WaveMask |= wave_pos[i]+wave_length[i]-1;
@@ -249,18 +252,11 @@ int LoadGame(Q_State *Q, char *gamename)
         return -1;
     }
 
-
     // Setup sound driver.
     memset(&Q->Chip,0,sizeof(Q->Chip));
 
     C352_init(&Q->Chip,chipfreq);
     Q->Chip.vgm_log = 0;
-
-    //C352_write(&Q->Chip,0x07,0x1234);
-
-//    Q->GameHacks = 0;
-//    if(!strcmp(gamehackname,"alpinerd"))
-//        Q->GameHacks = Q_GAMEHACK_ALPINERD;
 
     Q->EnablePitchOverflow = pitchoverflow >= 0 ? 1 : 0;
     Q->PitchOverflow = pitchoverflow&0xffff;

@@ -174,6 +174,7 @@ void ui_pattern_disp(int TrackNo)
                             data = temp;
                         else
                             data = pattern_arg_byte(&pos);
+
                         if(dest&0x80)
                             data = regs[data];
 
@@ -201,6 +202,7 @@ void ui_pattern_disp(int TrackNo)
                             data = temp;
                         else
                             data = pattern_arg_word(&pos);
+
                         if(dest&0x80)
                             data = regs[data&0xff];
 
@@ -380,7 +382,6 @@ void ui_pattern_disp(int TrackNo)
                 mask = pattern_arg_byte(&pos);
                 if(cmd&0x40)
                     temp = pattern_arg_byte(&pos);
-                i = 0;
                 for(i=0;i<Q_MAX_TRKCHN;i++)
                 {
                     if(mask&0x80)
@@ -394,9 +395,8 @@ void ui_pattern_disp(int TrackNo)
                         if(((cmd&0x3f) == 0x20) && data < 0x7f)
                             data += transpose[i];
 
-                        // write
+                        // write note
                         trackpattern[trackpattern_length][i] = (data&0xff) | (dest<<8);
-
                     }
                     else
                         trackpattern[trackpattern_length][i] = -1;
@@ -409,6 +409,7 @@ void ui_pattern_disp(int TrackNo)
         }
         else
         {
+            // break if we hit command limit
             if(maxcommands == 0)
                 cmd = 0x7f;
 
