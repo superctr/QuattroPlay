@@ -253,9 +253,13 @@ struct Q_State {
     uint16_t NextLoopId; // set 0 to disable loop detection
 #endif
 
-    // plus one to include a "dummy" entry
+    // controls startup sound (ie Tekken "Good Morning!" sample)
+    // 0=don't play/done, 1=play, 2=silent (just to set initial registers/pitch)
+    uint8_t BootSong;
 
-    uint8_t BootSong; // 0=don't play, 1=play, 2=silent (just to set initial registers/pitch)
+    // if set, voice pitch is set when the sound driver is reset,
+    // fixing songs that begin with portamentos
+    uint8_t PortaFix;
 
 // ========================================================================= //
 // Quattro variables

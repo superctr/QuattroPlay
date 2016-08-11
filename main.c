@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     int wavlog = 0;
     int vgmlog = 0;
     int autoplay_song = -1;
+    int portafix = 0;
 #ifdef DEBUG
     bootsong = 0;
 #else
@@ -68,6 +69,8 @@ int main(int argc, char *argv[])
                     gain = atof(initest.value);
                 else if(!strcmp(initest.key,"bootsong"))
                     bootsong = atoi(initest.value);
+                else if(!strcmp(initest.key,"portafix"))
+                    portafix = atoi(initest.value);
             }
         }
         ini_close(&initest);
@@ -131,6 +134,7 @@ int main(int argc, char *argv[])
         QDrv->Chip.vgm_log = 1;
     }
 
+    QDrv->PortaFix=portafix;
     QDrv->BootSong=bootsong;
     Q_Init(QDrv);
 

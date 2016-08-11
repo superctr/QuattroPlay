@@ -148,10 +148,8 @@ int LoadGame(Q_State *Q, char *gamename)
             }
             if(!strcmp(initest.section,"playlist"))
             {
+                // nothing here... yet.
                 Q_DEBUG("playlist %s = %s\n",initest.key,initest.value);
-
-
-
             }
         }
     }
@@ -252,7 +250,7 @@ int LoadGame(Q_State *Q, char *gamename)
         return -1;
     }
 
-    // Setup sound driver.
+    // Initialize sound chip and some initial sound driver parameters.
     memset(&Q->Chip,0,sizeof(Q->Chip));
 
     C352_init(&Q->Chip,chipfreq);

@@ -29,11 +29,16 @@ void Q_Reset(Q_State *Q)
     Q_LoopDetectionReset(Q);
     int i;
 
-    for(i=0;i<Q_MAX_VOICES;i++)
-        Q_C352_W(Q,i,C352_FLAGS,0);
-
     memset(Q->Chip.v,0,sizeof(Q->Chip.v));
     memset(Q->Voice,0,sizeof(Q->Voice));
+
+    for(i=0;i<Q_MAX_VOICES;i++)
+    {
+        Q_C352_W(Q,i,C352_FLAGS,0);
+        if(Q->PortaFix)
+            Q->Voice[i].Pitch = 0x3000; // A3 works well for ncv1.
+    }
+
     Q->Chip.mute_mask=0;
 
     memset(Q->SongRequest,0,sizeof(Q->SongRequest));
