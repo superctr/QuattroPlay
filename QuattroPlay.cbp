@@ -28,9 +28,6 @@
 					<Add option="-O2" />
 					<Add option="-DRELEASE" />
 				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
