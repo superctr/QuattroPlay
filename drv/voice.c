@@ -171,6 +171,7 @@ void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
 {
     //C352_Voice *CV = &Q->Chip.v[VoiceNo];
     //CV->flags = 0;
+    Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
 
     Q_VoicePitchEnvSet(Q,VoiceNo,V);
 
