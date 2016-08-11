@@ -14,6 +14,7 @@ void vgm_stop();
 void vgm_write_tag(char* gamename,int songid);
 void vgm_close();
 void vgm_poke32(int32_t offset, uint32_t d);
+void vgm_poke8(int32_t offset, uint8_t d);
 void vgm_datablock(uint8_t dbtype, uint32_t dbsize, uint8_t* datablock, uint32_t maxsize, uint32_t mask, int32_t flags);
 
 #endif // VGM_H_INCLUDED

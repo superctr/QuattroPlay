@@ -100,6 +100,11 @@ void vgm_poke32(int32_t offset, uint32_t d)
     *(uint32_t*)(vgmdata+offset)= d;
 }
 
+void vgm_poke8(int32_t offset, uint8_t d)
+{
+    *(uint8_t*)(vgmdata+offset)= d;
+}
+
 // notice: start offset was replaced with ROM mask.
 void vgm_datablock(uint8_t dbtype, uint32_t dbsize, uint8_t* datablock, uint32_t maxsize, uint32_t mask, int32_t flags)
 {

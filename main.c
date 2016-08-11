@@ -165,6 +165,7 @@ int main(int argc, char *argv[])
         SDL_LockAudioDevice(Audio->dev);
         QDrv->Chip.vgm_log = 0;
         vgm_poke32(0xdc,QDrv->ChipClock | Audio->state.MuteRear<<31);
+        vgm_poke8(0xd6,288/4);
         vgm_stop();
         vgm_write_tag(strlen(L_GameTitle) ? L_GameTitle : gamename,autoplay_song);
         vgm_close();
