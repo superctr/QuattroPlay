@@ -345,21 +345,31 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
             V->PanEnvLoop=V->PanEnvPos;
             break;
         default:
+            e = Q_ReadByte(Q,V->PanEnvPos++);
+            V->PanEnvValue = ((e<<8) - V->PanEnvTarget);
+            V->PanEnvTarget = e<<8;
+
+            // machbrkr song 23d has a weird pan envelope ('left' slide with positive delta)
+            // on H8 drivers, this would cause a pan rotation across the rear speakers.
+            // on C75 (and probably other M377xx) this causes instant change to the target value.
             if(d&0x80)
             {
                 // left slide
                 V->PanEnvDelta = Q_EnvelopeRateTable[-d &0xff];
                 V->PanState = Q_PAN_ENV_LEFT;
+
+                if(Q->McuVer < Q_MCUVER_Q00 && ~V->PanEnvValue&0x8000)
+                    V->PanEnvValue = V->PanEnvTarget;
             }
             else
             {
                 // right slide
                 V->PanEnvDelta = Q_EnvelopeRateTable[d];
                 V->PanState = Q_PAN_ENV_RIGHT;
+
+                if(Q->McuVer < Q_MCUVER_Q00 && V->PanEnvValue&0x8000)
+                    V->PanEnvValue = V->PanEnvTarget;
             }
-            e = Q_ReadByte(Q,V->PanEnvPos++);
-            V->PanEnvValue = ((e<<8) - V->PanEnvTarget);
-            V->PanEnvTarget = e<<8;
             return;
         }
     }
