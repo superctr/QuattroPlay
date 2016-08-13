@@ -236,8 +236,6 @@ void ui_info_track(int id,int ypos)
             }
             ypos++;
         }
-
-
         break;
     case 1:
         snprintf(&text[ypos][44],4,"Trk");
@@ -279,11 +277,6 @@ void ui_info_track(int id,int ypos)
 #endif // DEBUG
         break;
     }
-
-
-
-
-
 }
 
 const char* EnvelopeState_KOn[Q_ENV_STATE_MAX] =
@@ -344,7 +337,7 @@ void ui_info_voice(int id,int ypos)
         snprintf(&text[ypos][45],40,"%-10s  %02x = ????",
                  "PosEnv",  V->Pan);
     else if(V->PanMode == Q_PANMODE_REG)
-        snprintf(&text[ypos][45],40,"%-10s  %02x = %4d",
+        snprintf(&text[ypos][45],40,"%-10s  %02x = %04x",
                  "PanReg",  V->Pan,
                  V->PanSource ? *V->PanSource : 0);
     else if(V->PanMode == Q_PANMODE_POSREG)
