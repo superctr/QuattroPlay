@@ -74,6 +74,11 @@ void Q_TrackInit(Q_State* Q, int TrackNo)
     }
 }
 
+// funny bug here: voices allocated by a subtrack may not be deallocated
+// if the parent song is still playing when the subsong is stopped.
+// This can be replicated on the original sound driver.
+// Apparently some songs rely on this behavior (downhill song 0x50)
+
 // Call 0x16 - stops a track
 // source: 0x4ef0
 void Q_TrackStop(Q_State* Q,int TrackNo)
