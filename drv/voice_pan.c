@@ -358,7 +358,7 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
                 V->PanEnvDelta = Q_EnvelopeRateTable[-d &0xff];
                 V->PanState = Q_PAN_ENV_LEFT;
 
-                if(Q->McuVer < Q_MCUVER_Q00 && ~V->PanEnvValue&0x8000)
+                if(Q->McuVer < Q_MCUVER_Q00 && ~V->PanEnvValue > 0x8000)
                     V->PanEnvValue = V->PanEnvTarget;
             }
             else
@@ -367,7 +367,7 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
                 V->PanEnvDelta = Q_EnvelopeRateTable[d];
                 V->PanState = Q_PAN_ENV_RIGHT;
 
-                if(Q->McuVer < Q_MCUVER_Q00 && V->PanEnvValue&0x8000)
+                if(Q->McuVer < Q_MCUVER_Q00 && V->PanEnvValue > 0x8000)
                     V->PanEnvValue = V->PanEnvTarget;
             }
             return;
