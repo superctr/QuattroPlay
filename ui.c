@@ -166,6 +166,16 @@ void ui_main()
 
     set_color(0,0,FROWS,FCOLUMNS,COLOR_D_BLUE,COLOR_N_GREEN);
 
+    SDL_Surface *surface;
+    surface = SDL_LoadBMP("font.bmp");
+    if(!surface)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","could not load 'font.bmp'",NULL);
+        return;
+    }
+    FSIZE_X = surface->w/32;
+    FSIZE_Y = surface->h/8;
+
     window = SDL_CreateWindow(windowtitle,SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,0);
     rend = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
     #ifdef DEBUG
@@ -177,15 +187,6 @@ void ui_main()
     SDL_SetRenderDrawColor(rend,0,0,0,255);
     SDL_RenderClear(rend);
     SDL_RenderPresent(rend);
-
-    SDL_Surface *surface;
-    surface = SDL_LoadBMP("font.bmp");
-
-    if(!surface)
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","could not load 'font.bmp'",NULL);
-        return;
-    }
 
     SDL_SetColorKey(surface,SDL_TRUE,0);
     font = SDL_CreateTextureFromSurface(rend,surface);
