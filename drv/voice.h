@@ -21,6 +21,8 @@ void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V);
 // Call 0x0c - voice update
 void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V);
 
+void Q_VoiceDisable(Q_State *Q,int VoiceNo,Q_Voice* V);
+
 // ---------------------------------------------------------------------------
 // Volume envelopes
 
@@ -78,7 +80,7 @@ uint16_t Q_VoiceLfoUpdateEnv(uint16_t a,uint16_t b,uint16_t delta);
 void Q_VoiceLfoSetMod(Q_State *Q,int VoiceNo,Q_Voice *V,int8_t offset);
 
 // ---------------------------------------------------------------------------
-// Voice-related
+// Wave-related
 
 void Q_WaveSet(Q_State* Q,int VoiceNo,Q_Voice* V,uint16_t WaveNo);
 void Q_WaveReset(Q_State* Q,int VoiceNo,Q_Voice* V);

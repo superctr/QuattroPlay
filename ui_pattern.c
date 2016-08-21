@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "ui.h"
+#include "qp.h"
 #include "ui_menu.h"
 #include "drv/helper.h"
 

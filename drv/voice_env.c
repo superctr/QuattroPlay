@@ -42,9 +42,7 @@ void Q_VoiceEnvRead(Q_State *Q,int VoiceNo,Q_Voice* V)
     {
     case 0xff:
         //printf("V=%02x, envelope end\n",VoiceNo);
-        V->EnvState = Q_ENV_DISABLE;
-        Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
-        V->Enabled = 0;
+        Q_VoiceDisable(Q,VoiceNo,V);
         break;
     case 0xfe:
         V->EnvState = Q_ENV_SUSTAIN;
@@ -104,10 +102,7 @@ void Q_VoiceEnvUpdate(Q_State *Q,int VoiceNo,Q_Voice *V)
 
             if(d==0xff)
             {
-                V->EnvState = Q_ENV_DISABLE;
-                V->Enabled=0;
-                Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
-                return;
+                return Q_VoiceDisable(Q,VoiceNo,V);
             }
             else if(d!=0xfe)
             {

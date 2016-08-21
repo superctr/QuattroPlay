@@ -11,6 +11,7 @@
 #include "SDL2/SDL_events.h"
 #include "SDL2/SDL_keyboard.h"
 #include "SDL2/SDL_render.h"
+#include "qp.h"
 #include "ui.h"
 #include "ui_menu.h"
 #include "loader.h"
@@ -146,16 +147,16 @@ void ui_main()
     char windowtitle[256];
     strcpy(windowtitle,"QuattroPlay");
 
-    if(strlen(L_GameTitle))
-        sprintf(windowtitle,"%s - QuattroPlay",L_GameTitle);
+    if(strlen(Game->Title))
+        sprintf(windowtitle,"%s - QuattroPlay",Game->Title);
 
-    Audio->state.MuteRear = muterear;
-    Audio->state.Gain = gain*gamegain;
+    Audio->state.MuteRear = Game->MuteRear;
+    Audio->state.Gain = Game->BaseGain*Game->Gain;
     vol = 1.0;
 
     #ifdef DEBUG
-    printf("Base gain is %.3f\n",gain);
-    printf("Game gain is %.3f\n",gamegain);
+    printf("Base gain is %.3f\n",Game->BaseGain);
+    printf("Game gain is %.3f\n",Game->Gain);
 
     printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
     #endif

@@ -3,12 +3,13 @@
 #include <unistd.h>
 #include "string.h"
 #include "vgm.h"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_audio.h"
+#include "qp.h"
+//#include "SDL2/SDL.h"
+//#include "SDL2/SDL_audio.h"
 #include "ui.h"
 #include "ini.h"
-#include "loader.h"
-#include "drv/quattro.h"
+//#include "loader.h"
+//#include "drv/quattro.h"
 
 
 int main(int argc, char *argv[])
@@ -18,24 +19,21 @@ int main(int argc, char *argv[])
 //    static char inipath[128];
 //    static char wavepath[128];
 //    static char datapath[128];
-    static char gamename[128];
-    static char filename[FILENAME_MAX];
-
-    int wavlog = 0;
-    int vgmlog = 0;
-    int autoplay_song = -1;
-    int portafix = 0;
-#ifdef DEBUG
-    bootsong = 0;
-#else
-    bootsong = 1;
-#endif
+//    static char gamename[128];
 
     QDrv = (Q_State*)malloc(sizeof(Q_State));
     memset(QDrv,0,sizeof(Q_State));
 
-    audio_t audio_instance;
-    Audio = &audio_instance;
+    Audio = (audio_t*)malloc(sizeof(audio_t));
+    memset(Audio,0,sizeof(audio_t));
+
+    Game = (game_t*)malloc(sizeof(game_t));
+    memset(Game,0,sizeof(game_t));
+
+    if(!QDrv || !Audio || !Game)
+        return -1;
+
+    Game->AutoPlay = -1;
 /*
     QP_PlaylistState playlist_instance;
     pl = &playlist_instance;
@@ -45,8 +43,8 @@ int main(int argc, char *argv[])
     pl->PlayState = QP_PLAYSTATE_IDLE;
     pl->CommandPos=0;
 */
-    muterear=0;
-    gain=32.0;
+    Game->MuteRear=0;
+    Game->BaseGain=32.0;
 
     inifile_t initest;
     if(!ini_open("quattroplay.ini",&initest))
@@ -58,19 +56,19 @@ int main(int argc, char *argv[])
             if(!strcmp(initest.section,"config"))
             {
                 if(!strcmp(initest.key,"inipath"))
-                    strcpy(L_IniPath,initest.value);
+                    strcpy(QP_IniPath,initest.value);
                 else if(!strcmp(initest.key,"wavepath"))
-                    strcpy(L_WavePath,initest.value);
+                    strcpy(QP_WavePath,initest.value);
                 else if(!strcmp(initest.key,"datapath"))
-                    strcpy(L_DataPath,initest.value);
+                    strcpy(QP_DataPath,initest.value);
                 else if(!strcmp(initest.key,"gamename"))
-                    strcpy(gamename,initest.value);
+                    strcpy(Game->Name,initest.value);
                 else if(!strcmp(initest.key,"gain"))
-                    gain = atof(initest.value);
+                    Game->BaseGain = atof(initest.value);
                 else if(!strcmp(initest.key,"bootsong"))
-                    bootsong = atoi(initest.value);
+                    Game->BootSong = atoi(initest.value);
                 else if(!strcmp(initest.key,"portafix"))
-                    portafix = atoi(initest.value);
+                    Game->PortaFix = atoi(initest.value);
             }
         }
         ini_close(&initest);
@@ -88,100 +86,49 @@ int main(int argc, char *argv[])
         if((!strcmp(argv[i],"-a") || !strcmp(argv[i],"--autoplay")) && i<argc)
         {
             i++;
-            autoplay_song = (int)strtol(argv[i],NULL,0);
+            Game->AutoPlay = (int)strtol(argv[i],NULL,0);
         }
         else if(!strcmp(argv[i],"-w") || !strcmp(argv[i],"--wavlog"))
         {
-            wavlog=1;
+            Game->WavLog=1;
         }
         else if(!strcmp(argv[i],"-v") || !strcmp(argv[i],"--vgmlog"))
         {
-            vgmlog=1;
+            Game->VgmLog=1;
         }
         else
         {
             if(standard_args == 0)
-                strcpy(gamename, argv[i]);
+                strcpy(Game->Name, argv[i]);
             else if(standard_args == 1)
-                autoplay_song = (int)strtol(argv[i],NULL,0);
+                Game->AutoPlay = (int)strtol(argv[i],NULL,0);
             else
                 break;
             standard_args++;
         }
 
     }
-    /*
-    if(argc>1)
-        strcpy(gamename, argv[1]);
-    if(argc>2)
-        autoplay_song = strtol(argv[2],NULL,0);
-    */
-    if(LoadGame(QDrv,gamename))
+
+    Game->QDrv = QDrv;
+
+    if(LoadGame(Game))
     {
         SDL_Quit();
         return -1;
     }
 
-    if(vgmlog)
-    {
-        strcpy(filename,"qp_log.vgm");
-        if(autoplay_song >= 0)
-        {
-            sprintf(filename,"%s_%03x.vgm",gamename,autoplay_song&0x7ff);
-        }
-        vgm_open(filename);
-        vgm_datablock(0x92,0x1000000,QDrv->Chip.wave,0x1000000,QDrv->Chip.wave_mask,0);
-        QDrv->Chip.vgm_log = 1;
-    }
-
-    QDrv->PortaFix=portafix;
-    QDrv->BootSong=bootsong;
-    Q_Init(QDrv);
-
-    QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,1024,NULL);
-
-    if(autoplay_song >= 0)
-        QDrv->BootSong=2;
-
-    Audio->state.AutoPlaySong = autoplay_song;
-
-    if(wavlog)
-    {
-        strcpy(filename,"qp_log.wav");
-        if(autoplay_song >= 0)
-        {
-            sprintf(filename,"%s_%03x.wav",gamename,autoplay_song&0x7ff);
-        }
-        QPAudio_WavOpen(Audio,filename);
-    }
+    InitGame(Game);
 
     ui_main();
 
-    if(Audio->state.FileLogging)
-    {
-        SDL_LockAudioDevice(Audio->dev);
-        QPAudio_WavClose(Audio);
-        SDL_UnlockAudioDevice(Audio->dev);
-    }
-
-    if(QDrv->Chip.vgm_log)
-    {
-        SDL_LockAudioDevice(Audio->dev);
-        QDrv->Chip.vgm_log = 0;
-        vgm_poke32(0xdc,QDrv->ChipClock | Audio->state.MuteRear<<31);
-        vgm_poke8(0xd6,288/4);
-        vgm_stop();
-        vgm_write_tag(strlen(L_GameTitle) ? L_GameTitle : gamename,autoplay_song);
-        vgm_close();
-        SDL_UnlockAudioDevice(Audio->dev);
-    }
-
     QPAudio_Close(Audio);
 
+    // Audio must be closed or locked before calling this
+    DeInitGame(Game);
+
     SDL_Quit();
-    UnloadGame(QDrv);
+    UnloadGame(Game);
     free(QDrv);
 
     return 0;
 }
-

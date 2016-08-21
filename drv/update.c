@@ -55,7 +55,18 @@ void Q_UpdateVoices(Q_State* Q)
         }
 
         if(V->Enabled)
+        {
             Q_VoiceUpdate(Q,VoiceNo,V);
+        }
+        /*
+        else if(~Q->SongRequest[V->TrackNo] & Q_TRACK_STATUS_BUSY &&
+           Q->Track[V->TrackNo].Channel[V->ChannelNo].VoiceNo != VoiceNo)
+        {
+            printf("voice %02x needs cleanup.")
+
+        }
+        */
+
     }
     C352_write(&Q->Chip,0x202,VoiceNo); // update key-ons
 }

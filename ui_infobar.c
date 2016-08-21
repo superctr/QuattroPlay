@@ -10,6 +10,7 @@
 #include "string.h"
 #include "math.h"
 
+#include "qp.h"
 #include "ui.h"
 #include "ui_menu.h"
 #include "drv/quattro.h"

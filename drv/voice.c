@@ -252,3 +252,11 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
 
     return Q_VoicePanUpdate(Q,VoiceNo,V);
 }
+
+// source: 0x7714
+void Q_VoiceDisable(Q_State *Q,int VoiceNo,Q_Voice* V)
+{
+    Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
+    V->EnvState = Q_ENV_DISABLE;
+    V->Enabled=0;
+}

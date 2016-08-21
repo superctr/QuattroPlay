@@ -8,6 +8,7 @@
 #include "string.h"
 #include "math.h"
 
+#include "qp.h"
 #include "ui.h"
 #include "ui_menu.h"
 #include "drv/quattro.h"
@@ -256,7 +257,7 @@ void ui_handleinput(SDL_Keysym *ks)
         break;
     case SDLK_F3:
         SDL_LockAudioDevice(Audio->dev);
-        QDrv->BootSong=bootsong;
+        QDrv->BootSong=Game->BootSong;
         Q_Reset(QDrv);
         SDL_UnlockAudioDevice(Audio->dev);
         break;
@@ -278,7 +279,7 @@ void ui_handleinput(SDL_Keysym *ks)
             vol=9.95;
         if(vol<0)
             vol=0;
-        Audio->state.Gain = gain*gamegain*vol;
+        Audio->state.Gain = Game->BaseGain*Game->Gain*vol;
         //printf("*** Volume = %f ***\n",gain);
         break;
     case SDLK_F10:

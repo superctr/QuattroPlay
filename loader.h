@@ -3,18 +3,38 @@
 #include "stdint.h"
 #include "drv/quattro.h"
 
-    char L_IniPath[128];
-    char L_WavePath[128];
-    char L_DataPath[128];
+typedef struct {
 
-    char L_GameTitle[128];
+    char Name[256]; // short name (filename-legal)
+    char Title[1024]; // display title
 
-    uint8_t *L_Data;
-    uint32_t L_DataSize;
-    uint8_t *L_WaveData;
-    uint32_t L_WaveMask;
+    uint8_t *Data;
+    uint32_t DataSize;
+    uint8_t *WaveData;
+    uint32_t WaveMask;
 
-int LoadGame(Q_State* Q,char* gamename);
-int UnloadGame(Q_State* Q);
+    Q_State *QDrv;
+
+    // Global configuration
+    int WavLog;
+    int VgmLog;
+    int AutoPlay;
+    int PortaFix;
+    int BootSong;
+    float BaseGain;
+
+    // Game configuration
+    float Gain;
+    int MuteRear;
+    int ChipFreq; // sound chip frequency, best to not touch this.
+    int PitchOverflow; // out of bounds value for pitch table. if -1, use default (C74-C76)
+
+} game_t;
+
+int LoadGame(game_t *Game);
+int UnloadGame(game_t *Game);
+
+void InitGame(game_t *Game);
+void DeInitGame(game_t *Game);
 
 #endif // LOADER_H_INCLUDED

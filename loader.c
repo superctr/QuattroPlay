@@ -7,16 +7,17 @@
 #include <unistd.h>
 #include "string.h"
 #include "SDL2/SDL.h"
-#include "drv/quattro.h"
-#include "c352.h"
-#include "ui.h"
+#include "qp.h"
+// #include "ui.h"
+#include "vgm.h"
 #include "ini.h"
-#include "loader.h"
 #include "fileio.h"
 
 // Loads game ini, then the sound data and wave roms...
-int LoadGame(Q_State *Q, char *gamename)
+int LoadGame(game_t *G)
 {
+    Q_State* Q = G->QDrv;
+
     static char msgstring[2048];
 
     static char filename[128];
@@ -32,14 +33,13 @@ int LoadGame(Q_State *Q, char *gamename)
     int wave_length[16];
     int wave_offset[16];
     unsigned int wave_maxlen; // max length of wave roms.
-    int chipfreq = 0;
+    G->ChipFreq = 0;
+    G->PitchOverflow = 0;
 
     int patchtype_set = 0;
     int patchaddr_set = 0;
     int patchdata_set = 0;
     int patchcount = 0;
-
-    int pitchoverflow = -1;
 
     int patchtype[64];
     int patchaddr[64];
@@ -53,15 +53,16 @@ int LoadGame(Q_State *Q, char *gamename)
     mcutype[0] = 0;
     path[0] = 0;
 
-    sprintf(msgstring,"Failed to load '%s':",gamename);
+    sprintf(msgstring,"Failed to load '%s':",G->Name);
     int loadok = strlen(msgstring);
 
-    snprintf(filename,127,"%s/%s.ini",L_IniPath,gamename);
+    snprintf(filename,127,"%s/%s.ini",QP_IniPath,G->Name);
 
 #ifdef DEBUG
     printf("Now loading '%s' ...\n",filename);
 #endif
 
+    strcpy(G->Title,G->Name);
     memset(wave_pos,0,sizeof(wave_pos));
     memset(wave_length,0,sizeof(wave_length));
     memset(wave_offset,0,sizeof(wave_offset));
@@ -80,7 +81,7 @@ int LoadGame(Q_State *Q, char *gamename)
             if(!strcmp(initest.section,"data"))
             {
                 if(!strcmp(initest.key,"name"))
-                    strcpy(L_GameTitle,initest.value);
+                    strcpy(G->Title,initest.value);
                 else if(!strcmp(initest.key,"path"))
                     strcpy(path,initest.value);
                 else if(!strcmp(initest.key,"filename"))
@@ -90,13 +91,13 @@ int LoadGame(Q_State *Q, char *gamename)
                 else if(!strcmp(initest.key,"byteswap"))
                     byteswap = atoi(initest.value) & 1;
                 else if(!strcmp(initest.key,"gain"))
-                    gamegain = atof(initest.value);
+                    G->Gain = atof(initest.value);
                 else if(!strcmp(initest.key,"muterear"))
-                    muterear = atoi(initest.value);
+                    G->MuteRear = atoi(initest.value);
                 else if(!strcmp(initest.key,"chipfreq"))
-                    chipfreq = atoi(initest.value);
+                    G->ChipFreq = atoi(initest.value);
                 else if(!strcmp(initest.key,"pitchtab"))
-                    pitchoverflow = strtol(initest.value,NULL,0);
+                    G->PitchOverflow = strtol(initest.value,NULL,0);
 //                else if(!strcmp(initest.key,"gamehack"))
 //                    strcpy(gamehackname,initest.value);
             }
@@ -169,21 +170,21 @@ int LoadGame(Q_State *Q, char *gamename)
     ini_close(&initest);
 
     if(strlen(path) == 0)
-        strcpy(path,gamename);
+        strcpy(path,G->Name);
 
-    L_WaveMask=0;
-    L_DataSize = 0x80000;
-    L_Data = (uint8_t*)malloc(L_DataSize);
+    G->WaveMask=0;
+    G->DataSize = 0x80000;
+    G->Data = (uint8_t*)malloc(G->DataSize);
 
 #ifdef DEBUG
-    printf("Game title: '%s'\n",L_GameTitle);
+    printf("Game title: '%s'\n",G->Title);
     printf("Data filename: '%s'\n",data_filename);
     printf("Wave count: %d\n",wave_count+1);
     if(byteswap)
         printf("Data file byteswapped\n");
 #endif
-    snprintf(filename,127,"%s/%s/%s",L_DataPath,path,data_filename);
-    if(read_file(filename,L_Data,0,0,byteswap,&L_DataSize))
+    snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename);
+    if(read_file(filename,G->Data,0,0,byteswap,&G->DataSize))
     {
         strcat(msgstring,my_strerror(filename));
         //return -1;
@@ -194,10 +195,10 @@ int LoadGame(Q_State *Q, char *gamename)
     {
         printf("Patch type %d addr %06x data %06x\n",patchtype[i],patchaddr[i],patchdata[i]);
 
-        if(patchaddr[i]+patchtype[i] > L_DataSize)
+        if(patchaddr[i]+patchtype[i] > G->DataSize)
             printf("patch address out of bounds\n");
         else if(patchtype[i] == 1) // byte
-            *(uint8_t*)(L_Data+patchaddr[i]) = patchdata[i];
+            *(uint8_t*)(G->Data+patchaddr[i]) = patchdata[i];
         else if(patchtype[i] == 3) // song table
         {
             patchaddr_set = patchaddr[i];
@@ -214,15 +215,15 @@ int LoadGame(Q_State *Q, char *gamename)
                 patchdata_set = patchdata[i] + 0x200000;
             }
 
-            *(uint16_t*)(L_Data+patchaddr_set) = patchdata_set&0xffff;
-            *(uint8_t*)(L_Data+patchaddr_set+2) = patchdata_set>>16;
+            *(uint16_t*)(G->Data+patchaddr_set) = patchdata_set&0xffff;
+            *(uint8_t*)(G->Data+patchaddr_set+2) = patchdata_set>>16;
         }
         else //if (patchtype[i] == 2) // word
-            *(uint16_t*)(L_Data+patchaddr[i]) = patchdata[i];
+            *(uint16_t*)(G->Data+patchaddr[i]) = patchdata[i];
     }
 
-    L_WaveData = (uint8_t*)malloc(0x1000000);
-    memset(L_WaveData,0,0x1000000);
+    G->WaveData = (uint8_t*)malloc(0x1000000);
+    memset(G->WaveData,0,0x1000000);
     for(i=0;i<wave_count+1;i++)
     {
 #ifdef DEBUG
@@ -233,15 +234,15 @@ int LoadGame(Q_State *Q, char *gamename)
         printf("\tOffset: %06x\n",wave_offset[i]);
 #endif
         wave_maxlen = 0x1000000 - wave_pos[i];
-        snprintf(filename,127,"%s/%s/%s",L_WavePath,path,wave_filename[i]);
-        if(read_file(filename,L_WaveData+wave_pos[i],wave_length[i],wave_offset[i],0,&wave_maxlen))
+        snprintf(filename,127,"%s/%s/%s",QP_WavePath,path,wave_filename[i]);
+        if(read_file(filename,G->WaveData+wave_pos[i],wave_length[i],wave_offset[i],0,&wave_maxlen))
             strcat(msgstring,my_strerror(filename));
         else
-            L_WaveMask |= wave_pos[i]+wave_length[i]-1;
+            G->WaveMask |= wave_pos[i]+wave_length[i]-1;
     }
 
 #ifdef DEBUG
-    printf("Wave Mask = %06x\n",L_WaveMask);
+    printf("Wave Mask = %06x\n",G->WaveMask);
 #endif
 
     if(loadok != strlen(msgstring))
@@ -250,28 +251,90 @@ int LoadGame(Q_State *Q, char *gamename)
         return -1;
     }
 
-    // Initialize sound chip and some initial sound driver parameters.
-    memset(&Q->Chip,0,sizeof(Q->Chip));
-
-    C352_init(&Q->Chip,chipfreq);
-    Q->Chip.vgm_log = 0;
-
-    Q->EnablePitchOverflow = pitchoverflow >= 0 ? 1 : 0;
-    Q->PitchOverflow = pitchoverflow&0xffff;
-
-    Q->Chip.wave = L_WaveData;
-    Q->Chip.wave_mask = L_WaveMask;
-    Q->McuData = L_Data;
-
+    G->QDrv = Q;
     return 0;
 }
 
-int UnloadGame(Q_State* Q)
+int UnloadGame(game_t *G)
 {
-    free(L_Data);
-    free(L_WaveData);
-
+    free(G->Data);
+    free(G->WaveData);
     //free(Q_Chip);
-
     return 0;
+}
+
+void InitGame(game_t *Game)
+{
+
+    // Initialize sound chip and some initial sound driver parameters.
+    memset(&QDrv->Chip,0,sizeof(QDrv->Chip));
+
+    C352_init(&QDrv->Chip,Game->ChipFreq);
+    QDrv->Chip.vgm_log = 0;
+
+    QDrv->EnablePitchOverflow = Game->PitchOverflow >= 0 ? 1 : 0;
+    QDrv->PitchOverflow = Game->PitchOverflow&0xffff;
+
+    QDrv->Chip.wave = Game->WaveData;
+    QDrv->Chip.wave_mask = Game->WaveMask;
+    QDrv->McuData = Game->Data;
+
+    static char filename[FILENAME_MAX];
+
+    if(Game->VgmLog)
+    {
+        strcpy(filename,"qp_log.vgm");
+        if(Game->AutoPlay >= 0)
+        {
+            sprintf(filename,"%s_%03x.vgm",Game->Name,Game->AutoPlay&0x7ff);
+        }
+        vgm_open(filename);
+        vgm_datablock(0x92,0x1000000,QDrv->Chip.wave,0x1000000,QDrv->Chip.wave_mask,0);
+        QDrv->Chip.vgm_log = 1;
+    }
+
+    QDrv->PortaFix=Game->PortaFix;
+    QDrv->BootSong=Game->BootSong;
+    Q_Init(QDrv);
+
+    QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,1024,NULL);
+
+    if(Game->AutoPlay >= 0)
+        QDrv->BootSong=2;
+
+    Audio->state.AutoPlaySong = Game->AutoPlay;
+
+    if(Game->WavLog)
+    {
+        strcpy(filename,"qp_log.wav");
+        if(Game->AutoPlay >= 0)
+        {
+            sprintf(filename,"%s_%03x.wav",Game->Name,Game->AutoPlay&0x7ff);
+        }
+        QPAudio_WavOpen(Audio,filename);
+    }
+}
+
+void DeInitGame(game_t *Game)
+{
+    if(Audio->state.FileLogging)
+    {
+        SDL_LockAudioDevice(Audio->dev);
+        QPAudio_WavClose(Audio);
+        SDL_UnlockAudioDevice(Audio->dev);
+    }
+
+    if(QDrv->Chip.vgm_log)
+    {
+        SDL_LockAudioDevice(Audio->dev);
+        QDrv->Chip.vgm_log = 0;
+        vgm_poke32(0xdc,QDrv->ChipClock | Audio->state.MuteRear<<31);
+        vgm_poke8(0xd6,288/4);
+        vgm_stop();
+        vgm_write_tag(strlen(Game->Title) ? Game->Title : Game->Name,Game->AutoPlay);
+        vgm_close();
+        SDL_UnlockAudioDevice(Audio->dev);
+    }
+
+    Q_Deinit(QDrv);
 }

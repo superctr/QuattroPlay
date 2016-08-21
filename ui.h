@@ -52,17 +52,12 @@ typedef struct {
     uint8_t blue;
 } color_t;
 
-
-    // this will be moved somewhere else later.
-    Q_State *QDrv;
-    audio_t *Audio;
-
-    int bootsong;
+    //int bootsong;
     //QP_PlaylistState *pl;
 
-    int muterear;
-    float gain;
-    float gamegain;
+    //int muterear;
+    //float gain;
+    //float gamegain;
     float vol;
 
     char text[FROWS][FCOLUMNS*2];
@@ -84,9 +79,5 @@ void redraw_text();
 void ui_main();
 
 void set_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
-
-/*****/
-
-
 
 #endif // UI_H_INCLUDED

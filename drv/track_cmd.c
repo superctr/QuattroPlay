@@ -553,8 +553,10 @@ TRACKCOMMAND(tc_StartTrack)
     uint16_t id = arg_word(Q,TrackPos);
 
     // prevent race condition
-    //if(slot == TrackNo)
-    //    return Q_TrackDisable(Q,TrackNo);
+    // following code if uncommented will fix the issue detailed in track.c
+    // line 77, but is untested...
+    //if(Q->SongRequest[slot]&Q_TRACK_STATUS_BUSY)
+    //    Q_TrackDisable(Q,slot);
 
     Q->SongRequest[slot] = id | (Q_TRACK_STATUS_START | Q_TRACK_STATUS_SUB);
     Q->ParentSong[slot] = TrackNo;
