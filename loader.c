@@ -34,7 +34,7 @@ int LoadGame(game_t *G)
     int wave_offset[16];
     unsigned int wave_maxlen; // max length of wave roms.
     G->ChipFreq = 0;
-    G->PitchOverflow = 0;
+    G->PitchOverflow = -1;
 
     int patchtype_set = 0;
     int patchaddr_set = 0;

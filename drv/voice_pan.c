@@ -151,6 +151,22 @@ void Q_VoicePanSet(Q_State *Q,int VoiceNo,Q_Voice* V)
         }
         else if(d == 0xff)
         {
+            // always reset on new pan envelope
+            if(V->PanUpdateFlag == V->Pan)
+                break;
+            // later drivers: reset if pan envelope command was retriggered.
+            else if(Q->McuVer >= Q_MCUVER_Q00 && V->PanMode != Q_PANMODE_ENV_SET && V->PanMode != Q_PANMODE_POSENV_SET)
+                break;
+
+            if(V->PanMode == Q_PANMODE_ENV_SET)
+                V->PanMode = Q_PANMODE_ENV;
+            else if(V->PanMode == Q_PANMODE_POSENV_SET)
+                V->PanMode = Q_PANMODE_POSENV;
+            V->Channel->PanMode = V->PanMode2 = V->PanMode;
+
+            V->PanEnvDelay = 1;
+
+            /*
             // don't reset on new note unless set
             if(V->PanMode == Q_PANMODE_ENV_SET || V->PanMode == Q_PANMODE_POSENV_SET || V->PanUpdateFlag != V->Pan)
             {
@@ -164,6 +180,7 @@ void Q_VoicePanSet(Q_State *Q,int VoiceNo,Q_Voice* V)
             }
             else
                 break;
+            */
         }
         else
             V->PanEnvDelay = d;
@@ -350,16 +367,17 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
             V->PanEnvTarget = e<<8;
 
             // machbrkr song 23d has a weird pan envelope ('left' slide with positive delta)
-            // on H8 drivers, this would cause a pan rotation across the rear speakers.
-            // on C75 (and probably other M377xx) this causes instant change to the target value.
+            // this happens on the original sound driver but also doesn't (see Q_VoicePanSet)
+            // Uncommenting below code 'fixes' the pan envelope, but may break other songs.
             if(d&0x80)
             {
                 // left slide
                 V->PanEnvDelta = Q_EnvelopeRateTable[-d &0xff];
                 V->PanState = Q_PAN_ENV_LEFT;
 
-                if(Q->McuVer < Q_MCUVER_Q00 && ~V->PanEnvValue > 0x8000)
-                    V->PanEnvValue = V->PanEnvTarget;
+                //printf("%02x = L %04x\n", VoiceNo, ~V->PanEnvValue & 0xffff);
+                //if(~V->PanEnvValue > 0x8000)
+                //    V->PanEnvValue = V->PanEnvTarget;
             }
             else
             {
@@ -367,8 +385,9 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
                 V->PanEnvDelta = Q_EnvelopeRateTable[d];
                 V->PanState = Q_PAN_ENV_RIGHT;
 
-                if(Q->McuVer < Q_MCUVER_Q00 && V->PanEnvValue > 0x8000)
-                    V->PanEnvValue = V->PanEnvTarget;
+                //printf("%02x = R %04x\n", VoiceNo, V->PanEnvValue & 0xffff);
+                //if(V->PanEnvValue > 0x8000)
+                //    V->PanEnvValue = V->PanEnvTarget;
             }
             return;
         }
