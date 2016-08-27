@@ -313,6 +313,36 @@ void ui_handleinput(SDL_Keysym *ks)
     case SDLK_F12:
         debug_stat ^= 1;
         break;
+    case SDLK_0:
+        GameDoAction(Game,0);
+        break;
+    case SDLK_1:
+        GameDoAction(Game,1);
+        break;
+    case SDLK_2:
+        GameDoAction(Game,2);
+        break;
+    case SDLK_3:
+        GameDoAction(Game,3);
+        break;
+    case SDLK_4:
+        GameDoAction(Game,4);
+        break;
+    case SDLK_5:
+        GameDoAction(Game,5);
+        break;
+    case SDLK_6:
+        GameDoAction(Game,6);
+        break;
+    case SDLK_7:
+        GameDoAction(Game,7);
+        break;
+    case SDLK_8:
+        GameDoAction(Game,8);
+        break;
+    case SDLK_9:
+        GameDoAction(Game,9);
+        break;
     case SDLK_ESCAPE:
         if(inpstate == STATE_SETVALUE)
             inpstate=STATE_MAIN;

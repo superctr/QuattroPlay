@@ -41,6 +41,10 @@ int LoadGame(game_t *G)
     int patchdata_set = 0;
     int patchcount = 0;
 
+    unsigned int action_id = 0;
+    unsigned int action_reg = 0;
+    unsigned int action_data = 0;
+
     int patchtype[64];
     int patchaddr[64];
     int patchdata[64];
@@ -67,6 +71,7 @@ int LoadGame(game_t *G)
     memset(wave_length,0,sizeof(wave_length));
     memset(wave_offset,0,sizeof(wave_offset));
     memset(wave_filename,0,sizeof(wave_filename));
+    memset(G->Action,0,sizeof(G->Action));
 
     inifile_t initest;
     if(!ini_open(filename,&initest))
@@ -151,6 +156,17 @@ int LoadGame(game_t *G)
             {
                 // nothing here... yet.
                 Q_DEBUG("playlist %s = %s\n",initest.key,initest.value);
+            }
+            if(sscanf(initest.section,"action.%d",&action_id)==1 && action_id < 10)
+            {
+                if(sscanf(initest.key,"r%x",&action_reg)==1)
+                {
+                    action_data = strtol(initest.value,NULL,0);
+                    G->Action[action_id].reg[G->Action[action_id].cnt] = action_reg;
+                    G->Action[action_id].data[G->Action[action_id].cnt] = action_data;
+                    Q_DEBUG("action %d (%02x) =  r%02x = %04x\n",action_id,G->Action[action_id].cnt,action_reg,action_data);
+                    G->Action[action_id].cnt++;
+                }
             }
         }
     }
@@ -338,3 +354,17 @@ void DeInitGame(game_t *Game)
 
     Q_Deinit(QDrv);
 }
+
+// Perform register action (song triggers).
+void GameDoAction(game_t *G,unsigned int id)
+{
+    if(id > 9)
+        return;
+    int i;
+    for(i=0;i<G->Action[id].cnt;i++)
+    {
+        G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
+    }
+    return;
+}
+
