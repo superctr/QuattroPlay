@@ -88,6 +88,11 @@ int main(int argc, char *argv[])
             i++;
             Game->AutoPlay = (int)strtol(argv[i],NULL,0);
         }
+        else if((!strcmp(argv[i],"-ini") || !strcmp(argv[i],"--ini-path")) && i<argc)
+        {
+            i++;
+            strcpy(QP_IniPath,argv[i]);
+        }
         else if(!strcmp(argv[i],"-w") || !strcmp(argv[i],"--wavlog"))
         {
             Game->WavLog=1;
