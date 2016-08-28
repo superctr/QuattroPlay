@@ -1,9 +1,6 @@
 #ifndef TRACK_H_INCLUDED
 #define TRACK_H_INCLUDED
 
-// Track status
-
-
 // Call 0x06
 void Q_TrackInit(Q_State *Q,int TrackNo);
 // Call 0x16
@@ -24,5 +21,12 @@ void Q_ChannelEnable(Q_State *Q,int TrackNo,int ChannelNo);
 // calculate track volume including fadeout and attenuations.
 void Q_TrackCalcVolume(Q_State *Q,int TrackNo);
 
+// track commands
+typedef void (*Q_TrackCommand)(Q_State*,int,Q_Track*,uint32_t*,uint8_t);
+
+// callback for channel write commands
+typedef void (*Q_WriteCallback)(Q_State*,int,Q_Track*,uint32_t*,int,int,uint16_t);
+
+Q_TrackCommand Q_TrackCommandTable[0x40];
 
 #endif // TRACK_H_INCLUDED

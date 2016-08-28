@@ -47,7 +47,6 @@ void Q_VoiceSetVolume(Q_State *Q,int VoiceNo,Q_Voice *V, uint16_t VolumeF, uint1
 void Q_VoicePanEnvUpdate(Q_State *Q,int VoiceNo,Q_Voice *V);
 void Q_VoicePanEnvRead(Q_State *Q,int VoiceNo,Q_Voice *V);
 
-
 // call 0x1c - pan update
 void Q_VoicePanUpdate(Q_State *Q,int VoiceNo,Q_Voice *V);
 // call 0x2c - convert panpot value to volume

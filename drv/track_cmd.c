@@ -6,7 +6,6 @@
 #include "quattro.h"
 #include "track.h"
 #include "voice.h"
-#include "track_cmd.h"
 #include "helper.h"
 #include "tables.h"
 #define TRACKCOMMAND(__name) void __name(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command)

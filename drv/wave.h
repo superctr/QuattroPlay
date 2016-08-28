@@ -1,3 +1,0 @@
-/*
-    moved to voice.h
-*/
