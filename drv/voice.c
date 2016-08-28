@@ -3,7 +3,6 @@
 */
 #include "quattro.h"
 #include "voice.h"
-#include "wave.h"
 #include "helper.h"
 #include "tables.h"
 
@@ -233,13 +232,9 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
     pitch += V->WaveTranspose;
 
     // get frequencies from table
-    freq1 = Q_PitchTable[pitch>>8];
-    freq2 = Q_PitchTable[(pitch>>8)+1];
+    freq1 = Q->PitchTable[pitch>>8];
+    freq2 = Q->PitchTable[(pitch>>8)+1];
     freq1 += ((uint16_t)(freq2-freq1)*(pitch&0xff))>>8;
-
-    // overflow for some H8 drivers.
-    if(pitch >= 0x6b00 && Q->EnablePitchOverflow)
-        freq1 = Q->PitchOverflow;
 
     Q_C352_W(Q,VoiceNo,C352_FREQUENCY,freq1);
     //CV->freq = freq1;

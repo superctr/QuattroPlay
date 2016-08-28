@@ -13,6 +13,7 @@ Q_McuType Q_GetMcuType(Q_State* Q);
 void Q_GetMcuVer(Q_State* Q);
 
 void Q_GetOffsets(Q_State* Q);
+void Q_MakePitchTable(Q_State *Q);
 
 int32_t Q_GetSongPos(Q_State *Q,uint16_t id);
 

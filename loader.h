@@ -33,7 +33,6 @@ typedef struct {
     float Gain;
     int MuteRear;
     int ChipFreq; // sound chip frequency, best to not touch this.
-    int PitchOverflow; // out of bounds value for pitch table. if -1, use default (C74-C76)
 
     action_t Action[10];
 } game_t;

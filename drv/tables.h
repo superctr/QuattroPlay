@@ -7,7 +7,7 @@
 #include "stdint.h"
 
 uint16_t Q_EnvelopeRateTable[0xa0];
-uint16_t Q_PitchTable[0x90];
+uint16_t Q_PitchTable[0x6c];
 uint16_t Q_LfoWaveTable[0xb0];
 uint8_t Q_PanTable[0x40];
 uint8_t Q_VolumeTable[0x100];

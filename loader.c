@@ -34,7 +34,6 @@ int LoadGame(game_t *G)
     int wave_offset[16];
     unsigned int wave_maxlen; // max length of wave roms.
     G->ChipFreq = 0;
-    G->PitchOverflow = -1;
 
     int patchtype_set = 0;
     int patchaddr_set = 0;
@@ -101,8 +100,6 @@ int LoadGame(game_t *G)
                     G->MuteRear = atoi(initest.value);
                 else if(!strcmp(initest.key,"chipfreq"))
                     G->ChipFreq = atoi(initest.value);
-                else if(!strcmp(initest.key,"pitchtab"))
-                    G->PitchOverflow = strtol(initest.value,NULL,0);
 //                else if(!strcmp(initest.key,"gamehack"))
 //                    strcpy(gamehackname,initest.value);
             }
@@ -287,9 +284,6 @@ void InitGame(game_t *Game)
 
     C352_init(&QDrv->Chip,Game->ChipFreq);
     QDrv->Chip.vgm_log = 0;
-
-    QDrv->EnablePitchOverflow = Game->PitchOverflow >= 0 ? 1 : 0;
-    QDrv->PitchOverflow = Game->PitchOverflow&0xffff;
 
     QDrv->Chip.wave = Game->WaveData;
     QDrv->Chip.wave_mask = Game->WaveMask;

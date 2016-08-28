@@ -44,6 +44,18 @@ const char* MCUVerSearch_Quattro[5] =
     "Quattro","Q00","QX0","Q01","Q02"
 };
 
+// Used when searching for pitch table in ROM
+uint8_t Q_PitchTableH8[0x18] = {
+    0x00, 0x88, 0x00, 0x90, 0x00, 0x98, 0x00, 0xA1,
+    0x00, 0xAB, 0x00, 0xB5, 0x00, 0xC0, 0x00, 0xCB,
+    0x00, 0xD7, 0x00, 0xE4, 0x00, 0xF2, 0x01, 0x00,
+};
+uint8_t Q_PitchTableM37702[0x18] = {
+    0x88, 0x00, 0x90, 0x00, 0x98, 0x00, 0xA1, 0x00,
+    0xAB, 0x00, 0xB5, 0x00, 0xC0, 0x00, 0xCB, 0x00,
+    0xD7, 0x00, 0xE4, 0x00, 0xF2, 0x00, 0x00, 0x01
+};
+
 // ************************************************************************* //
 
 uint32_t Q_ReadPos(Q_State *Q, uint32_t d)
@@ -97,10 +109,10 @@ void Q_GetMcuVer(Q_State* Q)
 
     Q->McuType = Q_GetMcuType(Q);
     Q->McuVer = Q_MCUVER_PRE;
+    Q_DEBUG("Detected MCU Type: %s\n",Q_McuNames[Q->McuType]);
 
     Q_GetOffsets(Q);
-
-    Q_DEBUG("Detected MCU Type: %s\n",Q_McuNames[Q->McuType]);
+    Q_MakePitchTable(Q);
 
 #ifdef DISP_MCU_INFO
     static char temp[17];
@@ -206,6 +218,45 @@ void Q_GetOffsets(Q_State *Q)
         break;
     }
     Q->McuDataPosBase = Q->McuHeaderPos&0xff0000;
+}
+
+void Q_MakePitchTable(Q_State *Q)
+{
+    uint8_t *search = Q_PitchTableH8;
+    int little_endian = 0;
+    int i,j;
+    switch(Q->McuType)
+    {
+    case Q_MCUTYPE_SS22:
+        search = Q_PitchTableM37702;
+        little_endian = 1;
+    case Q_MCUTYPE_ND:
+    case Q_MCUTYPE_S12:
+        for(i=Q->McuDrvStartPos;i<Q->McuDrvEndPos;i++)
+        {
+            if(!memcmp(Q->McuData+i,search,0x18))
+            {
+                Q_DEBUG("Pitch table located at 0x%06x\n",i);
+                for(j=0;j<0x100;j++)
+                {
+                    if(little_endian)
+                        Q->PitchTable[j] = Q_ReadWord(Q,i+(j<<1));
+                    else
+                        Q->PitchTable[j] = Q_ReadWordBE(Q,i+(j<<1));
+                }
+                return;
+            }
+        }
+        Q_DEBUG("Pitch table not found... ");
+    default:
+        Q_DEBUG("Using default pitch table\n");
+        // use default pitch table.
+        memcpy(Q->PitchTable,Q_PitchTable,sizeof(Q_PitchTable));
+        // copy overflow values from LFO table
+        for(i=0x6c;i<0x100;i++)
+            Q->PitchTable[i] = ((Q_LfoWaveTable[i-0x6c]&0xff)<<8)|((Q_LfoWaveTable[i-0x6c]>>8)&0xff);
+        break;
+    }
 }
 
 int32_t Q_GetSongPos(Q_State *Q,uint16_t id)

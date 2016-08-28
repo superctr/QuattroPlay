@@ -3,7 +3,6 @@
 */
 #include "quattro.h"
 #include "voice.h"
-#include "wave.h"
 #include "helper.h"
 #include "tables.h"
 

@@ -239,9 +239,6 @@ struct Q_State {
 // ========================================================================= //
 // QuattroPlay added variables
 
-    uint8_t EnablePitchOverflow;
-    uint16_t PitchOverflow;
-
     uint32_t MuteMask;
     uint32_t SoloMask;
 
@@ -298,6 +295,7 @@ struct Q_State {
 
     Q_Channel ChannelMacro[256];
 
+    uint16_t PitchTable[256];
 };
 
 #endif // STRUCT_H_INCLUDED
