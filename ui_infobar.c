@@ -48,8 +48,9 @@ void ui_info_track(int id,int ypos)
     ypos++;
 
     double bpm = 0;
-
-    if( (T->BaseTempo*T->Tempo) > 0 )
+    if(T->TempoReg && T->TempoSource && *T->TempoSource)
+        bpm = (double)115200/ *T->TempoSource;
+    else if( (T->BaseTempo*T->Tempo) > 0 )
         bpm = (double)115200/ (T->BaseTempo*T->Tempo);
 
     //                        .............
