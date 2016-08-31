@@ -12,11 +12,11 @@ LD = g++
 WINDRES = windres
 
 INC = 
-CFLAGS = -Wall
+CFLAGS = -Wall $(shell sdl2-config --cflags)
 RESINC = 
 LIBDIR = 
 LIB = 
-LDFLAGS = -lSDL2main -lSDL2
+LDFLAGS = $(shell sdl2-config --libs)
 
 INC_DEBUG = $(INC)
 CFLAGS_DEBUG = $(CFLAGS) -g -DDEBUG
