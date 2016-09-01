@@ -70,8 +70,6 @@ int main(int argc, char *argv[])
                     Game->BootSong = atoi(initest.value);
                 else if(!strcmp(initest.key,"portafix"))
                     Game->PortaFix = atoi(initest.value);
-                else if(!strcmp(initest.key,"portafix"))
-                    Game->PortaFix = atoi(initest.value);
                 else if(!strcmp(initest.key,"audiodevice"))
                     strcpy(Game->AudioDevice,initest.value);
                 else if(!strcmp(initest.key,"audiobuffer"))
