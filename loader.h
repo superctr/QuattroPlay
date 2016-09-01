@@ -21,6 +21,10 @@ typedef struct {
 
     Q_State *QDrv;
 
+    // audio configuration
+    char AudioDevice[256];
+    int AudioBuffer;
+
     // Global configuration
     int WavLog;
     int VgmLog;

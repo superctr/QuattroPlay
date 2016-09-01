@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
 */
     Game->MuteRear=0;
     Game->BaseGain=32.0;
+    Game->AudioBuffer=1024;
 
     inifile_t initest;
     if(!ini_open("quattroplay.ini",&initest))
@@ -69,6 +70,12 @@ int main(int argc, char *argv[])
                     Game->BootSong = atoi(initest.value);
                 else if(!strcmp(initest.key,"portafix"))
                     Game->PortaFix = atoi(initest.value);
+                else if(!strcmp(initest.key,"portafix"))
+                    Game->PortaFix = atoi(initest.value);
+                else if(!strcmp(initest.key,"audiodevice"))
+                    strcpy(Game->AudioDevice,initest.value);
+                else if(!strcmp(initest.key,"audiobuffer"))
+                    Game->AudioBuffer = atoi(initest.value);
             }
         }
         ini_close(&initest);

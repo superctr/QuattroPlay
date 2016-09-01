@@ -291,6 +291,10 @@ void InitGame(game_t *Game)
 
     static char filename[FILENAME_MAX];
 
+    char* audiodev = NULL;
+    if(strlen(Game->AudioDevice))
+        strcpy(audiodev,Game->AudioDevice);
+
     if(Game->VgmLog)
     {
         strcpy(filename,"qp_log.vgm");
@@ -307,7 +311,7 @@ void InitGame(game_t *Game)
     QDrv->BootSong=Game->BootSong;
     Q_Init(QDrv);
 
-    QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,1024,NULL);
+    QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,Game->AudioBuffer,audiodev);
 
     if(Game->AutoPlay >= 0)
         QDrv->BootSong=2;
