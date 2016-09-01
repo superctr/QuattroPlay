@@ -2,18 +2,25 @@
 
 ## About
 
-This program implements the Quattro sound driver used by Namco games in the mid and late 90s. It can play music and sound effects from these games, with a tracker-style pattern visualization.
+This program implements the Quattro sound driver used by Namco games in the mid and late 90s. It can play music and sound effects from over 75 games, with a tracker-style pattern visualization, channel muting and more.
+
+QuattroPlay is free software licensed under the GPL version 2.
 
 ## Build instructions
 
 Only dependency is SDL2 (sudo apt-get install libsdl2-dev)
+
 The makefile is tested on Linux Mint and Ubuntu.
-For windows, use the codeblocks project file instead.
+
+The program works on macOS, but you might have to do modifications to the makefile. I can't help you there.
+ 
+For Windows, use the codeblocks project file instead.
 
 ## Usage
 
-put configs and ROMs in the configs and roms directory respectively.
-then run it from command line/terminal:
+Currently zipped MAME ROMs are not supported, you will have to store them in a subdirectory under /roms.
+
+Then run it from command line/terminal:
 
 	bin/Debug/QuattroPlay.exe <gamename>
 or
@@ -87,3 +94,4 @@ This might not be complete yet.
 *	Mostly everything works.
 *	Position envelopes (used by a few songs in _Cyber Commando_) are not supported.
 *	No playlist support. It won't happen until the frontend code is rewritten.
+*	The UI performance isn't great on Linux and macOS. This appears to be due to a prolem with SDL's own rendering API.
