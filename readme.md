@@ -44,11 +44,11 @@ By highlighting one of the values in the last group you can mute or solo channel
 	./bin/Debug/QuattroPlay [options] <gamename> [<song ID>]
 
 If Song ID is specified, the song will automatically start. If enabled with
-the -l or -v parameters, the filenames will also contain the game name and
+the -w or -v parameters, the filenames will also contain the game name and
 song ID.
  
 *	`-ini`: Set game config path
-*	`-l`: log to WAV.
+*	`-w`: log to WAV.
 *	`-v`: log to VGM.
  
 ## Key bindings (a mess)
