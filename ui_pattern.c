@@ -202,7 +202,7 @@ void ui_pattern_disp(int TrackNo)
                         if(cmd&0x40)
                             data = temp;
                         else
-                            data = pattern_arg_word(&pos);
+                            data = (dest&0x80) ? pattern_arg_byte(&pos) : pattern_arg_word(&pos);
 
                         if(dest&0x80)
                             data = regs[data&0xff];
