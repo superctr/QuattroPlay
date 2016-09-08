@@ -52,6 +52,9 @@ typedef struct {
 
     uint16_t vol_f;
     uint16_t vol_r;
+
+    uint8_t curr_vol[4];
+
     uint16_t freq;
     uint16_t flags;
 

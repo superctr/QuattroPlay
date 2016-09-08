@@ -87,6 +87,11 @@ void C352_write(C352 *c, uint16_t addr, uint16_t data)
 
                 c->v[i].flags |= C352_FLG_BUSY;
                 c->v[i].flags &= ~(C352_FLG_KEYON|C352_FLG_LOOPHIST);
+
+                c->v[i].curr_vol[0] = 0;//c->v[i].vol_f>>8;
+                c->v[i].curr_vol[1] = 0;//c->v[i].vol_f&0xff;
+                c->v[i].curr_vol[2] = 0;//c->v[i].vol_r>>8;
+                c->v[i].curr_vol[3] = 0;//c->v[i].vol_f&0xff;
             }
             else if(c->v[i].flags & C352_FLG_KEYOFF)
             {
@@ -168,7 +173,6 @@ void C352_fetch_sample(C352 *c, int i)
 
 int16_t C352_update_voice(C352 *c, int i)
 {
-
     C352_Voice *v = &c->v[i];
 
     if((v->flags & C352_FLG_BUSY) == 0)
@@ -190,6 +194,14 @@ int16_t C352_update_voice(C352 *c, int i)
     return temp;
 }
 
+void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
+{
+    // do volume ramping to prevent clicks
+    int16_t vol_delta = c->v[i].curr_vol[ch] - v;
+    if(vol_delta != 0)
+        c->v[i].curr_vol[ch] += (vol_delta>0) ? -1 : 1;
+}
+
 void C352_update(C352 *c)
 {
     int i;
@@ -203,17 +215,22 @@ void C352_update(C352 *c)
 
         if(!(c->mute_mask & 1<<i))
         {
+            C352_update_volume(c,i,0,c->v[i].vol_f>>8);
+            C352_update_volume(c,i,1,c->v[i].vol_f&0xff);
+            C352_update_volume(c,i,2,c->v[i].vol_r>>8);
+            C352_update_volume(c,i,3,c->v[i].vol_r&0xff);
+
             // Left
-            c->out[0] += (c->v[i].flags & C352_FLG_PHASEFL) ? -s * (c->v[i].vol_f>>8)
-                                                            :  s * (c->v[i].vol_f>>8);
-            c->out[2] += (c->v[i].flags & C352_FLG_PHASERL) ? -s * (c->v[i].vol_r>>8)
-                                                            :  s * (c->v[i].vol_r>>8);
+            c->out[0] += (c->v[i].flags & C352_FLG_PHASEFL) ? -s * (c->v[i].curr_vol[0])
+                                                            :  s * (c->v[i].curr_vol[0]);
+            c->out[2] += (c->v[i].flags & C352_FLG_PHASERL) ? -s * (c->v[i].curr_vol[2])
+                                                            :  s * (c->v[i].curr_vol[2]);
 
             // Right
-            c->out[1] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].vol_f&0xff)
-                                                            :  s * (c->v[i].vol_f&0xff);
-            c->out[3] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].vol_r&0xff)
-                                                            :  s * (c->v[i].vol_r&0xff);
+            c->out[1] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[1])
+                                                            :  s * (c->v[i].curr_vol[1]);
+            c->out[3] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[3])
+                                                            :  s * (c->v[i].curr_vol[3]);
         }
     }
 }
