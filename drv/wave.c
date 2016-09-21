@@ -9,11 +9,9 @@
 // source: 0x77c2
 void Q_WaveSet(Q_State* Q,int VoiceNo,Q_Voice* V,uint16_t WaveNo)
 {
-    //printf("write wave no %04x\n",WaveNo);
     V->WaveNo = WaveNo;
 
     V->WavePos = Q->McuDataPosBase | Q_ReadWord(Q,Q->TableOffset[Q_TOFFSET_WAVETABLE]+(2*WaveNo));
-    //printf("V=%02x write wave no %04x at %06x\n",VoiceNo,WaveNo,V->WavePos);
 
     V->WaveTranspose = Q_ReadWord(Q,V->WavePos);
     V->WaveBank  = Q_ReadWord(Q,V->WavePos+0x02);
@@ -25,11 +23,6 @@ void Q_WaveSet(Q_State* Q,int VoiceNo,Q_Voice* V,uint16_t WaveNo)
 // source: 0x780e
 void Q_WaveReset(Q_State* Q,int VoiceNo,Q_Voice* V)
 {
-    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
-    //CV->wave_start = Q_ReadWord(Q,V->WavePos+0x06)+V->SampleOffset;
-    //CV->wave_end   = Q_ReadWord(Q,V->WavePos+0x08);
-    //CV->wave_loop  = Q_ReadWord(Q,V->WavePos+0x0a);
-
     Q_C352_W(Q,VoiceNo,C352_WAVE_START,Q_ReadWord(Q,V->WavePos+0x06)+V->SampleOffset);
     Q_C352_W(Q,VoiceNo,C352_WAVE_END,  Q_ReadWord(Q,V->WavePos+0x08));
     Q_C352_W(Q,VoiceNo,C352_WAVE_LOOP, Q_ReadWord(Q,V->WavePos+0x0a));
@@ -43,7 +36,6 @@ void Q_WaveReset(Q_State* Q,int VoiceNo,Q_Voice* V)
 void Q_WaveLinkUpdate(Q_State* Q,int VoiceNo,Q_Voice *V)
 {
     uint16_t cflags = Q_C352_R(Q,VoiceNo,C352_FLAGS);
-    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
     uint16_t NextFlag;
 
     if(V->WaveLinkFlag == 1)

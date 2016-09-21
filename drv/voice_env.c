@@ -40,7 +40,6 @@ void Q_VoiceEnvRead(Q_State *Q,int VoiceNo,Q_Voice* V)
     switch(d)
     {
     case 0xff:
-        //printf("V=%02x, envelope end\n",VoiceNo);
         Q_VoiceDisable(Q,VoiceNo,V);
         break;
     case 0xfe:

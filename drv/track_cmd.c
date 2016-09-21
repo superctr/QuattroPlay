@@ -18,7 +18,6 @@
 uint8_t arg_byte(Q_State *Q,uint32_t* TrackPos)
 {
     uint8_t r = Q->McuData[*TrackPos];
-    //printf("read arg %02x from %06x\n",r,*TrackPos);
     *TrackPos += 1;
     return r;
 }
@@ -26,7 +25,6 @@ uint8_t arg_byte(Q_State *Q,uint32_t* TrackPos)
 uint16_t arg_word(Q_State *Q,uint32_t* TrackPos)
 {
     uint16_t r = (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0);
-    //printf("read arg %04x from %06x\n",r,*TrackPos);
     *TrackPos += 2;
     return r;
 }
@@ -34,7 +32,6 @@ uint16_t arg_word(Q_State *Q,uint32_t* TrackPos)
 uint32_t arg_pos(Q_State *Q,uint32_t* TrackPos)
 {
     uint32_t r = ((Q->McuData[*TrackPos+2]<<16) | (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0)) - Q->McuPosBase;
-    //printf("read arg %06x from %06x\n",r,*TrackPos);
     *TrackPos += 3;
     return r;
 }
@@ -143,7 +140,6 @@ void WriteChannel(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t C
         }
         mask<<=1;
     }
-    //Q_WriteTrackInfo(Q,TrackNo,dest&0x1f,data);
 }
 
 // write channel or macro preset
@@ -242,8 +238,6 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
     E->Value = data;
     E->Volume = ch->VolumeReg ? &Q->Register[ch->VolumeReg] : &T->GlobalVolume;
     E->Channel = ch->Source;
-
-    //printf("add event %02x on voice %02x, time %04x, mode %02x, val %02x, vol %02x\n",EventPos,ch->VoiceNo,E->Time,E->Mode,E->Value,ch->VolumeReg);
 }
 
 // parse key-on commands
@@ -323,7 +317,6 @@ TRACKCOMMAND(tc_Nop)
 // Command 0x01
 TRACKCOMMAND(tc_Write8)
 {
-    //LOGCMD;
     uint16_t dest = arg_word(Q,TrackPos);
     uint8_t data = arg_byte(Q,TrackPos);
 
@@ -343,7 +336,6 @@ TRACKCOMMAND(tc_Write8)
 // Command 0x02
 TRACKCOMMAND(tc_Write16)
 {
-    //LOGCMD;
     uint16_t dest = arg_word(Q,TrackPos);
     uint16_t data = arg_word(Q,TrackPos);
     if(dest == 0x2400)
@@ -358,27 +350,23 @@ TRACKCOMMAND(tc_Write16)
 // Command 0x03
 TRACKCOMMAND(tc_WriteTrack)
 {
-    //LOGCMD;
     WriteTrack(Q,TrackNo,TrackPos);
 }
 // Command 0x07
 TRACKCOMMAND(tc_WriteTrackVolume)
 {
-    //LOGCMD;
     WriteTrack(Q,TrackNo,TrackPos);
     T->VolumeSource=&T->TrackVolume;
 }
 // Command 0x06
 TRACKCOMMAND(tc_WriteTrackTempo)
 {
-    //LOGCMD;
     WriteTrack(Q,TrackNo,TrackPos);
     T->TempoReg=0;
 }
 // Command 0x2d
 TRACKCOMMAND(tc_WriteTrackTempo2)
 {
-    //LOGCMD;
     WriteTrack(Q,TrackNo,TrackPos);
     T->TempoMulFactor=0;
     T->TempoMode=0;
@@ -387,13 +375,11 @@ TRACKCOMMAND(tc_WriteTrackTempo2)
 // Command 0x04
 TRACKCOMMAND(tc_WriteChannel)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,NULL);
 }
 // Command 0x30
 TRACKCOMMAND(tc_WriteChannelEnvWord)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,1,NULL);
 }
 // ============================================================================
@@ -420,7 +406,6 @@ WRITECALLBACK(cb_WriteChannelPan)
 }
 TRACKCOMMAND(tc_WriteChannelPan)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelPan);
 }
 // Command 0x1a
@@ -430,7 +415,6 @@ WRITECALLBACK(cb_WriteChannelPanReg)
 }
 TRACKCOMMAND(tc_WriteChannelPanReg)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelPanReg);
 }
 // Command 0x29
@@ -440,7 +424,6 @@ WRITECALLBACK(cb_WriteChannelPanEnv)
 }
 TRACKCOMMAND(tc_WriteChannelPanEnv)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelPanEnv);
 }
 // Command 0x2a
@@ -460,7 +443,6 @@ WRITECALLBACK(cb_WriteChannelPosReg)
 }
 TRACKCOMMAND(tc_WriteChannelPosReg)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelPosReg);
 }
 // ============================================================================
@@ -471,13 +453,11 @@ WRITECALLBACK(cb_WriteChannelWave)
 // Command 0x1b
 TRACKCOMMAND(tc_WriteChannelWaveWord)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,1,cb_WriteChannelWave);
 }
 // Command 0x1c, 0x28
 TRACKCOMMAND(tc_WriteChannelWaveByte)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelWave);
 }
 // ============================================================================
@@ -502,28 +482,24 @@ WRITECALLBACK(cb_InitChannel)
 // Command 0x1d
 TRACKCOMMAND(tc_InitChannel)
 {
-    //LOGCMD;
     WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_InitChannel);
 }
 // ============================================================================
 // Command 0x09 - read tempo from register (this will bypass the regular tempo calculation)
 TRACKCOMMAND(tc_WriteTempoReg)
 {
-    //LOGCMD;
     T->TempoReg = arg_byte(Q,TrackPos);
     T->TempoSource = &Q->Register[T->TempoReg];
 }
 // Command 0x0a - read track volume from register
 TRACKCOMMAND(tc_WriteVolumeReg)
 {
-    //LOGCMD;
     T->VolumeSource = &Q->Register[arg_byte(Q,TrackPos)];
     //printf("volumesource = %04x, %04x\n",*T->VolumeSource, T->VolumeSource-Q->Register);
 }
 // Command 0x0b - set accelerando/ritardando
 TRACKCOMMAND(tc_WriteTempoMult)
 {
-    //LOGCMD;
     T->Tempo = arg_byte(Q,TrackPos);
     T->TempoFraction = 0;
 
@@ -534,7 +510,6 @@ TRACKCOMMAND(tc_WriteTempoMult)
 // Command 0x0c - write and enable a tempo sequence
 TRACKCOMMAND(tc_WriteTempoSeq)
 {
-    //LOGCMD;
     uint8_t count = arg_byte(Q,TrackPos);
 
     T->TempoMode = count;
@@ -547,15 +522,16 @@ TRACKCOMMAND(tc_WriteTempoSeq)
 // Command 0x0d - start subtrack with ID read from track
 TRACKCOMMAND(tc_StartTrack)
 {
-    //LOGCMD;
     uint8_t slot = arg_byte(Q,TrackPos);
     uint16_t id = arg_word(Q,TrackPos);
 
     // prevent race condition
     // following code if uncommented will fix the issue detailed in track.c
     // line 77, but is untested...
-    //if(Q->SongRequest[slot]&Q_TRACK_STATUS_BUSY)
-    //    Q_TrackDisable(Q,slot);
+#if 0
+    if(Q->SongRequest[slot]&Q_TRACK_STATUS_BUSY)
+        Q_TrackDisable(Q,slot);
+#endif
 
     Q->SongRequest[slot] = id | (Q_TRACK_STATUS_START | Q_TRACK_STATUS_SUB);
     Q->ParentSong[slot] = TrackNo;
@@ -563,12 +539,8 @@ TRACKCOMMAND(tc_StartTrack)
 // Command 0x0e - starts subtrack with ID read from a register
 TRACKCOMMAND(tc_StartTrackReg)
 {
-    //LOGCMD;
     uint8_t slot = arg_byte(Q,TrackPos);
     uint16_t id = Q->Register[arg_byte(Q,TrackPos)];
-
-    //if(slot == TrackNo)
-    //    return Q_TrackDisable(Q,TrackNo);
 
     Q->SongRequest[slot] = id | (Q_TRACK_STATUS_START | Q_TRACK_STATUS_SUB);
     Q->ParentSong[slot] = TrackNo;
@@ -577,7 +549,6 @@ TRACKCOMMAND(tc_StartTrackReg)
 // Command 0x10 - jump to address
 TRACKCOMMAND(tc_Jump)
 {
-    //LOGCMD;
     *TrackPos = arg_pos(Q,TrackPos);
 
     Q_LoopDetectionJumpCheck(Q,TrackNo);
@@ -585,7 +556,6 @@ TRACKCOMMAND(tc_Jump)
 // Command 0x11 - jump to subroutine
 TRACKCOMMAND(tc_JumpSub)
 {
-    //LOGCMD;
     uint32_t jump = arg_pos(Q,TrackPos);
     T->SubStack[T->SubStackPos] = *TrackPos;
     T->SubStackPos++;
@@ -594,7 +564,6 @@ TRACKCOMMAND(tc_JumpSub)
 // Command 0x12 - repeat section
 TRACKCOMMAND(tc_Repeat)
 {
-    //LOGCMD;
     uint8_t count = arg_byte(Q,TrackPos);
     uint32_t jump = arg_pos(Q,TrackPos);
     int8_t pos = T->RepeatStackPos;
@@ -621,7 +590,6 @@ TRACKCOMMAND(tc_Repeat)
 // Command 0x13 - decrease counter then jump if 0.
 TRACKCOMMAND(tc_Loop)
 {
-    //LOGCMD;
     uint8_t count = arg_byte(Q,TrackPos);
     uint32_t jump = arg_pos(Q,TrackPos);
     int8_t pos = T->LoopStackPos;
@@ -647,7 +615,6 @@ TRACKCOMMAND(tc_Loop)
 // Command 0x14 - returns from subroutine OR stops a track
 TRACKCOMMAND(tc_Return)
 {
-    //LOGCMD;
     int8_t pos = T->SubStackPos;
     if(pos > 0)
     {
@@ -663,7 +630,6 @@ TRACKCOMMAND(tc_Return)
 // Command 0x15 - stop track
 TRACKCOMMAND(tc_Stop)
 {
-    //LOGCMD;
     Q_LoopDetectionCheck(Q,TrackNo,1);
     Q_TrackDisable(Q,TrackNo);
 }
@@ -671,7 +637,6 @@ TRACKCOMMAND(tc_Stop)
 // Command 0x17 - write song message
 TRACKCOMMAND(tc_WriteMessage)
 {
-    //LOGCMD;
     uint8_t *pos = (uint8_t*) Q->SongMessage, data;
     do
     {
@@ -684,16 +649,12 @@ TRACKCOMMAND(tc_WriteMessage)
 // Command 0x18 - write a channel preset
 TRACKCOMMAND(tc_WriteChannelMultiple)
 {
-    //LOGCMD;
-
     Q_Channel *ch = &T->Channel[arg_byte(Q,TrackPos)];
     WriteMultiple(Q,ch,TrackPos);
 }
 // Command 0x19 - write a macro preset
 TRACKCOMMAND(tc_WriteMacroMultiple)
 {
-    //LOGCMD;
-
     Q_Channel *ch = &Q->ChannelMacro[arg_byte(Q,TrackPos)];
     WriteMultiple(Q,ch,TrackPos);
 }
@@ -701,8 +662,6 @@ TRACKCOMMAND(tc_WriteMacroMultiple)
 // Command 0x1e - set/perform arithmetic on register
 TRACKCOMMAND(tc_SetReg)
 {
-    //LOGCMD;
-
     uint16_t dest, source;
     uint8_t mode = arg_byte(Q,TrackPos);
     uint32_t reg;
@@ -762,8 +721,6 @@ TRACKCOMMAND(tc_SetReg)
 // Command 0x1f - Conditional Jump
 TRACKCOMMAND(tc_CJump)
 {
-    //LOGCMD;
-
     uint16_t op1,op2;
     uint8_t mode = arg_byte(Q,TrackPos);
     uint32_t jump1, jump2;
@@ -845,8 +802,6 @@ TRACKCOMMAND(tc_Memory)
 // Command 0x20-0x27
 TRACKCOMMAND(tc_KeyOn)
 {
-    //LOGCMD;
-
     uint8_t EventMode = (Command&6)>>1;
     uint8_t IndirectMode = Command&1;
 

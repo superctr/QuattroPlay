@@ -164,7 +164,6 @@ skip:
         break;
     case Q_MCUTYPE_C76:
     case Q_MCUTYPE_S12:
-    //case Q_MCUTYPE_S23:
         Q->ChipClock = 25401600;
         break;
     }
@@ -206,7 +205,6 @@ void Q_GetOffsets(Q_State *Q)
         break;
     case Q_MCUTYPE_ND:
     case Q_MCUTYPE_S12:
-    //case Q_MCUTYPE_S23:
         Q->McuDrvStartPos=0;
         Q->McuDrvEndPos=0x8000;
         Q->McuPosBase=0;
@@ -277,7 +275,7 @@ int32_t Q_GetSongPos(Q_State *Q,uint16_t id)
     return pos;
 }
 
-// ===
+// ************************************************************************* //
 
 uint8_t Q_ReadTrackInfo(Q_State *Q, int trk, int index)
 {
@@ -289,6 +287,7 @@ uint8_t Q_ReadTrackInfo(Q_State *Q, int trk, int index)
         return Q->Track[trk].RepeatCount[index-0x22];
     return *(uint8_t*)((void*)&Q->Track[trk]+Q_TrackStructMap[index]);
 }
+
 uint8_t Q_ReadChannelInfo(Q_State *Q, int trk, int ch, int index)
 {
     return *(uint8_t*)((void*)&Q->Track[trk].Channel[ch]+Q_ChannelStructMap[index]);
@@ -298,14 +297,17 @@ void Q_WriteTrackInfo(Q_State *Q, int trk, int index, uint8_t data)
 {
     *(uint8_t*)((void*)&Q->Track[trk]+Q_TrackStructMap[index]) = data;
 }
+
 void Q_WriteChannelInfo(Q_State *Q, int trk, int ch, int index, uint8_t data)
 {
     *(uint8_t*)((void*)&Q->Track[trk].Channel[ch]+Q_ChannelStructMap[index]) = data;
 }
+
 void Q_WriteMacroInfo(Q_State *Q, int macro, int index, uint8_t data)
 {
     *(uint8_t*)((void*)&Q->ChannelMacro[macro]+Q_ChannelStructMap[index]) = data;
 }
+
 void Q_UpdateMuteMask(Q_State *Q)
 {
     if(Q->SoloMask)
@@ -315,6 +317,7 @@ void Q_UpdateMuteMask(Q_State *Q)
 }
 
 #ifndef Q_DISABLE_LOOP_DETECTION
+
 void Q_LoopDetectionInit(Q_State *Q)
 {
     Q->LoopCounterFlags = (uint32_t*)malloc(0x80000*sizeof(uint32_t));
@@ -376,7 +379,6 @@ void Q_LoopDetectionJumpCheck(Q_State *Q,int TrackNo)
 
     uint16_t trackid = Q->SongRequest[TrackNo]&0x7ff;
     uint16_t trackid2;
-    //uint32_t loopid = Q->TrackLoopId[trackid];
 
     if(Q->TrackLoopCount[trackid] > 100)
         return;

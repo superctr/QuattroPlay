@@ -101,7 +101,5 @@ void Q_VoicePitchEnvSetMod(Q_State *Q,int VoiceNo,Q_Voice *V)
     uint8_t depth = V->PitchEnvDepth;
     int16_t val = (V->PitchEnvValue-0x6400)>>1; // 100<<8
     int32_t mod = (val*depth)>>8;
-
-    //printf("V=%02x pitch env %02x %04x %08x\n",VoiceNo,depth,(uint16_t)val,(uint32_t)mod);
     V->PitchEnvMod = mod&0xffff;
 }

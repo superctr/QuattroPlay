@@ -38,8 +38,6 @@ void Q_VoicePanConvert(Q_State *Q,int8_t pan,uint16_t *VolumeF,uint16_t *VolumeR
         RL=panL;
     }
 
-    //printf("Pan=%4d Offset=%02x,  L=%02x R=%02x,  FL=%02x FR=%02x RL=%02x RR=%02x\n",pan,offset,panL,panR,FL,FR,RL,RR);
-
     *VolumeF = (FL<<8)|(FR&0xff);
     *VolumeR = (RL<<8)|(RR&0xff);
 }
@@ -164,22 +162,6 @@ void Q_VoicePanSet(Q_State *Q,int VoiceNo,Q_Voice* V)
             V->Channel->PanMode = V->PanMode2 = V->PanMode;
 
             V->PanEnvDelay = 1;
-
-            /*
-            // don't reset on new note unless set
-            if(V->PanMode == Q_PANMODE_ENV_SET || V->PanMode == Q_PANMODE_POSENV_SET || V->PanUpdateFlag != V->Pan)
-            {
-                if(V->PanMode == Q_PANMODE_ENV_SET)
-                    V->PanMode = Q_PANMODE_ENV;
-                else if(V->PanMode == Q_PANMODE_POSENV_SET)
-                    V->PanMode = Q_PANMODE_POSENV;
-                V->Channel->PanMode = V->PanMode2 = V->PanMode;
-
-                V->PanEnvDelay = 1;
-            }
-            else
-                break;
-            */
         }
         else
             V->PanEnvDelay = d;
@@ -311,8 +293,6 @@ void Q_VoicePanEnvUpdate(Q_State* Q,int VoiceNo,Q_Voice* V)
         if(V->PanState == Q_PAN_SET)
             return;
     }
-
-    //printf("V=%02x, pan env t:%04x v:%04x s:%04x\n",VoiceNo,V->PanEnvTarget,V->PanEnvValue,(uint16_t)(V->PanEnvTarget-V->PanEnvValue));
     return Q_VoicePanSetVolume(Q,VoiceNo,V,(V->PanEnvTarget-V->PanEnvValue)>>8);
 }
 
@@ -367,26 +347,28 @@ void Q_VoicePanEnvRead(Q_State* Q,int VoiceNo,Q_Voice* V)
 
             // machbrkr song 23d has a weird pan envelope ('left' slide with positive delta)
             // this happens on the original sound driver but also doesn't (see Q_VoicePanSet)
-            // Uncommenting below code 'fixes' the pan envelope, but may break other songs.
+            // Uncommenting below code 'fixes' the pan envelope, but will break other songs.
             if(d&0x80)
             {
                 // left slide
                 V->PanEnvDelta = Q_EnvelopeRateTable[-d &0xff];
                 V->PanState = Q_PAN_ENV_LEFT;
-
-                //printf("%02x = L %04x\n", VoiceNo, ~V->PanEnvValue & 0xffff);
-                //if(~V->PanEnvValue > 0x8000)
-                //    V->PanEnvValue = V->PanEnvTarget;
+#if 0
+                printf("%02x = L %04x\n", VoiceNo, ~V->PanEnvValue & 0xffff);
+                if(~V->PanEnvValue > 0x8000)
+                    V->PanEnvValue = V->PanEnvTarget;
+#endif
             }
             else
             {
                 // right slide
                 V->PanEnvDelta = Q_EnvelopeRateTable[d];
                 V->PanState = Q_PAN_ENV_RIGHT;
-
-                //printf("%02x = R %04x\n", VoiceNo, V->PanEnvValue & 0xffff);
-                //if(V->PanEnvValue > 0x8000)
-                //    V->PanEnvValue = V->PanEnvTarget;
+#if 0
+                printf("%02x = R %04x\n", VoiceNo, V->PanEnvValue & 0xffff);
+                if(V->PanEnvValue > 0x8000)
+                    V->PanEnvValue = V->PanEnvTarget;
+#endif
             }
             return;
         }

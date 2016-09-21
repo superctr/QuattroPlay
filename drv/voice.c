@@ -10,8 +10,6 @@
 // source: 0x4dd6 (call 0x14 at 0x4e78 has a similar function)
 void Q_VoiceSetChannel(Q_State *Q,int VoiceNo,int TrackNo,int ChannelNo)
 {
-    //printf("Trk %02x.%02x, Allocate voice %02x\n",TrackNo,ChannelNo,VoiceNo);
-
     Q_Channel* new_ch = &Q->Track[TrackNo].Channel[ChannelNo];
     Q_Channel* old_ch = Q->ActiveChannel[VoiceNo];
 
@@ -67,15 +65,12 @@ void Q_VoiceSetPriority(Q_State *Q,int VoiceNo,int TrackNo,int ChannelNo,int Pri
     Q->ChannelPriority[VoiceNo][TrackNo].priority = Priority;
 }
 
-
 // Call 0x24 - process an event
 // source: 0x6340
 void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
 {
     Q_Channel *C = E->Channel;
     uint8_t mode;
-    //Q_Voice *V = &Q->Voice[VoiceNo];
-    //printf("V=%02x event t:%04x, m:%02x d:%02x v:%04x \n",VoiceNo,E->Time,E->Mode,E->Value,*E->Volume);
 
     V->Channel = E->Channel;
     V->TrackVol = E->Volume;
@@ -168,8 +163,6 @@ void Q_VoiceProcessEvent(Q_State *Q,int VoiceNo,Q_Voice *V,Q_VoiceEvent *E)
 // source: 0x649c
 void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
 {
-    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
-    //CV->flags = 0;
     Q_C352_W(Q,VoiceNo,C352_FLAGS,0);
 
     Q_VoicePitchEnvSet(Q,VoiceNo,V);
@@ -182,8 +175,6 @@ void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
     Q_VoicePanSet(Q,VoiceNo,V);
     Q_VoiceLfoSet(Q,VoiceNo,V);
 
-    //CV->wave_bank = V->WaveBank;
-    //CV->flags = V->WaveFlags |= C352_FLG_KEYON;
     Q_C352_W(Q,VoiceNo,C352_WAVE_BANK,V->WaveBank);
     Q_C352_W(Q,VoiceNo,C352_FLAGS,    V->WaveFlags|C352_FLG_KEYON);
 
@@ -193,7 +184,6 @@ void Q_VoiceKeyOn(Q_State *Q,int VoiceNo,Q_Voice* V)
 // source: 0x6aae
 void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
 {
-    //C352_Voice *CV = &Q->Chip.v[VoiceNo];
     uint16_t flags = Q_C352_R(Q,VoiceNo,C352_FLAGS);
     uint16_t pitch;
     uint16_t freq1, freq2, vol;
@@ -205,7 +195,6 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
     }
     else if(~flags & C352_FLG_KEYON)
     {
-        //printf("V=%02x sample terminated\n",VoiceNo);
         V->EnvState = Q_ENV_DISABLE;
         V->Enabled=0;
         return;
@@ -237,7 +226,6 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
     freq1 += ((uint16_t)(freq2-freq1)*(pitch&0xff))>>8;
 
     Q_C352_W(Q,VoiceNo,C352_FREQUENCY,freq1);
-    //CV->freq = freq1;
     V->FreqReg = freq1;
 
     vol = V->Volume + (V->EnvValue>>8) + (*V->TrackVol);

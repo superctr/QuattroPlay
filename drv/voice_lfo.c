@@ -91,7 +91,6 @@ void Q_VoiceLfoUpdate(Q_State *Q,int VoiceNo,Q_Voice *V)
         wavepos = ((V->LfoWaveform&0x0f)<<4)|((V->LfoPhase&0x1e0)>>5);
         depth = (Q_LfoWaveTable[wavepos]&0xff00)>>8; // base
         delta = ((Q_LfoWaveTable[wavepos]&0x007f) * (V->LfoPhase&0x1f))>>4;
-        //delta = V->LfoPhase>>3;
         if(Q_LfoWaveTable[wavepos]&0x80)
             depth -= delta;
         else
