@@ -10,11 +10,11 @@ QuattroPlay is free software licensed under the GPL version 2.
 
 Only dependency is SDL2 (sudo apt-get install libsdl2-dev)
 
-The makefile is tested on Linux Mint and Ubuntu.
+The makefile is tested on Linux Mint, Ubuntu and Windows (using MSYS).
 
 The program works on macOS, but you might have to do modifications to the makefile. I can't help you there.
  
-For Windows, use the codeblocks project file instead.
+For Windows, you can also use the codeblocks project file.
 
 ## Usage
 
@@ -56,6 +56,7 @@ song ID.
 This might not be complete yet.
  
 ###	Global
+
 *	__Q__: exit
 *	__P__: pause
 *	__U__: update tick (be sure to pause first)
@@ -72,9 +73,13 @@ This might not be complete yet.
 *	__Arrow keys__: move selection
 *	__0__-__9__: Preset action (song triggers, etc)
 	*	These are configured in the game config files, check the `/ini` directory.
+	
 ###	if Track selected
+
 *	__L__: display mode
+
 ### if Track or Register selected
+
 *	__C__: clear register/track
 *	__S__: stop track
 *	__I__: increase value
@@ -85,13 +90,34 @@ This might not be complete yet.
 	*	__Shift__: Hold down to multiply increment with `0x100`
 	*	__Enter__: play song/change register
 	*	__Esc__: exit edit mode
+
 ### if Voice selected
+
 *	__M__: Mute voice
 *	__S__: Solo voice
 *	__R__: Reset mute/solo for all voices. Same as __F6__.
 
 ## Notes
+
 *	Mostly everything works.
 *	Position envelopes (used by a few songs in _Cyber Commando_) are not supported.
 *	No playlist support. It won't happen until the frontend code is rewritten.
 *	The UI performance isn't great on Linux and macOS. This appears to be due to a prolem with SDL's own rendering API.
+
+## Copyright
+
+&copy; 2016 Ian Karlsson
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
