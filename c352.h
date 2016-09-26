@@ -44,16 +44,18 @@ enum {
 
 typedef struct {
 
+    uint16_t latch_flags;
+
     uint32_t pos;
-	uint32_t counter;
+	uint16_t counter;
 
 	int16_t sample;
     int16_t last_sample;
 
+    uint8_t curr_vol[4];
+
     uint16_t vol_f;
     uint16_t vol_r;
-
-    uint8_t curr_vol[4];
 
     uint16_t freq;
     uint16_t flags;
@@ -80,16 +82,12 @@ typedef struct {
 
     uint16_t random;
 
-    int16_t mulaw[256];
-
     // special
     uint32_t mute_mask;
     uint8_t mute_rear;
     int vgm_log;
 
 } C352;
-
-
 
 int C352_init(C352 *c,uint32_t clk);
 

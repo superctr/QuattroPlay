@@ -13,25 +13,6 @@
 #include "c352.h"
 #include "vgm.h"
 
-void C352_generate_mulaw(C352 *c)
-{
-    int i;
-    double x_max = 32752.0;
-    double y_max = 127.0;
-    double u = 10.0;
-
-    // generate mulaw table for mulaw format samples
-    for (i = 0; i < 256; i++)
-    {
-        double y = (double) (i & 0x7f);
-        double x = (exp (y / y_max * log (1.0 + u)) - 1.0) * x_max / u;
-
-        if (i & 0x80)
-            x = -x;
-        c->mulaw[i] = (short)x;
-    }
-}
-
 int C352_init(C352 *c, uint32_t clk)
 {
     c->mute_mask=0;
@@ -43,9 +24,6 @@ int C352_init(C352 *c, uint32_t clk)
     c->control1 = 0;
     c->control2 = 0;
     c->random = 0x1234;
-
-    C352_generate_mulaw(c);
-
     return c->rate;
 }
 
@@ -81,21 +59,20 @@ void C352_write(C352 *c, uint16_t addr, uint16_t data)
             {
                 c->v[i].pos = (c->v[i].wave_bank<<16) | c->v[i].wave_start;
 
-				c->v[i].sample = 0;
-                c->v[i].last_sample = 0;
-				c->v[i].counter = 0x10000;
+				c->v[i].counter = 0xffff;
 
                 c->v[i].flags |= C352_FLG_BUSY;
                 c->v[i].flags &= ~(C352_FLG_KEYON|C352_FLG_LOOPHIST);
 
-                c->v[i].curr_vol[0] = 0;//c->v[i].vol_f>>8;
-                c->v[i].curr_vol[1] = 0;//c->v[i].vol_f&0xff;
-                c->v[i].curr_vol[2] = 0;//c->v[i].vol_r>>8;
-                c->v[i].curr_vol[3] = 0;//c->v[i].vol_f&0xff;
+                c->v[i].latch_flags = c->v[i].flags;
+
+                c->v[i].curr_vol[0] = c->v[i].curr_vol[1] = 0;
+                c->v[i].curr_vol[2] = c->v[i].curr_vol[3] = 0;
             }
             else if(c->v[i].flags & C352_FLG_KEYOFF)
             {
                 c->v[i].flags &= ~(C352_FLG_BUSY|C352_FLG_KEYOFF);
+                c->v[i].counter = 0xffff;
             }
         }
     }
@@ -115,22 +92,33 @@ void C352_fetch_sample(C352 *c, int i)
     C352_Voice *v = &c->v[i];
 	v->last_sample = v->sample;
 
-    if(v->flags & C352_FLG_NOISE)
+    if(~v->flags & C352_FLG_BUSY)
+    {
+        v->sample = 0;
+    }
+    else if(v->flags & C352_FLG_NOISE)
     {
         c->random = (c->random>>1) ^ ((-(c->random&1)) & 0xfff6);
-        // don't know what is most accurate here...
-        v->sample = c->random; // (c->random&4) ? 0xc000 : 0x3fff;
+        v->sample = c->random;
 	}
 	else
 	{
-		int8_t s;
+		int8_t s, s2;
 
 		s = (int8_t)c->wave[v->pos&c->wave_mask];
 
 		if(v->flags & C352_FLG_MULAW)
-			v->sample = c->mulaw[(uint8_t)s];
+        {
+            // 7-bit sample value is squared to produce 15-bit output
+            s2 = s&0x7f;
+			v->sample = (s2*s2)<<1;
+			if(s&0x80)
+                v->sample = -v->sample;
+        }
 		else
+        {
 			v->sample = s<<8;
+        }
 
 		uint16_t pos = v->pos&0xffff;
 
@@ -161,7 +149,6 @@ void C352_fetch_sample(C352 *c, int i)
             {
                 v->flags |= C352_FLG_KEYOFF;
                 v->flags &= ~C352_FLG_BUSY;
-				v->sample=0;
             }
         }
 		else
@@ -171,28 +158,6 @@ void C352_fetch_sample(C352 *c, int i)
 	}
 }
 
-int16_t C352_update_voice(C352 *c, int i)
-{
-    C352_Voice *v = &c->v[i];
-
-    if((v->flags & C352_FLG_BUSY) == 0)
-        return 0;
-
-	v->counter += v->freq;
-
-	if(v->counter > 0x10000)
-	{
-		v->counter &= 0xffff;
-		C352_fetch_sample(c,i);
-	}
-
-	int32_t temp = v->sample;
-	// Interpolate samples
-    if((v->flags & C352_FLG_FILTER) == 0)
-         temp = v->last_sample + (v->counter*(v->sample-v->last_sample)>>16);
-
-    return temp;
-}
 
 void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
 {
@@ -202,10 +167,38 @@ void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
         c->v[i].curr_vol[ch] += (vol_delta>0) ? -1 : 1;
 }
 
+int16_t C352_update_voice(C352 *c, int i)
+{
+    C352_Voice *v = &c->v[i];
+
+    uint32_t next_counter = v->counter + v->freq;
+
+	if(next_counter & 0x10000)
+        C352_fetch_sample(c,i);
+
+	if((next_counter^v->counter) & 0x18000)
+    {
+        C352_update_volume(c,i,0,c->v[i].vol_f>>8);
+        C352_update_volume(c,i,1,c->v[i].vol_f&0xff);
+        C352_update_volume(c,i,2,c->v[i].vol_r>>8);
+        C352_update_volume(c,i,3,c->v[i].vol_r&0xff);
+    }
+
+	v->counter = next_counter&0xffff;
+
+	int32_t temp = v->sample;
+	// Interpolate samples
+    if((v->latch_flags & C352_FLG_FILTER) == 0)
+         temp = v->last_sample + (v->counter*(v->sample-v->last_sample)>>16);
+
+    return temp;
+}
+
 void C352_update(C352 *c)
 {
     int i;
     int16_t s;
+    uint16_t flags;
 
     c->out[0]=c->out[1]=c->out[2]=c->out[3]=0;
 
@@ -215,22 +208,19 @@ void C352_update(C352 *c)
 
         if(!(c->mute_mask & 1<<i))
         {
-            C352_update_volume(c,i,0,c->v[i].vol_f>>8);
-            C352_update_volume(c,i,1,c->v[i].vol_f&0xff);
-            C352_update_volume(c,i,2,c->v[i].vol_r>>8);
-            C352_update_volume(c,i,3,c->v[i].vol_r&0xff);
+            flags = c->v[i].latch_flags;
 
             // Left
-            c->out[0] += (c->v[i].flags & C352_FLG_PHASEFL) ? -s * (c->v[i].curr_vol[0])
-                                                            :  s * (c->v[i].curr_vol[0]);
-            c->out[2] += (c->v[i].flags & C352_FLG_PHASERL) ? -s * (c->v[i].curr_vol[2])
-                                                            :  s * (c->v[i].curr_vol[2]);
+            c->out[0] += (flags & C352_FLG_PHASEFL) ? -s * (c->v[i].curr_vol[0])
+                                                    :  s * (c->v[i].curr_vol[0]);
+            c->out[2] += (flags & C352_FLG_PHASERL) ? -s * (c->v[i].curr_vol[2])
+                                                    :  s * (c->v[i].curr_vol[2]);
 
             // Right
-            c->out[1] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[1])
-                                                            :  s * (c->v[i].curr_vol[1]);
-            c->out[3] += (c->v[i].flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[3])
-                                                            :  s * (c->v[i].curr_vol[3]);
+            c->out[1] += (flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[1])
+                                                    :  s * (c->v[i].curr_vol[1]);
+            c->out[3] += (flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[3])
+                                                    :  s * (c->v[i].curr_vol[3]);
         }
     }
 }
