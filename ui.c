@@ -191,6 +191,7 @@ void ui_main()
 
     window = SDL_CreateWindow(windowtitle,SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,0);
     rend = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+    dispbuf = SDL_CreateTexture(rend,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y);
     #ifdef DEBUG
     SDL_RendererInfo info;
     SDL_GetRendererInfo(rend,&info);
@@ -200,6 +201,10 @@ void ui_main()
     SDL_SetRenderDrawColor(rend,0,0,0,255);
     SDL_RenderClear(rend);
     SDL_RenderPresent(rend);
+
+    SDL_SetRenderTarget(rend,dispbuf);
+    SDL_SetRenderDrawColor(rend,0,0,0,255);
+    SDL_RenderClear(rend);
 
     SDL_SetColorKey(surface,SDL_TRUE,0);
     font = SDL_CreateTextureFromSurface(rend,surface);
@@ -251,6 +256,7 @@ void ui_main()
 
 
         RP_START(rp1);
+        SDL_SetRenderTarget(rend,dispbuf);
         ui_drawscreen();
         RP_END(rp1,rp1r);
 
@@ -272,6 +278,9 @@ void ui_main()
         RP_END(rp2,rp2r);
 
         RP_START(rp3)
+        SDL_SetRenderTarget(rend,NULL);
+        SDL_RenderClear(rend);
+        SDL_RenderCopy(rend,dispbuf,NULL,NULL);
         SDL_RenderPresent(rend);
         RP_END(rp3,rp3r);
         //ui_drawscreen();

@@ -26,6 +26,7 @@
     SDL_Window *window;
     SDL_Renderer *rend;
     SDL_Texture *font;
+    SDL_Texture *dispbuf;
 
 typedef enum {
     COLOR_BLACK = 0,
