@@ -71,13 +71,13 @@ void ui_drawreg(int val,int y,int x)
     }
 
     set_color(y,x,1,4,bg,c);
-    snprintf(&text[y][x],5,"%04x",v);
+    SCRN(y,x,5,"%04x",v);
 }
 
 void ui_drawregkey(int y)
 {
     set_color(y,4,1,40,COLOR_BLACK,COLOR_L_GREY);
-    snprintf(&text[y][4],40,"%s",regmatrix_key);
+    SCRN(y,4,40,"%s",regmatrix_key);
 }
 
 void ui_drawregrow(int y,int val)
@@ -91,7 +91,7 @@ void ui_drawregrow(int y,int val)
     else if(val>=0x20)
         dispval = val-0x20;
 
-    snprintf(&text[y][1],40,"%02x",dispval);
+    SCRN(y,1,40,"%02x",dispval);
 
     for(i=0;i<8;i++)
     {
@@ -109,20 +109,20 @@ void ui_drawscreen()
 
     set_color(0,0,FROWS,FCOLUMNS,COLOR_BLACK,COLOR_L_GREY);
 
-    memset(text,0,sizeof(text));
+    memset(screen.text,0,sizeof(screen.text));
 
     if(!debug_stat)
     {
-        i = snprintf(&text[0][14],60,"Volume: %4.2f [%s] %s",vol,
+        i = SCRN(0,14,60,"Volume: %4.2f [%s] %s",vol,
                  Audio->state.MuteRear ? "Stereo" : " Quad ",
                  Audio->state.FastForward ? "Fast Forward" : "");
         if(Audio->state.FileLogging)
-            snprintf(&text[0][15+i],20,"Logging %8d ...",Audio->state.LogSamples);
+            SCRN(0,15+i,20,"Logging %8d ...",Audio->state.LogSamples);
     }
 
-    snprintf(&text[1][1],FCOLUMNS-2,"%s",QDrv->SongMessage);
+    SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
 
-    snprintf(&text[0][FCOLUMNS-4],5,"%04x",QDrv->FrameCnt);
+    SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
 
     int ypos = 5;
     ui_drawregkey(ypos++);
@@ -137,49 +137,49 @@ void ui_drawscreen()
 
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
-    //snprintf(&text[47][1],40,"");
+    //SCRN(47,1,40,"");
 
 
     set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
     if(curr_val < 0x120)
     {
-        x = snprintf(&text[49][1],48,"ENTER: change value, I/D: in-/decrement");
+        x = SCRN(49,1,48,"ENTER: change value, I/D: in-/decrement");
     }
     if(curr_val < 0x20)
     {
         i=curr_val;
         ui_info_track(i,5);
-        x += snprintf(&text[49][1+x],48,", R: Restart, S: Stop, F: Fade");
-        j += snprintf(&text[3][1],40,"Track %02x = %04x",i,QDrv->SongRequest[i]&0x7ff);
+        x += SCRN(49,1+x,48,", R: Restart, S: Stop, F: Fade");
+        j += SCRN(3,1,40,"Track %02x = %04x",i,QDrv->SongRequest[i]&0x7ff);
 
-        y += snprintf(&text[3][44+y],40,"%s %2.0f:%02.0f",
+        y += SCRN(3,44+y,40,"%s %2.0f:%02.0f",
                  QDrv->SongRequest[i]&0x8000 ? "Playing" : "Stopped",
                  floor(QDrv->SongTimer[i]/60),floor(fmod(QDrv->SongTimer[i],60)));
 
         int8_t loopcount = Q_LoopDetectionGetCount(QDrv,curr_val);
         if(loopcount > 0)
-            y += snprintf(&text[3][44+y],15,", Loop%3d",loopcount);
+            y += SCRN(3,44+y,15,", Loop%3d",loopcount);
 
     }
     else if(curr_val < 0x120)
     {
-        j += snprintf(&text[3][1],40,"Register %02x = %04x",curr_val-0x20,QDrv->Register[curr_val-0x20]);
+        j += SCRN(3,1,40,"Register %02x = %04x",curr_val-0x20,QDrv->Register[curr_val-0x20]);
     }
     else if(curr_val < 0x140)
     {
         i = curr_val-0x120;
 
-        snprintf(&text[49][1],48,"ENTER: display mode, M: Mute, S: Solo, R: Reset");
+        SCRN(49,1,48,"ENTER: display mode, M: Mute, S: Solo, R: Reset");
         ui_info_voice(i,5);
-        snprintf(&text[3][1],40,"Voice %02x",i);
+        SCRN(3,1,40,"Voice %02x",i);
 
         if(QDrv->Voice[i].TrackNo)
-            snprintf(&text[3][44],40,"Track %02x, Channel %02x",QDrv->Voice[i].TrackNo-1,QDrv->Voice[i].ChannelNo);
+            SCRN(3,44,40,"Track %02x, Channel %02x",QDrv->Voice[i].TrackNo-1,QDrv->Voice[i].ChannelNo);
     }
 
     if(inpstate == STATE_SETVALUE)
     {
-        snprintf(&text[3][4+j],16," (Edit: %04x)",curr_val_edit);
+        SCRN(3,4+j,16," (Edit: %04x)",curr_val_edit);
     }
 }
 

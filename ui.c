@@ -84,41 +84,53 @@ void redraw_text()
     {
         for(x=0;x<FCOLUMNS;x++)
         {
-            yshift=0;
-            bgc = bgcolor[y][x];
-            if(bgc & CFLAG_YSHIFT_25)
-                yshift = yshift_25;
-            else if(bgc & CFLAG_YSHIFT_50)
-                yshift = yshift_50;
-            else if(bgc & CFLAG_YSHIFT_75)
-                yshift = yshift_75;
+            c=0;
+            if(y)
+                c = (screen.bgcolor[y-1][x] & CFLAG_YSHIFT) != (last_screen.bgcolor[y-1][x] & CFLAG_YSHIFT);
 
-            if(yshift)
-                scrp.y += yshift;
-
-            // Draw background
-            bc = Colors[bgc&0x7f];
-
-            SDL_SetRenderDrawColor(rend,bc.red,bc.green,bc.blue,255);
-            SDL_RenderFillRect(rend,&scrp);
-            rect_count++;
-
-            // Draw text
-            c = (uint8_t)text[y][x];
-            if(c != 0x20 && c != 0x00)
+            if(c || screen.bgcolor[y][x] != last_screen.bgcolor[y][x] ||
+               screen.textcolor[y][x] != last_screen.textcolor[y][x] ||
+               screen.text[y][x] != last_screen.text[y][x])
             {
-                tc = Colors[textcolor[y][x]&0x7f];
-                //SDL_SetRenderDrawColor(rend,0,0x10,0,255);
-                SDL_SetTextureColorMod(font,tc.red,tc.green,tc.blue);
-                fntp.x = (c%32)*FSIZE_X;
-                fntp.y = (c/32)*FSIZE_Y;
-                SDL_RenderCopy(rend,font,&fntp,&scrp);
-                draw_count++;
+                yshift=0;
+                bgc = screen.bgcolor[y][x];
+                if(bgc & CFLAG_YSHIFT_25)
+                    yshift = yshift_25;
+                else if(bgc & CFLAG_YSHIFT_50)
+                    yshift = yshift_50;
+                else if(bgc & CFLAG_YSHIFT_75)
+                    yshift = yshift_75;
+
+                if(yshift)
+                    scrp.y += yshift;
+
+                // Draw background
+                bc = Colors[bgc&0x7f];
+
+                SDL_SetRenderDrawColor(rend,bc.red,bc.green,bc.blue,255);
+                SDL_RenderFillRect(rend,&scrp);
+                rect_count++;
+
+                // Draw text
+                c = (uint8_t)screen.text[y][x];
+                if(c != 0x20 && c != 0x00)
+                {
+                    tc = Colors[screen.textcolor[y][x]&0x7f];
+                    //SDL_SetRenderDrawColor(rend,0,0x10,0,255);
+                    SDL_SetTextureColorMod(font,tc.red,tc.green,tc.blue);
+                    fntp.x = (c%32)*FSIZE_X;
+                    fntp.y = (c/32)*FSIZE_Y;
+                    SDL_RenderCopy(rend,font,&fntp,&scrp);
+                    draw_count++;
+                }
+
+                if(yshift)
+                    scrp.y -= yshift;
+
+                last_screen.text[y][x] = screen.text[y][x];
+                last_screen.bgcolor[y][x] = screen.bgcolor[y][x];
+                last_screen.textcolor[y][x] = screen.textcolor[y][x];
             }
-
-            if(yshift)
-                scrp.y -= yshift;
-
             scrp.x += FSIZE_X;
         }
         scrp.x = 0;
@@ -136,8 +148,8 @@ void set_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg)
     {
         for(j=x;j<l;j++)
         {
-            textcolor[i][j]=fg;
-            bgcolor[i][j]=bg;
+            screen.textcolor[i][j]=fg;
+            screen.bgcolor[i][j]=bg;
         }
     }
 }
@@ -247,14 +259,14 @@ void ui_main()
         if(debug_stat)
         {
             #ifdef RENDER_PROFILING
-                sprintf(&text[0][0],"FPS = %6.2f, Draws: %6d, Frame Speed: %6.2f ms, %6.2f ms, %6.2f ms",fps_cnt,draw_count,rp1r,rp2r,rp3r);
+                SCR(0,0,"FPS = %6.2f, Draws: %6d, Frame Speed: %6.2f ms, %6.2f ms, %6.2f ms",fps_cnt,draw_count,rp1r,rp2r,rp3r);
             #else
-                sprintf(&text[0][0],"FPS = %6.2f, Draws: %6d",fps_cnt,draw_count);
+                sprintf(&screen.text[0][0],"FPS = %6.2f, Draws: %6d",fps_cnt,draw_count);
             #endif // RENDER_PROFILING
         }
         else
         {
-            sprintf(&text[0][0],"FPS = %6.2f",fps_cnt);
+            SCR(0,0,"FPS = %6.2f",fps_cnt);
         }
         redraw_text();
         RP_END(rp2,rp2r);
@@ -263,7 +275,7 @@ void ui_main()
         SDL_RenderPresent(rend);
         RP_END(rp3,rp3r);
         //ui_drawscreen();
-        //sprintf(&text[0][0],"ID = %04x",count);
+        //sprintf(&screen.text[0][0],"ID = %04x",count);
         //update_text();
         SDL_Delay(1);
     }

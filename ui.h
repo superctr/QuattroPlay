@@ -20,6 +20,9 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_render.h"
 
+#define SCR(_y_,_x_,str,...) sprintf(&screen.text[_y_][_x_],str , ##__VA_ARGS__)
+#define SCRN(_y_,_x_,count,str,...) snprintf(&screen.text[_y_][_x_],count,str , ##__VA_ARGS__)
+
     SDL_Window *window;
     SDL_Renderer *rend;
     SDL_Texture *font;
@@ -43,6 +46,7 @@ typedef enum {
     CFLAG_YSHIFT_25 = 0x100,
     CFLAG_YSHIFT_50 = 0x200,
     CFLAG_YSHIFT_75 = 0x400,
+    CFLAG_YSHIFT    = 0x700
 
 } colorsel_t;
 
@@ -52,6 +56,13 @@ typedef struct {
     uint8_t blue;
 } color_t;
 
+typedef struct {
+    char text[FROWS][FCOLUMNS*2];
+    colorsel_t textcolor[FROWS][FCOLUMNS*2];
+    colorsel_t bgcolor[FROWS][FCOLUMNS*2];
+    uint8_t dirty[FROWS][FCOLUMNS*2];
+} screen_t;
+
     //int bootsong;
     //QP_PlaylistState *pl;
 
@@ -59,10 +70,8 @@ typedef struct {
     //float gain;
     //float gamegain;
     float vol;
-
-    char text[FROWS][FCOLUMNS*2];
-    colorsel_t textcolor[FROWS][FCOLUMNS*2];
-    colorsel_t bgcolor[FROWS][FCOLUMNS*2];
+    screen_t screen;
+    screen_t last_screen;
 
     int trackpattern[32][8];
     int trackpattern_length;
