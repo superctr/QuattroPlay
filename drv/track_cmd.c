@@ -209,8 +209,15 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
         else
             ch->Source = ch;
 
-        // ptblank song 0xaa
-        EventMode = Q_EVENTMODE_NOTE;
+        // ptblank song 0xaa assumes the preset map to force the event
+        // parameter mode to 'note'.
+        // This song still exists in ptblank2 but sounds broken with the
+        // System11/12 sound drivers.
+        if(Q->McuVer < Q_MCUVER_Q00)
+        {
+            // ptblank song 0xaa
+            EventMode = Q_EVENTMODE_NOTE;
+        }
     }
 
     // do the rest here...
