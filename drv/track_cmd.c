@@ -150,7 +150,7 @@ void WriteMultiple(Q_State* Q,Q_Channel* ch,uint32_t* TrackPos)
     int regno = 2;
 
     if(mask & 0x8000)
-        ch->WaveNo = arg_word(Q,TrackPos);
+        ch->WaveNo = arg_word(Q,TrackPos)|0x8000;
 
     mask<<=1;
     while(mask)
