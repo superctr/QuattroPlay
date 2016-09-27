@@ -303,9 +303,9 @@ void Q_WriteChannelInfo(Q_State *Q, int trk, int ch, int index, uint8_t data)
     *(uint8_t*)((void*)&Q->Track[trk].Channel[ch]+Q_ChannelStructMap[index]) = data;
 }
 
-void Q_WriteMacroInfo(Q_State *Q, int macro, int index, uint8_t data)
+void Q_WritePresetInfo(Q_State *Q, int preset, int index, uint8_t data)
 {
-    *(uint8_t*)((void*)&Q->ChannelMacro[macro]+Q_ChannelStructMap[index]) = data;
+    *(uint8_t*)((void*)&Q->ChannelPreset[preset]+Q_ChannelStructMap[index]) = data;
 }
 
 void Q_UpdateMuteMask(Q_State *Q)

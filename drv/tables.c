@@ -224,12 +224,12 @@ uint8_t Q_ChannelStructMap[0x20] =
 /* 0e */ MAP_BYTE(Q_Channel,PanMode),
 /* 0f */ MAP_BYTE(Q_Channel,PitchReg),
 
-/* 10 */ MAP_BYTE(Q_Channel,MacroMap),
+/* 10 */ MAP_BYTE(Q_Channel,PresetMap),
 /* 11 */ MAP_BYTE(Q_Channel,VoiceNo),
 /* 12 */ MAP_BYTE(Q_Channel,Legato),
 /* 13 */ MAP_BYTE(Q_Channel,Enabled),
 /* 14 */ MAP_BYTE(Q_Channel,ChannelLink),
-/* 15 */ MAP_BYTE(Q_Channel,MacroOffset),
+/* 15 */ MAP_BYTE(Q_Channel,Preset),
 /* 16 */ MAP_WORD(Q_Channel,Unused), // voice pointer
 /* 18 */ MAP_WORD(Q_Channel,Unused), // source pointer
 /* 1a */ MAP_BYTE(Q_Channel,KeyOnNote),

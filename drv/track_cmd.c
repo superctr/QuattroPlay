@@ -173,39 +173,39 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
     Q_Voice* V;
     Q_VoiceEvent* E;
     uint8_t EventPos;
-    uint32_t MacroPos;
+    uint32_t MapPos;
     int i;
 
-    uint8_t MacroRes;
+    uint8_t MapRes;
 
-    // read macro if exists..
+    // if a preset map is set, get a preset number from that
     ch->Source = ch;
-    if(ch->MacroMap)
+    if(ch->PresetMap)
     {
         // the initial value is ignored (maybe because it's useless)
-        MacroPos = Q->TableOffset[Q_TOFFSET_MACROTABLE] + (16 * (ch->MacroMap-1))+1;
-        MacroRes=0;
+        MapPos = Q->TableOffset[Q_TOFFSET_PRESETMAP] + (16 * (ch->PresetMap-1))+1;
+        MapRes=0;
         if(data == 0xff)
         {
             // last entry
-            MacroRes = Q->McuData[MacroPos+0x0e];
+            MapRes = Q->McuData[MapPos+0x0e];
         }
         else
         {
             for(i=0;i<7;i++)
             {
-                if(data < Q->McuData[MacroPos+1])
+                if(data < Q->McuData[MapPos+1])
                 {
-                    MacroRes = Q->McuData[MacroPos];
+                    MapRes = Q->McuData[MapPos];
                     break;
                 }
-                MacroPos+=2;
+                MapPos+=2;
             }
-            if(!MacroRes)
-                MacroRes = Q->McuData[MacroPos];
+            if(!MapRes)
+                MapRes = Q->McuData[MapPos];
         }
-        if(MacroRes)
-            ch->Source = &Q->ChannelMacro[MacroRes];
+        if(MapRes)
+            ch->Source = &Q->ChannelPreset[MapRes];
         else
             ch->Source = ch;
 
@@ -384,19 +384,19 @@ TRACKCOMMAND(tc_WriteChannelEnvWord)
 }
 // ============================================================================
 // Command 0x0f
-WRITECALLBACK(cb_WriteChannelMacro)
+WRITECALLBACK(cb_WriteChannelPreset)
 {
     if(data)
-        T->Channel[ChannelNo].Source = &Q->ChannelMacro[data];
+        T->Channel[ChannelNo].Source = &Q->ChannelPreset[data];
     else
         T->Channel[ChannelNo].Source = &T->Channel[ChannelNo];
 
-    T->Channel[ChannelNo].PanMode=Q_PANMODE_IMM;
+    T->Channel[ChannelNo].Preset=data;
 }
-TRACKCOMMAND(tc_WriteChannelMacro)
+TRACKCOMMAND(tc_WriteChannelPreset)
 {
     LOGCMD;
-    WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelMacro);
+    WriteChannel(Q,TrackNo,T,TrackPos,Command,0,cb_WriteChannelPreset);
 }
 // ============================================================================
 // Command 0x08
@@ -646,16 +646,16 @@ TRACKCOMMAND(tc_WriteMessage)
     while(data != 0);
 }
 // ============================================================================
-// Command 0x18 - write a channel preset
+// Command 0x18 - write channel data
 TRACKCOMMAND(tc_WriteChannelMultiple)
 {
     Q_Channel *ch = &T->Channel[arg_byte(Q,TrackPos)];
     WriteMultiple(Q,ch,TrackPos);
 }
-// Command 0x19 - write a macro preset
-TRACKCOMMAND(tc_WriteMacroMultiple)
+// Command 0x19 - write a channel preset
+TRACKCOMMAND(tc_WritePresetMultiple)
 {
-    Q_Channel *ch = &Q->ChannelMacro[arg_byte(Q,TrackPos)];
+    Q_Channel *ch = &Q->ChannelPreset[arg_byte(Q,TrackPos)];
     WriteMultiple(Q,ch,TrackPos);
 }
 // ============================================================================
@@ -831,7 +831,7 @@ Q_TrackCommand Q_TrackCommandTable[0x40] =
 /* 0c */ tc_WriteTempoSeq,
 /* 0d */ tc_StartTrack,
 /* 0e */ tc_StartTrackReg,
-/* 0f */ tc_WriteChannelMacro,
+/* 0f */ tc_WriteChannelPreset,
 /* 10 */ tc_Jump,
 /* 11 */ tc_JumpSub,
 /* 12 */ tc_Repeat,
@@ -841,7 +841,7 @@ Q_TrackCommand Q_TrackCommandTable[0x40] =
 /* 16 */ tc_Nop,
 /* 17 */ tc_WriteMessage,
 /* 18 */ tc_WriteChannelMultiple,
-/* 19 */ tc_WriteMacroMultiple,
+/* 19 */ tc_WritePresetMultiple,
 /* 1a */ tc_WriteChannelPanReg,
 /* 1b */ tc_WriteChannelWaveWord,
 /* 1c */ tc_WriteChannelWaveByte,

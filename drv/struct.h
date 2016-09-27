@@ -34,12 +34,12 @@ struct Q_Channel {
     uint8_t Portamento;
     uint8_t PanMode;
     uint8_t PitchReg;
-    uint8_t MacroMap;
+    uint8_t PresetMap;
     uint8_t VoiceNo;
     uint8_t Legato;
     uint8_t Enabled;
     uint8_t ChannelLink;
-    uint8_t MacroOffset;
+    uint8_t Preset;
     Q_Voice* Voice;
     Q_Channel* Source;
     uint8_t KeyOnNote;
@@ -293,7 +293,7 @@ struct Q_State {
     uint16_t VoiceCount;
     Q_Voice Voice[Q_MAX_VOICES];
 
-    Q_Channel ChannelMacro[256];
+    Q_Channel ChannelPreset[256];
 
     uint16_t PitchTable[256];
 };
