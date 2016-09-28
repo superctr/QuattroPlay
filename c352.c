@@ -109,11 +109,10 @@ void C352_fetch_sample(C352 *c, int i)
 
 		if(v->flags & C352_FLG_MULAW)
         {
-            // 7-bit sample value is squared to produce 15-bit output
-            s2 = s&0x7f;
-			v->sample = (s2*s2)<<1;
-			if(s&0x80)
-                v->sample = -v->sample;
+            // 7-bit sample value is squared to produce 11-bit output
+            s2 = (s&0x7f)>>4;
+            v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s&0x0f);
+            v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
         }
 		else
         {
