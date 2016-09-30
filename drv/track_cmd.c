@@ -774,8 +774,9 @@ TRACKCOMMAND(tc_CJump)
 
 // 0x2c is supposed to changed to change the handler for driver call 0x2e
 //      (pan position update), but it is bugged - seemingly in all H8 drivers.
-// 0x2e reads 0x40 bytes from the tracks and stores them in a song param area,
+// 0x2e reads the next 0x40 bytes to use as an alternate pan conversion table,
 //      and then changes the handler for driver call 0x2c (pan update)
+// See voice_pan.c for more details.
 TRACKCOMMAND(tc_Dummy)
 {
     LOGCMD;

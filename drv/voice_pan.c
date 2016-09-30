@@ -6,6 +6,20 @@
 #include "helper.h"
 #include "tables.h"
 
+// In the code for most sound drivers there are alternate versions of
+// Q_VoicePanConvert and Q_VoicePosConvert.
+//
+// The alternate version of Q_VoicePanConvert is mostly identical to the
+// normal function, except it reads from a pan conversion table in RAM written
+// by track command 0x2e, which is also supposed to enable the function.
+// It's not implemented as I have not seen it used anywhere yet.
+//
+// The alternate version of Q_VoicePosConvert uses the ROM pan conversion
+// table and keeps the final amplitude constant, unlike the normal function
+// which uses a linear conversion and attenuates one side without boosting
+// the other. The track command that enables it (0x2c) is broken in later
+// sound driver versions.
+
 // call 0x2c - convert the 8-bit signed pan value to C352 volume register offsets
 // source: 0x6a1c (NOTE: unimplemented "alt" function at 0x69ce)
 void Q_VoicePanConvert(Q_State *Q,int8_t pan,uint16_t *VolumeF,uint16_t *VolumeR)
