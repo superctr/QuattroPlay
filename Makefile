@@ -45,7 +45,7 @@ LIBDIR   +=
 LIB      += -lSDL2
 endif
 
-SRC = .
+SRC = ./src
 OBJ = ./obj
 OUT = ./bin
 OUTBIN = $(OUT)/QuattroPlay
