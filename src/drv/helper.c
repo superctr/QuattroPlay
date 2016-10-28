@@ -156,16 +156,19 @@ void Q_GetMcuVer(Q_State* Q)
     }
 skip:
 
-    // Chip clock
-    switch(Q->McuType)
+    if(!Q->ChipClock)
     {
-    default:
-        Q->ChipClock = 24576000;
-        break;
-    case Q_MCUTYPE_C76:
-    case Q_MCUTYPE_S12:
-        Q->ChipClock = 25401600;
-        break;
+        // Chip clock
+        switch(Q->McuType)
+        {
+        default:
+            Q->ChipClock = 24576000;
+            break;
+        case Q_MCUTYPE_C76:
+        case Q_MCUTYPE_S12:
+            Q->ChipClock = 25401600;
+            break;
+        }
     }
 
     if(!Q->Chip.rate)

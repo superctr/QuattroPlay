@@ -282,6 +282,7 @@ void InitGame(game_t *Game)
     // Initialize sound chip and some initial sound driver parameters.
     memset(&QDrv->Chip,0,sizeof(QDrv->Chip));
 
+    QDrv->ChipClock = Game->ChipFreq;
     C352_init(&QDrv->Chip,Game->ChipFreq);
     QDrv->Chip.vgm_log = 0;
 

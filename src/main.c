@@ -6,7 +6,7 @@
 #include "qp.h"
 //#include "SDL2/SDL.h"
 //#include "SDL2/SDL_audio.h"
-#include "ui.h"
+#include "ui/ui.h"
 #include "ini.h"
 //#include "loader.h"
 //#include "drv/quattro.h"
@@ -129,7 +129,9 @@ int main(int argc, char *argv[])
 
     InitGame(Game);
 
+    ui_init();
     ui_main();
+    ui_deinit();
 
     QPAudio_Close(Audio);
 

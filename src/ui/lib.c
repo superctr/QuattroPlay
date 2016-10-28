@@ -1,36 +1,4 @@
-/*
-    General window/graphics routines and initialization
-*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include "vgm.h"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_audio.h"
-#include "SDL2/SDL_events.h"
-#include "SDL2/SDL_keyboard.h"
-#include "SDL2/SDL_render.h"
-#include "qp.h"
 #include "ui.h"
-#include "ui_menu.h"
-#include "loader.h"
-
-#ifdef DEBUG
-#define RENDER_PROFILING 1
-#endif // DEBUG
-
-#ifdef RENDER_PROFILING
-
-#define RP_START(_rpvar)      _rpvar[1] = SDL_GetPerformanceCounter();
-#define RP_END(_rpvar,_rpres) _rpvar[0] = SDL_GetPerformanceCounter();\
-                              _rpres = (double)((_rpvar[0] - _rpvar[1])*1000) / SDL_GetPerformanceFrequency();
-#else
-
-#define RP_START(_rpvar)
-#define RP_END(_rpvar,_rpres)
-
-#endif // RENDER_PROFILING
 
 color_t Colors[14] = {
  {0x00,0x00,0x00}, // Black
@@ -49,7 +17,7 @@ color_t Colors[14] = {
  {0x7f,0x7f,0xff}, // L Blue
 };
 
-void redraw_text()
+void ui_update()
 {
     //SDL_SetRenderDrawColor(rend,0x10,0,0,255);
     //SDL_RenderClear(rend);
@@ -139,7 +107,15 @@ void redraw_text()
     }
 }
 
-void set_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg)
+void ui_refresh()
+{
+    SDL_SetRenderTarget(rend,NULL);
+    SDL_RenderClear(rend);
+    SDL_RenderCopy(rend,dispbuf,NULL,NULL);
+    SDL_RenderPresent(rend);
+}
+
+void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg)
 {
     int i,j,k,l;
     k=h+y;
@@ -154,29 +130,8 @@ void set_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg)
     }
 }
 
-void ui_main()
+void ui_init()
 {
-    char windowtitle[256];
-    strcpy(windowtitle,"QuattroPlay");
-
-    if(strlen(Game->Title))
-        sprintf(windowtitle,"%s - QuattroPlay",Game->Title);
-
-    Audio->state.MuteRear = Game->MuteRear;
-    Audio->state.Gain = Game->BaseGain*Game->Gain;
-    vol = 1.0;
-
-    #ifdef DEBUG
-    printf("Base gain is %.3f\n",Game->BaseGain);
-    printf("Game gain is %.3f\n",Game->Gain);
-
-    printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
-    #endif
-
-    QPAudio_SetPause(Audio,0);
-    Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
-    //Audio->state.UpdateRequest = QPAUDIO_DRV_PLAY;
-
     set_color(0,0,FROWS,FCOLUMNS,COLOR_D_BLUE,COLOR_N_GREEN);
 
     SDL_Surface *surface;
@@ -189,7 +144,7 @@ void ui_main()
     FSIZE_X = surface->w/32;
     FSIZE_Y = surface->h/8;
 
-    window = SDL_CreateWindow(windowtitle,SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,0);
+    window = SDL_CreateWindow("QuattroPlay",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,0);
     rend = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
     dispbuf = SDL_CreateTexture(rend,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y);
     #ifdef DEBUG
@@ -208,88 +163,21 @@ void ui_main()
 
     SDL_SetColorKey(surface,SDL_TRUE,0);
     font = SDL_CreateTextureFromSurface(rend,surface);
+
     SDL_FreeSurface(surface);
+}
 
-    SDL_Event event;
-
-    running = 1;
-    debug_stat = 0;
-
-    frame_cnt= 0;
-    lasttick= SDL_GetTicks();
-    #ifdef RENDER_PROFILING
-
-    lasttick= SDL_GetTicks();
-
-    //uint64_t p1, p2, q1, q2, r1, r2;
-
-    uint64_t rp1[2],rp2[2],rp3[2];
-    double rp1r=0, rp2r=0, rp3r=0;
-    #endif
-
-    while(running)
-    {
-        //SDL_WaitEvent(NULL);
-
-        while(SDL_PollEvent(&event))
-        {
-            switch(event.type)
-            {
-            case SDL_QUIT:
-                running=0;
-                break;
-            case SDL_KEYDOWN:
-                ui_handleinput(&event.key.keysym);
-                break;
-            default:
-                break;
-            }
-        }
-
-        frame_cnt++;
-        if(frame_cnt%UI_FPS_SAMPLES == 0)
-        {
-            fps_cnt = 1000.0 / ((double)(SDL_GetTicks() - lasttick) / UI_FPS_SAMPLES);
-            lasttick = SDL_GetTicks();
-        }
-        // Redraw the screen
-
-
-        RP_START(rp1);
-        SDL_SetRenderTarget(rend,dispbuf);
-        ui_drawscreen();
-        RP_END(rp1,rp1r);
-
-        RP_START(rp2);
-
-        if(debug_stat)
-        {
-            #ifdef RENDER_PROFILING
-                SCR(0,0,"FPS = %6.2f, Draws: %6d, Frame Speed: %6.2f ms, %6.2f ms, %6.2f ms",fps_cnt,draw_count,rp1r,rp2r,rp3r);
-            #else
-                sprintf(&screen.text[0][0],"FPS = %6.2f, Draws: %6d",fps_cnt,draw_count);
-            #endif // RENDER_PROFILING
-        }
-        else
-        {
-            SCR(0,0,"FPS = %6.2f",fps_cnt);
-        }
-        redraw_text();
-        RP_END(rp2,rp2r);
-
-        RP_START(rp3)
-        SDL_SetRenderTarget(rend,NULL);
-        SDL_RenderClear(rend);
-        SDL_RenderCopy(rend,dispbuf,NULL,NULL);
-        SDL_RenderPresent(rend);
-        RP_END(rp3,rp3r);
-        //ui_drawscreen();
-        //sprintf(&screen.text[0][0],"ID = %04x",count);
-        //update_text();
-        SDL_Delay(1);
-    }
-
+void ui_deinit()
+{
     SDL_DestroyTexture(font);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(window);
+}
+
+void ui_clear(colorsel_t bg,colorsel_t fg)
+{
+
+
+
+
 }

@@ -10,12 +10,10 @@
 #include "string.h"
 #include "math.h"
 
-#include "qp.h"
+#include "../qp.h"
 #include "ui.h"
-#include "ui_menu.h"
-#include "drv/quattro.h"
-#include "drv/tables.h"
-
+#include "scr_main.h"
+#include "quattro.h"
 
 void ui_info_track(int id,int ypos)
 {
@@ -450,7 +448,4 @@ void ui_info_voice(int id,int ypos)
                  "Mod",V->LfoMod);
         break;
     }
-
-
-
 }

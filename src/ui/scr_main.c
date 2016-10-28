@@ -8,15 +8,24 @@
 #include "string.h"
 #include "math.h"
 
-#include "qp.h"
+#include "../qp.h"
 #include "ui.h"
-#include "ui_menu.h"
-#include "drv/quattro.h"
-#include "drv/tables.h"
+#include "scr_main.h"
+
+    inputstate_t inpstate;
+
+    int displaymode;
+    int curr_val;         // Current selected value
+    int curr_val_edit;    // Temp value used in editing.
+    int curr_val_type;    // Type of current selected value (song request / register)
+    int curr_val_offset;  // Offset in song req/register table.
+    int blink;
+
+    char tempstring[512];
 
 const char regmatrix_key[] = "+0/8 +1/9 +2/a +3/b +4/c +5/d +6/e +7/f";
 
-void ui_drawreg(int val,int y,int x)
+void drawreg(int val,int y,int x)
 {
     uint16_t v, a;
 
@@ -74,13 +83,13 @@ void ui_drawreg(int val,int y,int x)
     SCRN(y,x,5,"%04x",v);
 }
 
-void ui_drawregkey(int y)
+void drawregkey(int y)
 {
     set_color(y,4,1,40,COLOR_BLACK,COLOR_L_GREY);
     SCRN(y,4,40,"%s",regmatrix_key);
 }
 
-void ui_drawregrow(int y,int val)
+void drawregrow(int y,int val)
 {
     int dispval = val&0x1f;
     int i;
@@ -95,91 +104,7 @@ void ui_drawregrow(int y,int val)
 
     for(i=0;i<8;i++)
     {
-        ui_drawreg(val+i,y,4+(i*5));
-    }
-}
-
-void ui_drawscreen()
-{
-    int i, j=0, x=0, y=0;
-
-    //...
-    //memset(bgcolor,0,sizeof(bgcolor));
-    //memset(textcolor,0,sizeof(textcolor));
-
-    set_color(0,0,FROWS,FCOLUMNS,COLOR_BLACK,COLOR_L_GREY);
-
-    memset(screen.text,0,sizeof(screen.text));
-
-    if(!debug_stat)
-    {
-        i = SCRN(0,14,60,"Volume: %4.2f [%s] %s",vol,
-                 Audio->state.MuteRear ? "Stereo" : " Quad ",
-                 Audio->state.FastForward ? "Fast Forward" : "");
-        if(Audio->state.FileLogging)
-            SCRN(0,15+i,20,"Logging %8d ...",Audio->state.LogSamples);
-    }
-
-    SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
-
-    SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
-
-    int ypos = 5;
-    ui_drawregkey(ypos++);
-    for(i=0;i<0x20;i+=8)
-        ui_drawregrow(ypos++,i);
-    ui_drawregkey(ypos++);
-    for(i=0x20;i<0x120;i+=8)
-        ui_drawregrow(ypos++,i);
-    ui_drawregkey(ypos++);
-    for(i=0x120;i<0x140;i+=8)
-        ui_drawregrow(ypos++,i);
-
-    set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
-    set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
-    //SCRN(47,1,40,"");
-
-
-    set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
-    if(curr_val < 0x120)
-    {
-        x = SCRN(49,1,48,"ENTER: change value, I/D: in-/decrement");
-    }
-    if(curr_val < 0x20)
-    {
-        i=curr_val;
-        ui_info_track(i,5);
-        x += SCRN(49,1+x,48,", R: Restart, S: Stop, F: Fade");
-        j += SCRN(3,1,40,"Track %02x = %04x",i,QDrv->SongRequest[i]&0x7ff);
-
-        y += SCRN(3,44+y,40,"%s %2.0f:%02.0f",
-                 QDrv->SongRequest[i]&0x8000 ? "Playing" : "Stopped",
-                 floor(QDrv->SongTimer[i]/60),floor(fmod(QDrv->SongTimer[i],60)));
-
-        int8_t loopcount = Q_LoopDetectionGetCount(QDrv,curr_val);
-        if(loopcount > 0)
-            y += SCRN(3,44+y,15,", Loop%3d",loopcount);
-
-    }
-    else if(curr_val < 0x120)
-    {
-        j += SCRN(3,1,40,"Register %02x = %04x",curr_val-0x20,QDrv->Register[curr_val-0x20]);
-    }
-    else if(curr_val < 0x140)
-    {
-        i = curr_val-0x120;
-
-        SCRN(49,1,48,"ENTER: display mode, M: Mute, S: Solo, R: Reset");
-        ui_info_voice(i,5);
-        SCRN(3,1,40,"Voice %02x",i);
-
-        if(QDrv->Voice[i].TrackNo)
-            SCRN(3,44,40,"Track %02x, Channel %02x",QDrv->Voice[i].TrackNo-1,QDrv->Voice[i].ChannelNo);
-    }
-
-    if(inpstate == STATE_SETVALUE)
-    {
-        SCRN(3,4+j,16," (Edit: %04x)",curr_val_edit);
+        drawreg(val+i,y,4+(i*5));
     }
 }
 
@@ -236,83 +161,17 @@ void ui_bounds_check()
         curr_val_edit=0xffff;
 }
 
-void ui_handleinput(SDL_Keysym *ks)
+void scr_main_input()
 {
+    got_input=0;
+
     const uint8_t * kbd;
     int increment;
 
     kbd = SDL_GetKeyboardState(NULL);
-    SDL_Keycode kc = ks->sym;
 
-    switch(kc)
+    switch(keycode)
     {
-    case SDLK_u:
-        Q_UpdateTick(QDrv);
-        break;
-    case SDLK_q:
-        running=0;
-        break;
-    case SDLK_p:
-        QPAudio_TogglePause(Audio);
-        break;
-    case SDLK_F3:
-        SDL_LockAudioDevice(Audio->dev);
-        QDrv->BootSong=Game->BootSong;
-        Q_Reset(QDrv);
-        SDL_UnlockAudioDevice(Audio->dev);
-        break;
-    case SDLK_F5:
-        Audio->state.MuteRear ^= 1;
-        //printf("*** MuteRear = %d ***\n",Audio->state.MuteRear);
-        break;
-    case SDLK_F6:
-        QDrv->MuteMask=0;
-        QDrv->SoloMask=0;
-        Q_UpdateMuteMask(QDrv);
-        break;
-    case SDLK_F7:
-        vol -= 0.05;
-    case SDLK_F8:
-        if(kc==SDLK_F8)
-            vol += 0.05;
-        if(vol>9.95)
-            vol=9.95;
-        if(vol<0)
-            vol=0;
-        Audio->state.Gain = Game->BaseGain*Game->Gain*vol;
-        //printf("*** Volume = %f ***\n",gain);
-        break;
-    case SDLK_F10:
-        Audio->state.FastForward ^= 1;
-        //printf("*** FastForward = %d ***\n",Audio->state.fastforward);
-        break;
-    case SDLK_F11:
-        SDL_LockAudioDevice(Audio->dev);
-        if(Audio->state.FileLogging == 0)
-        {
-            QPAudio_WavOpen(Audio,"qp_log.wav");
-            /*
-            Audio->state.logfile = NULL;
-            Audio->state.logfile = fopen("qp_log.raw","wb");
-            if(Audio->state.logfile)
-                Audio->state.FileLogging = 1;
-            Audio->state.LogSamples=0;
-            */
-        }
-        else
-        {
-            QPAudio_WavClose(Audio);
-            /*
-            if(Audio->state.FileLogging)
-                fclose(Audio->state.logfile);
-            Audio->state.FileLogging = 0;
-            */
-        }
-        SDL_UnlockAudioDevice(Audio->dev);
-        break;
-    case SDLK_F12:
-        debug_stat ^= 1;
-        break;
     case SDLK_0:
         GameDoAction(Game,0);
         break;
@@ -358,7 +217,7 @@ void ui_handleinput(SDL_Keysym *ks)
         break;
     case SDLK_i:
     case SDLK_d:
-        increment = kc==SDLK_i ? 1 : -1;
+        increment = keycode==SDLK_i ? 1 : -1;
         curr_val_edit+=increment;
         ui_bounds_check();
         if(inpstate != STATE_SETVALUE)
@@ -387,9 +246,9 @@ void ui_handleinput(SDL_Keysym *ks)
             if(curr_val_type == ENTRY_SONGREQ)
             {
                 Q_LoopDetectionReset(QDrv);
-                if(kc==SDLK_f)
+                if(keycode==SDLK_f)
                     QDrv->SongRequest[curr_val_offset] |= Q_TRACK_STATUS_FADE;
-                if(kc==SDLK_s)
+                if(keycode==SDLK_s)
                     QDrv->SongRequest[curr_val_offset] &= ~(Q_TRACK_STATUS_BUSY);
             }
             if(curr_val_type == ENTRY_VOICE)
@@ -457,9 +316,9 @@ void ui_handleinput(SDL_Keysym *ks)
 
             increment = 1;
 
-            if(kc == SDLK_UP || kc == SDLK_DOWN)
+            if(keycode == SDLK_UP || keycode == SDLK_DOWN)
                 increment *= 8;
-            if(kc == SDLK_LEFT || kc == SDLK_UP)
+            if(keycode == SDLK_LEFT || keycode == SDLK_UP)
                 increment *= -1;
             curr_val+=increment;
 
@@ -472,9 +331,9 @@ void ui_handleinput(SDL_Keysym *ks)
 
             increment = kbd[SDL_SCANCODE_RSHIFT] ? 256 : 1;
 
-            if(kc == SDLK_UP || kc == SDLK_DOWN)
+            if(keycode == SDLK_UP || keycode == SDLK_DOWN)
                 increment *= 16;
-            if(kc == SDLK_LEFT || kc == SDLK_DOWN)
+            if(keycode == SDLK_LEFT || keycode == SDLK_DOWN)
                 increment *= -1;
             curr_val_edit+=increment;
 
@@ -482,6 +341,77 @@ void ui_handleinput(SDL_Keysym *ks)
         }
         break;
     default:
+        got_input=1;
         break;
+    }
+}
+
+void scr_main()
+{
+    int i, j=0, x=0, y=0;
+
+    SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
+
+    SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
+
+    if(got_input)
+        scr_main_input();
+
+    int ypos = 5;
+    drawregkey(ypos++);
+    for(i=0;i<0x20;i+=8)
+        drawregrow(ypos++,i);
+    drawregkey(ypos++);
+    for(i=0x20;i<0x120;i+=8)
+        drawregrow(ypos++,i);
+    drawregkey(ypos++);
+    for(i=0x120;i<0x140;i+=8)
+        drawregrow(ypos++,i);
+
+    set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
+    set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
+    //SCRN(47,1,40,"");
+
+
+    set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
+    if(curr_val < 0x120)
+    {
+        x = SCRN(49,1,48,"ENTER: change value, I/D: in-/decrement");
+    }
+    if(curr_val < 0x20)
+    {
+        i=curr_val;
+        ui_info_track(i,5);
+        x += SCRN(49,1+x,48,", R: Restart, S: Stop, F: Fade");
+        j += SCRN(3,1,40,"Track %02x = %04x",i,QDrv->SongRequest[i]&0x7ff);
+
+        y += SCRN(3,44+y,40,"%s %2.0f:%02.0f",
+                 QDrv->SongRequest[i]&0x8000 ? "Playing" : "Stopped",
+                 floor(QDrv->SongTimer[i]/60),floor(fmod(QDrv->SongTimer[i],60)));
+
+        int8_t loopcount = Q_LoopDetectionGetCount(QDrv,curr_val);
+        if(loopcount > 0)
+            y += SCRN(3,44+y,15,", Loop%3d",loopcount);
+
+    }
+    else if(curr_val < 0x120)
+    {
+        j += SCRN(3,1,40,"Register %02x = %04x",curr_val-0x20,QDrv->Register[curr_val-0x20]);
+    }
+    else if(curr_val < 0x140)
+    {
+        i = curr_val-0x120;
+
+        SCRN(49,1,48,"ENTER: display mode, M: Mute, S: Solo, R: Reset");
+        ui_info_voice(i,5);
+        SCRN(3,1,40,"Voice %02x",i);
+
+        if(QDrv->Voice[i].TrackNo)
+            SCRN(3,44,40,"Track %02x, Channel %02x",QDrv->Voice[i].TrackNo-1,QDrv->Voice[i].ChannelNo);
+    }
+
+    if(inpstate == STATE_SETVALUE)
+    {
+        SCRN(3,4+j,16," (Edit: %04x)",curr_val_edit);
     }
 }

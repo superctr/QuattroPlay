@@ -1,27 +1,16 @@
-#ifndef UI_H_INCLUDED
-#define UI_H_INCLUDED
-
-// Setting to 60 will break debugging ...
-#define UI_FPS 30
-// Amount of frames to sample for FPS counting
-#define UI_FPS_SAMPLES 16
-
-//#define FSIZE_X 8
-//#define FSIZE_Y 8
-#define FCOLUMNS 80
-#define FROWS 50
-    int FSIZE_X;
-    int FSIZE_Y;
-
+#ifndef LIB_H_INCLUDED
+#define LIB_H_INCLUDED
 
 #include "stdint.h"
-#include "drv/quattro.h"
-#include "audio.h"
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_render.h"
+#include "stdio.h"
+#include "ui.h"
 
 #define SCR(_y_,_x_,str,...) sprintf(&screen.text[_y_][_x_],str , ##__VA_ARGS__)
 #define SCRN(_y_,_x_,count,str,...) snprintf(&screen.text[_y_][_x_],count,str , ##__VA_ARGS__)
+
+#define set_color ui_color
 
     SDL_Window *window;
     SDL_Renderer *rend;
@@ -64,30 +53,12 @@ typedef struct {
     uint8_t dirty[FROWS][FCOLUMNS*2];
 } screen_t;
 
-    //int bootsong;
-    //QP_PlaylistState *pl;
+void ui_update();
+void ui_refresh();
+void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
 
-    //int muterear;
-    //float gain;
-    //float gamegain;
-    float vol;
-    screen_t screen;
-    screen_t last_screen;
+void ui_init();
+void ui_deinit();
+void ui_clear();
 
-    int trackpattern[32][8];
-    int trackpattern_length;
-
-    uint32_t lasttick;
-    uint32_t frame_cnt;
-    double fps_cnt;
-
-    int debug_stat;
-    int draw_count;
-    int rect_count;
-
-void redraw_text();
-void ui_main();
-
-void set_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
-
-#endif // UI_H_INCLUDED
+#endif // LIB_H_INCLUDED

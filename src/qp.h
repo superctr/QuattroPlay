@@ -3,6 +3,13 @@
 */
 #ifndef QP_H_INCLUDED
 #define QP_H_INCLUDED
+
+#define QP_TITLE "QuattroPlay"
+#define QP_VERSION "1.1"
+#define QP_COPYRIGHT "2016 Ian Karlsson"
+#define QP_LICENSE "GPL v2"
+#define QP_WEBSITE "https://github.com/superctr/QuattroPlay"
+
 #include "drv/quattro.h"
 #include "audio.h"
 #include "loader.h"

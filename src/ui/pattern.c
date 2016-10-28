@@ -7,9 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "ui.h"
-#include "qp.h"
-#include "ui_menu.h"
-#include "drv/helper.h"
+#include "quattro.h"
 
 uint8_t pattern_arg_byte(uint32_t* TrackPos)
 {
