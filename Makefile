@@ -63,16 +63,18 @@ OBJS = \
 	$(OBJ)/drv/voice_pan.o \
 	$(OBJ)/drv/voice_pitch.o \
 	$(OBJ)/drv/wave.o \
+	$(OBJ)/ui/info.o \
+	$(OBJ)/ui/lib.o \
+	$(OBJ)/ui/pattern.o \
+	$(OBJ)/ui/scr_about.o \
+	$(OBJ)/ui/scr_main.o \
+	$(OBJ)/ui/ui.o \
 	$(OBJ)/audio.o \
 	$(OBJ)/c352.o \
 	$(OBJ)/fileio.o \
 	$(OBJ)/ini.o \
 	$(OBJ)/loader.o \
 	$(OBJ)/main.o \
-	$(OBJ)/ui.o \
-	$(OBJ)/ui_infobar.o \
-	$(OBJ)/ui_menu.o \
-	$(OBJ)/ui_pattern.o \
 	$(OBJ)/vgm.o
 
 build: $(OBJS)
