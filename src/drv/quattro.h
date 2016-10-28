@@ -14,6 +14,7 @@
 
 #include "enum.h"
 #include "struct.h"
+#include "version.h"
 
 #ifdef DEBUG
 #define Q_DEBUG(...) printf(__VA_ARGS__)

@@ -30,6 +30,8 @@ const char* Q_ConditionNames[16] =
     "pl","mi","XX","XX","XX","XX","XX","XX"
 };
 
+
+
 #ifdef DISP_MCU_INFO
 const char MCUVerSearch_H8[] = "namco ltd.;System";
 #endif
