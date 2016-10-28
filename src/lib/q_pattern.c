@@ -2,12 +2,11 @@
     Track command parser for UI pattern display.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include "ui.h"
-#include "quattro.h"
+#include "string.h"
+
+#include "../qp.h"
+#include "../drv/helper.h"
+#include "q_pattern.h"
 
 uint8_t pattern_arg_byte(uint32_t* TrackPos)
 {
