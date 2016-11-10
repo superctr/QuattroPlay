@@ -427,7 +427,7 @@ void GameDoUpdate(game_t *G)
         playlist_script_t* S = &G->Playlist[G->PlaylistPosition].script[G->PlaylistScript];
 
         int state = 0;
-        int SongReq = G->PlaylistSongID & 0x8000 ? 8 : 0;
+        int SongReq = G->PlaylistSongID & 0x800 ? 8 : 0;
 
         int loopcnt = Q_LoopDetectionGetCount(G->QDrv,SongReq);
 
