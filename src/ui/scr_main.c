@@ -218,12 +218,12 @@ void scr_main_input()
         break;
     case SDLK_i:
     case SDLK_d:
-        Game->PlaylistControl = 0;
         increment = keycode==SDLK_i ? 1 : -1;
         curr_val_edit+=increment;
         ui_bounds_check();
         if(inpstate != STATE_SETVALUE)
         {
+            Game->PlaylistControl = 0;
             ui_convert_currval();
             curr_val_edit+=increment;
             ui_bounds_check();
@@ -242,12 +242,12 @@ void scr_main_input()
         break;
     case SDLK_f:
     case SDLK_s:
-        Game->PlaylistControl = 0;
         if(inpstate != STATE_SETVALUE)
         {
             ui_convert_currval();
             if(curr_val_type == ENTRY_SONGREQ)
             {
+                Game->PlaylistControl = 0;
                 Q_LoopDetectionReset(QDrv);
                 if(keycode==SDLK_f)
                     QDrv->SongRequest[curr_val_offset] |= Q_TRACK_STATUS_FADE;
