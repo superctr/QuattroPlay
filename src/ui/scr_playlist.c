@@ -89,7 +89,7 @@ void scr_playlist()
         if(offset+max > Game->SongCount)
             offset -= (offset+max)-Game->SongCount;
 
-        for(y=0;y<PLPAGE;y++)
+        for(y=0;y<max;y++)
         {
             i=y+offset;
             colorsel_t bg=COLOR_D_BLUE,fg=COLOR_L_GREY;
