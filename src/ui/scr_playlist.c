@@ -52,7 +52,7 @@ void scr_playlist()
     set_color(5,1,FROWS-7,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
     SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
 
-    int SongReq = Game->PlaylistSongID & 0x8000 ? 8 : 0;
+    int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
 
     switch(Game->PlaylistControl)
     {
