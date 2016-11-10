@@ -68,6 +68,7 @@ OBJS = \
 	$(OBJ)/ui/pattern.o \
 	$(OBJ)/ui/scr_about.o \
 	$(OBJ)/ui/scr_main.o \
+	$(OBJ)/ui/scr_playlist.o \
 	$(OBJ)/ui/ui.o \
 	$(OBJ)/audio.o \
 	$(OBJ)/c352.o \

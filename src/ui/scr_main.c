@@ -114,6 +114,7 @@ void ui_entry_setvalue(int flag, int type, int offset, int value)
     switch(type)
     {
     case ENTRY_SONGREQ:
+        Game->PlaylistControl = 0;
         if(flag)
             temp = Q_TRACK_STATUS_START;
         Q_LoopDetectionReset(QDrv);
@@ -217,6 +218,7 @@ void scr_main_input()
         break;
     case SDLK_i:
     case SDLK_d:
+        Game->PlaylistControl = 0;
         increment = keycode==SDLK_i ? 1 : -1;
         curr_val_edit+=increment;
         ui_bounds_check();
@@ -240,6 +242,7 @@ void scr_main_input()
         break;
     case SDLK_f:
     case SDLK_s:
+        Game->PlaylistControl = 0;
         if(inpstate != STATE_SETVALUE)
         {
             ui_convert_currval();

@@ -41,6 +41,9 @@ void ui_drawscreen()
     case SCR_ABOUT:
         scr_about();
         break;
+    case SCR_PLAYLIST:
+        scr_playlist();
+        break;
     default:
         scr_main();
         break;
@@ -76,6 +79,12 @@ void ui_handleinput(SDL_Keysym* ks)
             last_scrmode = screen_mode;
             screen_mode = SCR_ABOUT;
         }
+        break;
+    case SDLK_SPACE:
+        if(screen_mode == SCR_PLAYLIST)
+            screen_mode = SCR_MAIN;
+        else
+            screen_mode = SCR_PLAYLIST;
         break;
     case SDLK_F3:
         SDL_LockAudioDevice(Audio->dev);

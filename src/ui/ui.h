@@ -15,7 +15,8 @@
 
 typedef enum {
     SCR_MAIN = 0,
-    SCR_ABOUT
+    SCR_ABOUT,
+    SCR_PLAYLIST
 } screen_mode_t;
 
 
@@ -48,5 +49,6 @@ void ui_main();
 
 void scr_main();
 void scr_about();
+void scr_playlist();
 
 #endif // UI_H_INCLUDED

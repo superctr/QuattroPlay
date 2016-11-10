@@ -8,7 +8,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_audio.h"
 
-#include "drv/quattro.h"
+#include "qp.h"
 #include "audio.h"
 #include "vgm.h"
 
@@ -42,13 +42,8 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
                     vgm_delay(441000/120);
                 }
                 S->DriverUpdate-=1;
-            }
 
-            // playlist support version 0.001
-            if(S->QDrv->BootSong == 0 && S->AutoPlaySong >= 0)
-            {
-                S->QDrv->SongRequest[S->AutoPlaySong & 0x800 ? 8 : 0] = 0x4000 | (S->AutoPlaySong&0x7ff);
-                S->AutoPlaySong = -1;
+                GameDoUpdate(Game);
             }
         }
         if(updatemode & QPAUDIO_CHIP_PLAY)

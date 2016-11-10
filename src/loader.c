@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 #include "string.h"
 #include "SDL2/SDL.h"
 #include "qp.h"
@@ -34,6 +35,7 @@ int LoadGame(game_t *G)
     int wave_offset[16];
     unsigned int wave_maxlen; // max length of wave roms.
     G->ChipFreq = 0;
+    G->SongCount = 0;
 
     int patchtype_set = 0;
     int patchaddr_set = 0;
@@ -151,10 +153,41 @@ int LoadGame(game_t *G)
             }
             if(!strcmp(initest.section,"playlist"))
             {
-                // nothing here... yet.
+                if(!strcmp(initest.key,"loops"))
+                {
+                    G->Playlist[G->SongCount-1].script[action_id].wait_type=0;
+                    G->Playlist[G->SongCount-1].script[action_id].wait_count=strtol(initest.value,NULL,0);
+                }
+                else if(!strcmp(initest.key,"time"))
+                {
+                    G->Playlist[G->SongCount-1].script[action_id].wait_type=1;
+                    G->Playlist[G->SongCount-1].script[action_id].wait_count=strtol(initest.value,NULL,0);
+                }
+                else if(!strcmp(initest.key,"action"))
+                {
+                    G->Playlist[G->SongCount-1].script[action_id].action_id=strtol(initest.value,NULL,0);
+                    action_id++;
+                    G->Playlist[G->SongCount-1].script[action_id].action_id = -1;
+                    G->Playlist[G->SongCount-1].script[action_id].wait_type = 1; // end immediately...
+                }
+                else if(!strcmp(initest.key,"loop"))
+                {
+                    G->Playlist[G->SongCount-1].script[action_id].wait_type=2;
+                    G->Playlist[G->SongCount-1].script[action_id].wait_count=strtol(initest.value,NULL,0);
+                }
+                else if(sscanf(initest.key,"%x",&action_reg)==1)
+                {
+                    action_id=0;
+                    G->Playlist[G->SongCount].SongID = action_reg;
+                    strncpy(G->Playlist[G->SongCount].Title,initest.value,254);
+                    G->Playlist[G->SongCount].script[action_id].wait_type=0;
+                    G->Playlist[G->SongCount].script[action_id].wait_count=2;
+                    G->Playlist[G->SongCount].script[action_id].action_id=-1;
+                    G->SongCount++;
+                }
                 Q_DEBUG("playlist %s = %s\n",initest.key,initest.value);
             }
-            if(sscanf(initest.section,"action.%d",&action_id)==1 && action_id < 10)
+            if(sscanf(initest.section,"action.%d",&action_id)==1 && action_id < 256)
             {
                 if(sscanf(initest.key,"r%x",&action_reg)==1)
                 {
@@ -195,6 +228,7 @@ int LoadGame(game_t *G)
     printf("Wave count: %d\n",wave_count+1);
     if(byteswap)
         printf("Data file byteswapped\n");
+    printf("Playlist Song count: %d\n",G->SongCount);
 #endif
     snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename);
     if(read_file(filename,G->Data,0,0,byteswap,&G->DataSize))
@@ -290,6 +324,12 @@ void InitGame(game_t *Game)
     QDrv->Chip.wave_mask = Game->WaveMask;
     QDrv->McuData = Game->Data;
 
+    Game->PlaylistPosition = 0;
+    Game->PlaylistLoop = 0;
+    Game->PlaylistControl = 0;
+    Game->PlaylistSongID = 0;
+    Game->ActionTimer = 0;
+
     static char filename[FILENAME_MAX];
 
     char* audiodev = NULL;
@@ -310,6 +350,7 @@ void InitGame(game_t *Game)
 
     QDrv->PortaFix=Game->PortaFix;
     QDrv->BootSong=Game->BootSong;
+    Game->QueueSong=Game->AutoPlay;
     Q_Init(QDrv);
 
     QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,Game->AudioBuffer,audiodev);
@@ -354,10 +395,19 @@ void DeInitGame(game_t *Game)
     Q_Deinit(QDrv);
 }
 
+void ResetGame(game_t *Game)
+{
+    QDrv->BootSong=Game->BootSong;
+    Q_Reset(QDrv);
+    Game->PlaylistControl=0;
+    Game->QueueSong=Game->AutoPlay;
+}
+
+
 // Perform register action (song triggers).
 void GameDoAction(game_t *G,unsigned int id)
 {
-    if(id > 9)
+    if(id > 255)
         return;
     int i;
     for(i=0;i<G->Action[id].cnt;i++)
@@ -367,3 +417,89 @@ void GameDoAction(game_t *G,unsigned int id)
     return;
 }
 
+void GameDoUpdate(game_t *G)
+{
+    if(QDrv->BootSong != 0)
+        return;
+
+    if(G->PlaylistControl == 1)
+    {
+        playlist_script_t* S = &G->Playlist[G->PlaylistPosition].script[G->PlaylistScript];
+
+        int state = 0;
+        int SongReq = G->PlaylistSongID & 0x8000 ? 8 : 0;
+
+        int loopcnt = Q_LoopDetectionGetCount(G->QDrv,SongReq);
+
+        // time out
+        if(S->wait_type == 2)
+        {
+            G->PlaylistScript = S->wait_count;
+            if(++G->PlaylistLoop > 1)
+                state = 1;
+        }
+        if(S->wait_type == 1 && G->QDrv->SongTimer[SongReq] > S->wait_count)
+            state=1;
+        if(S->wait_type == 0 && loopcnt >= S->wait_count)
+            state=1;
+
+        // song is stopped
+        if((QDrv->SongRequest[SongReq]&0x8000) == 0)
+            state=2;
+
+        switch(state)
+        {
+        default:
+            break;
+        case 1:
+            // do action and read next length
+            if(S->action_id >= 0)
+            {
+                // do the previous action immediately...
+                if(G->ActionTimer)
+                    GameDoAction(G,G->QueueAction);
+                Q_DEBUG("doing action %d...\n",S->action_id);
+                G->ActionTimer=20; // some songs don't like when actions are triggered immediately after loop...
+                G->QueueAction=S->action_id;
+                G->PlaylistScript++;
+            }
+            // or fade song
+            else
+                G->QDrv->SongRequest[SongReq]|=0x2000;
+            Q_LoopDetectionReset(G->QDrv);
+            break;
+        case 2:
+            // advance playlist
+            if(G->PlaylistPosition < G->SongCount-1)
+            {
+                G->PlaylistControl++;
+                G->PlaylistPosition++;
+            }
+            // or stop playlist
+            else
+                G->PlaylistControl=0;
+            break;
+        }
+    }
+
+    if(G->PlaylistControl == 2)
+    {
+        G->QueueSong = G->Playlist[G->PlaylistPosition].SongID;
+        G->PlaylistSongID = G->Playlist[G->PlaylistPosition].SongID;
+        G->PlaylistControl--;
+        G->PlaylistScript = 0;
+        G->PlaylistLoop = 0;
+        G->ActionTimer = 0;
+    }
+
+    if(G->QueueSong >= 0)
+    {
+        Q_LoopDetectionReset(G->QDrv);
+        G->QDrv->SongRequest[G->QueueSong & 0x800 ? 8 : 0] = 0x4000 | (G->QueueSong&0x7ff);
+    }
+
+    G->QueueSong = -1;
+
+    if(G->ActionTimer && --G->ActionTimer == 0)
+        GameDoAction(G,G->QueueAction);
+}

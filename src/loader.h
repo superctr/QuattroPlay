@@ -10,6 +10,18 @@ typedef struct {
 } action_t;
 
 typedef struct {
+    int wait_type;
+    int wait_count;
+    int action_id;
+} playlist_script_t;
+
+typedef struct {
+    int SongID;
+    char Title[256];
+    playlist_script_t script[16];
+} playlist_entry_t;
+
+typedef struct {
 
     char Name[256]; // short name (filename-legal)
     char Title[1024]; // display title
@@ -38,7 +50,20 @@ typedef struct {
     int MuteRear;
     int ChipFreq; // sound chip frequency, best to not touch this.
 
-    action_t Action[10];
+    action_t Action[256];
+
+    int SongCount;
+    playlist_entry_t Playlist[256];
+
+    int PlaylistControl; // 0=user control, 1=playlist control
+    int PlaylistPosition;
+    int PlaylistScript;
+    int PlaylistSongID;
+    int PlaylistLoop;
+
+    int QueueSong;
+    int QueueAction;
+    int ActionTimer;
 } game_t;
 
 int LoadGame(game_t *Game);
@@ -48,5 +73,6 @@ void InitGame(game_t *Game);
 void DeInitGame(game_t *Game);
 
 void GameDoAction(game_t *G,unsigned int actionid);
+void GameDoUpdate(game_t *G);
 
 #endif // LOADER_H_INCLUDED
