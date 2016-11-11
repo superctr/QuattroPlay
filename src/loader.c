@@ -197,6 +197,14 @@ int LoadGame(game_t *G)
                     Q_DEBUG("action %d (%02x) =  r%02x = %04x\n",action_id,G->Action[action_id].cnt,action_reg,action_data);
                     G->Action[action_id].cnt++;
                 }
+                else if(sscanf(initest.key,"t%x",&action_reg)==1)
+                {
+                    action_data = strtol(initest.value,NULL,0);
+                    G->Action[action_id].reg[G->Action[action_id].cnt] = action_reg+0x100;
+                    G->Action[action_id].data[G->Action[action_id].cnt] = action_data;
+                    Q_DEBUG("action %d (%02x) =  t%02x = %04x\n",action_id,G->Action[action_id].cnt,action_reg,action_data);
+                    G->Action[action_id].cnt++;
+                }
             }
         }
     }
@@ -409,10 +417,14 @@ void GameDoAction(game_t *G,unsigned int id)
 {
     if(id > 255)
         return;
-    int i;
+    int i,reg;
     for(i=0;i<G->Action[id].cnt;i++)
     {
-        G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
+        reg = G->Action[id].reg[i];
+        if(reg<0x100)
+            G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
+        else if(reg<0x120)
+            G->QDrv->SongRequest[G->Action[id].reg[i]&0x1f] = G->Action[id].data[i];
     }
     return;
 }
