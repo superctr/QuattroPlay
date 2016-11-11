@@ -122,8 +122,9 @@ int ini_readvalue(inifile_t* ini)
             ini->c = getc(ini->f);
         }
 
-        ini->c = getc(ini->f);
-        ini_readspaces(ini);
+        while(ini->c != EOF && !ini_newline(ini))
+            ini->c = getc(ini->f);
+
     }
     else
     {
