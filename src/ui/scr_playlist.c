@@ -39,6 +39,15 @@ void scr_playlist_input()
         Game->PlaylistPosition=displaypos;
         Game->PlaylistControl=2;
         break;
+    case SDLK_f:
+    case SDLK_s:
+        Game->PlaylistControl = 0;
+        int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
+        if(keycode==SDLK_f)
+            QDrv->SongRequest[SongReq] |= Q_TRACK_STATUS_FADE;
+        if(keycode==SDLK_s)
+            QDrv->SongRequest[SongReq] &= ~(Q_TRACK_STATUS_BUSY);
+        break;
     }
 
     SDL_UnlockAudioDevice(Audio->dev);
