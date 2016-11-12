@@ -37,6 +37,7 @@ void scr_playlist_input()
     case SDLK_RETURN:
         displaypos_check();
         Game->PlaylistPosition=displaypos;
+    case SDLK_r:
         Game->PlaylistControl=2;
         break;
     case SDLK_f:
@@ -47,6 +48,18 @@ void scr_playlist_input()
             QDrv->SongRequest[SongReq] |= Q_TRACK_STATUS_FADE;
         if(keycode==SDLK_s)
             QDrv->SongRequest[SongReq] &= ~(Q_TRACK_STATUS_BUSY);
+        break;
+    case SDLK_n:
+        displaypos = Game->PlaylistPosition+1;
+        displaypos_check();
+        Game->PlaylistPosition=displaypos;
+        Game->PlaylistControl=2;
+        break;
+    case SDLK_b:
+        displaypos = Game->PlaylistPosition-1;
+        displaypos_check();
+        Game->PlaylistPosition=displaypos;
+        Game->PlaylistControl=2;
         break;
     }
 
@@ -59,6 +72,7 @@ void scr_playlist()
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
     set_color(5,1,FROWS-7,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
+    set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
     SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
 
     int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
@@ -71,12 +85,15 @@ void scr_playlist()
         break;
     case 1:
     case 2:
-        SCRN(3,1,FCOLUMNS-2,"Playing song %02d: %s (%2.0f:%02.0f)",
+        SCRN(3,1,FCOLUMNS-6,"Playing song %02d: %s",
              Game->PlaylistPosition+1,
-             Game->Playlist[Game->PlaylistPosition].Title,
+             Game->Playlist[Game->PlaylistPosition].Title);
+
+        SCRN(3,FCOLUMNS-6,6,"%2.0f:%02.0f",
              floor(QDrv->SongTimer[SongReq]/60),floor(fmod(QDrv->SongTimer[SongReq],60)));
         break;
     }
+
 
     if(Game->SongCount == 0)
     {
@@ -112,5 +129,7 @@ void scr_playlist()
 
             SCRN(5+y,1,FCOLUMNS-2,"%02d %s",i+1,Game->Playlist[i].Title);
         }
+
+        SCRN(49,1,48,"ENTER: play song, S: stop, F: fade, P: pause");
     }
 }
