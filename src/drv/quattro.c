@@ -52,6 +52,7 @@ void Q_Reset(Q_State *Q)
     memset(Q->Register,0,sizeof(Q->Register));
     memset(Q->SongMessage,0,sizeof(Q->SongMessage));
     memset(Q->Track,0,sizeof(Q->Track));
+    memset(Q->ActiveChannel,0,sizeof(Q->ActiveChannel));
     memset(Q->ChannelPriority,0,sizeof(Q->ChannelPriority));
 
     Q->BasePitch=0;

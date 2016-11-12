@@ -130,7 +130,7 @@ void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg)
     }
 }
 
-void ui_init()
+int ui_init()
 {
     set_color(0,0,FROWS,FCOLUMNS,COLOR_D_BLUE,COLOR_N_GREEN);
 
@@ -139,7 +139,7 @@ void ui_init()
     if(!surface)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","could not load 'font.bmp'",NULL);
-        return;
+        return -1;
     }
     FSIZE_X = surface->w/32;
     FSIZE_Y = surface->h/8;
@@ -165,6 +165,8 @@ void ui_init()
     font = SDL_CreateTextureFromSurface(rend,surface);
 
     SDL_FreeSurface(surface);
+
+    return 0;
 }
 
 void ui_deinit()

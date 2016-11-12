@@ -11,7 +11,7 @@ void displaypos_check()
 {
     if(displaypos < 0)
         displaypos = 0;
-    if(displaypos > Game->SongCount-1)
+    if(displaypos >= Game->SongCount)
         displaypos = Game->SongCount-1;
 }
 void scr_playlist_input()
@@ -69,6 +69,12 @@ void scr_playlist_input()
 
 void scr_playlist()
 {
+    if(refresh & R_SCR_PLAYLIST)
+    {
+        refresh &= ~R_SCR_PLAYLIST;
+        displaypos=0;
+    }
+
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
     set_color(5,1,FROWS-7,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);

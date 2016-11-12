@@ -6,6 +6,7 @@
 #include "qp.h"
 //#include "SDL2/SDL.h"
 //#include "SDL2/SDL_audio.h"
+#include "lib/audit.h"
 #include "ui/ui.h"
 #include "ini.h"
 //#include "loader.h"
@@ -14,6 +15,8 @@
 
 int main(int argc, char *argv[])
 {
+    int loop = 0;
+    int val;
     SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_TIMER);
 
 //    static char inipath[128];
@@ -30,19 +33,14 @@ int main(int argc, char *argv[])
     Game = (game_t*)malloc(sizeof(game_t));
     memset(Game,0,sizeof(game_t));
 
+    Audit = (QPAudit*)malloc(sizeof(QPAudit));
+    memset(Audit,0,sizeof(QPAudit));
+
     if(!QDrv || !Audio || !Game)
         return -1;
 
     Game->AutoPlay = -1;
-/*
-    QP_PlaylistState playlist_instance;
-    pl = &playlist_instance;
 
-    pl->MaxEntries=0;
-    pl->CurrEntry=0;
-    pl->PlayState = QP_PLAYSTATE_IDLE;
-    pl->CommandPos=0;
-*/
     Game->MuteRear=0;
     Game->BaseGain=32.0;
     Game->AudioBuffer=1024;
@@ -121,26 +119,59 @@ int main(int argc, char *argv[])
 
     Game->QDrv = QDrv;
 
-    if(LoadGame(Game))
+    if(!strlen(Game->Name))
+    {
+        loop=1;
+
+        AuditGames(Audit);
+    }
+
+    if(ui_init())
     {
         SDL_Quit();
         return -1;
     }
 
-    InitGame(Game);
+    while(1)
+    {
+        if(loop)
+        {
+            val = ui_main(SCR_SELECT);
+            if(!val)
+                break;
+            --val;
+            strcpy(Game->Name,Audit->Entry[val].Name);
+        }
 
-    ui_init();
-    ui_main();
+        if(LoadGame(Game))
+        {
+            SDL_Quit();
+            return -1;
+        }
+
+        InitGame(Game);
+
+        QPAudio_SetPause(Audio,0);
+        Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
+
+        ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
+
+        QPAudio_Close(Audio);
+
+        // Audio must be closed or locked before calling this
+        DeInitGame(Game);
+
+        UnloadGame(Game);
+
+        if(!loop)
+            break;
+    }
+
     ui_deinit();
-
-    QPAudio_Close(Audio);
-
-    // Audio must be closed or locked before calling this
-    DeInitGame(Game);
-
     SDL_Quit();
-    UnloadGame(Game);
     free(QDrv);
+    free(Audio);
+    free(Game);
 
     return 0;
 }

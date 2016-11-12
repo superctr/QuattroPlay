@@ -13,6 +13,7 @@
 #include "drv/quattro.h"
 #include "audio.h"
 #include "loader.h"
+#include "lib/audit.h"
 
     char QP_IniPath[128];
     char QP_WavePath[128];
@@ -21,5 +22,6 @@
     Q_State *QDrv;
     audio_t *Audio;
     game_t  *Game;
+    QPAudit *Audit;
 
 #endif // QP_H_INCLUDED

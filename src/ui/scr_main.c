@@ -351,6 +351,16 @@ void scr_main_input()
 
 void scr_main()
 {
+    if(refresh & R_SCR_MAIN)
+    {
+        refresh &= ~R_SCR_MAIN;
+        displaymode = 0;
+        curr_val = 0;
+        curr_val_edit = 0;
+        curr_val_type = 0;
+        curr_val_offset = 0;
+    }
+
     int i, j=0, x=0, y=0;
 
     SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);

@@ -15,43 +15,47 @@ void scr_about()
     int h;
 
     y=5;
-    h=7;
-    set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
-    SCRN(y+1,2,FCOLUMNS-3,"Game settings");
-    SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
-         "Title", Game->Title);
-    SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
-         "Default output", Game->MuteRear ? "Stereo" : "Quad");
-    SCRN(y+5,3,FCOLUMNS-4,"%-20s%f",
-         "Gain", Game->Gain);
+    if(gameloaded)
+    {
+        h=7;
+        set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
+        SCRN(y+1,2,FCOLUMNS-3,"Game settings");
+        SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
+             "Title", Game->Title);
+        SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
+             "Default output", Game->MuteRear ? "Stereo" : "Quad");
+        SCRN(y+5,3,FCOLUMNS-4,"%-20s%f",
+             "Gain", Game->Gain);
 
-    y+=h+1;
-    h=7;
-    set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
-    SCRN(y+1,2,FCOLUMNS-3,"Sound driver settings");
-    SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
-         "Driver", "Quattro");
-    SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
-         "Driver type", Q_McuNames[QDrv->McuType] );
-    SCRN(y+5,3,FCOLUMNS-4,"%-20s%s (%d Hz)",
-         "Sound", "Namco C352", QDrv->ChipClock);
+        y+=h+1;
+        h=7;
+        set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
+        SCRN(y+1,2,FCOLUMNS-3,"Sound driver settings");
+        SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
+             "Driver", "Quattro");
+        SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
+             "Driver type", Q_McuNames[QDrv->McuType] );
+        SCRN(y+5,3,FCOLUMNS-4,"%-20s%s (%d Hz)",
+             "Sound", "Namco C352", QDrv->ChipClock);
 
-    y+=h+1;
-    h=8;
-    set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
-    SCRN(y+1,2,FCOLUMNS-3,"Audio settings");
-    SCRN(y+3,3,FCOLUMNS-4,"%-20s%d",
-         "Sample rate", Audio->as.freq);
-    SCRN(y+4,3,FCOLUMNS-4,"%-20s%d",
-         "Channels", Audio->as.channels);
-    SCRN(y+5,3,FCOLUMNS-4,"%-20s%d",
-         "Buffer size", Audio->as.samples);
+        y+=h+1;
+        h=8;
 
-    int af = Audio->as.format;
-    static char temp[80];
-    snprintf(temp,80,"%d-bit %s",SDL_AUDIO_BITSIZE(af),SDL_AUDIO_ISFLOAT(af)?"Float":"");
-    SCRN(y+6,3,FCOLUMNS-4,"%-20s%s",
-         "Format",temp);
+        set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
+        SCRN(y+1,2,FCOLUMNS-3,"Audio settings");
+        SCRN(y+3,3,FCOLUMNS-4,"%-20s%d",
+             "Sample rate", Audio->as.freq);
+        SCRN(y+4,3,FCOLUMNS-4,"%-20s%d",
+             "Channels", Audio->as.channels);
+        SCRN(y+5,3,FCOLUMNS-4,"%-20s%d",
+             "Buffer size", Audio->as.samples);
+
+        int af = Audio->as.format;
+        static char temp[80];
+        snprintf(temp,80,"%d-bit %s",SDL_AUDIO_BITSIZE(af),SDL_AUDIO_ISFLOAT(af)?"Float":"");
+        SCRN(y+6,3,FCOLUMNS-4,"%-20s%s",
+             "Format",temp);
+    }
 
     if(got_input)
         screen_mode = last_scrmode;

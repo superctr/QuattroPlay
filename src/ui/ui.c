@@ -27,7 +27,7 @@ void ui_drawscreen()
 
     memset(screen.text,0,sizeof(screen.text));
 
-    if(!debug_stat)
+    if(!debug_stat && gameloaded)
     {
         i=SCRN(0,14,60,"Volume: %4.2f [%s] %s",vol,
                  Audio->state.MuteRear ? "Stereo" : " Quad ",
@@ -43,6 +43,9 @@ void ui_drawscreen()
         break;
     case SCR_PLAYLIST:
         scr_playlist();
+        break;
+    case SCR_SELECT:
+        scr_select();
         break;
     default:
         scr_main();
@@ -62,12 +65,14 @@ void ui_handleinput(SDL_Keysym* ks)
         Q_UpdateTick(QDrv);
         break;
     case SDLK_q:
-        if(screen_mode == SCR_MAIN)
+        if(screen_mode == SCR_MAIN || screen_mode == SCR_SELECT)
             running=0;
-        screen_mode = SCR_MAIN;
+        else
+            screen_mode = SCR_MAIN;
         break;
     case SDLK_p:
-        QPAudio_TogglePause(Audio);
+        if(gameloaded)
+            QPAudio_TogglePause(Audio);
         break;
     case SDLK_F1:
         if(screen_mode == SCR_ABOUT)
@@ -81,24 +86,33 @@ void ui_handleinput(SDL_Keysym* ks)
         }
         break;
     case SDLK_SPACE:
-        if(screen_mode == SCR_PLAYLIST)
-            screen_mode = SCR_MAIN;
-        else
-            screen_mode = SCR_PLAYLIST;
+        if(gameloaded)
+        {
+            if(screen_mode == SCR_PLAYLIST)
+                screen_mode = SCR_MAIN;
+            else
+                screen_mode = SCR_PLAYLIST;
+        }
         break;
     case SDLK_F3:
-        SDL_LockAudioDevice(Audio->dev);
-        QDrv->BootSong=Game->BootSong;
-        Q_Reset(QDrv);
-        SDL_UnlockAudioDevice(Audio->dev);
+        if(gameloaded)
+        {
+            SDL_LockAudioDevice(Audio->dev);
+            QDrv->BootSong=Game->BootSong;
+            Q_Reset(QDrv);
+            SDL_UnlockAudioDevice(Audio->dev);
+        }
         break;
     case SDLK_F5:
         Audio->state.MuteRear ^= 1;
         break;
     case SDLK_F6:
-        QDrv->MuteMask=0;
-        QDrv->SoloMask=0;
-        Q_UpdateMuteMask(QDrv);
+        if(gameloaded)
+        {
+            QDrv->MuteMask=0;
+            QDrv->SoloMask=0;
+            Q_UpdateMuteMask(QDrv);
+        }
         break;
     case SDLK_F7:
         vol -= 0.05;
@@ -115,12 +129,15 @@ void ui_handleinput(SDL_Keysym* ks)
         Audio->state.FastForward ^= 1;
         break;
     case SDLK_F11:
-        SDL_LockAudioDevice(Audio->dev);
-        if(Audio->state.FileLogging == 0)
-            QPAudio_WavOpen(Audio,"qp_log.wav");
-        else
-            QPAudio_WavClose(Audio);
-        SDL_UnlockAudioDevice(Audio->dev);
+        if(gameloaded)
+        {
+            SDL_LockAudioDevice(Audio->dev);
+            if(Audio->state.FileLogging == 0)
+                QPAudio_WavOpen(Audio,"qp_log.wav");
+            else
+                QPAudio_WavClose(Audio);
+            SDL_UnlockAudioDevice(Audio->dev);
+        }
         break;
     case SDLK_F12:
         debug_stat ^= 1;
@@ -131,17 +148,18 @@ void ui_handleinput(SDL_Keysym* ks)
     }
 }
 
-
-void ui_main()
+int ui_main(screen_mode_t sm)
 {
+    gameloaded=1;
+    if(sm == SCR_SELECT)
+        gameloaded=0;
+
     char windowtitle[256];
     strcpy(windowtitle,"QuattroPlay");
 
-    if(strlen(Game->Title))
+    if(strlen(Game->Title) && gameloaded)
         sprintf(windowtitle,"%s - QuattroPlay",Game->Title);
 
-    Audio->state.MuteRear = Game->MuteRear;
-    Audio->state.Gain = Game->BaseGain*Game->Gain;
     vol = 1.0;
 
     #ifdef DEBUG
@@ -151,16 +169,14 @@ void ui_main()
     printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
     #endif
 
-    QPAudio_SetPause(Audio,0);
-    Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
-    //Audio->state.UpdateRequest = QPAUDIO_DRV_PLAY;
-
     SDL_SetWindowTitle(window,windowtitle);
 
     SDL_Event event;
 
-    screen_mode = SCR_MAIN;
+    screen_mode = sm;
     running = 1;
+    returncode=0;
+    refresh=-1;
     debug_stat = 0;
 
     frame_cnt= 0;
@@ -232,4 +248,6 @@ void ui_main()
         //update_text();
         SDL_Delay(1);
     }
+
+    return returncode;
 }

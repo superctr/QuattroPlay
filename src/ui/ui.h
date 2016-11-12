@@ -16,8 +16,18 @@
 typedef enum {
     SCR_MAIN = 0,
     SCR_ABOUT,
-    SCR_PLAYLIST
+    SCR_PLAYLIST,
+    SCR_SELECT,
+
 } screen_mode_t;
+
+enum {
+    R_SCR_MAIN = 1<<0,
+    R_SCR_ABOUT = 1<<1,
+    R_SCR_PLAYLIST = 1<<2,
+    R_SCR_SELECT = 1<<3,
+};
+
 
 
 #include "stdint.h"
@@ -25,6 +35,8 @@ typedef enum {
 #include "SDL2/SDL_render.h"
 #include "../qp.h"
 #include "lib.h"
+
+    int gameloaded;
 
     float vol;
     screen_t screen;
@@ -38,17 +50,22 @@ typedef enum {
     int draw_count;
     int rect_count;
 
+    int returncode;
+
     int got_input;
     SDL_Keycode keycode;
     int running;
 
+    int refresh;
+
     screen_mode_t screen_mode;
     screen_mode_t last_scrmode;
 
-void ui_main();
+int ui_main(screen_mode_t);
 
 void scr_main();
 void scr_about();
 void scr_playlist();
+void scr_select();
 
 #endif // UI_H_INCLUDED

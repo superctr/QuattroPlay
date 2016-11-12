@@ -57,7 +57,7 @@ void ui_update();
 void ui_refresh();
 void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
 
-void ui_init();
+int  ui_init();
 void ui_deinit();
 void ui_clear();
 

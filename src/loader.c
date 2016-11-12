@@ -367,6 +367,8 @@ void InitGame(game_t *Game)
         QDrv->BootSong=2;
 
     Audio->state.AutoPlaySong = Game->AutoPlay;
+    Audio->state.MuteRear = Game->MuteRear;
+    Audio->state.Gain = Game->BaseGain*Game->Gain;
 
     if(Game->WavLog)
     {
@@ -377,6 +379,7 @@ void InitGame(game_t *Game)
         }
         QPAudio_WavOpen(Audio,filename);
     }
+
 }
 
 void DeInitGame(game_t *Game)
