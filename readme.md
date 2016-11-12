@@ -60,6 +60,8 @@ This might not be complete yet.
 *	__Q__: exit
 *	__P__: pause
 *	__U__: update tick (be sure to pause first)
+*	__Esc__: Go to main screen
+*	__F1__: Go to about screen
 *	__F3__: Reset sound driver
 *	__F5__: toggle stereo/quad output
 *	__F6__: unmute all voices
@@ -70,15 +72,26 @@ This might not be complete yet.
 	*	Logs started from the GUI have filenames hardcoded to `qp_log.wav`. Don't log for too long; 30 seconds = 30 MB.
 	*	Format: 32-bit float, 4 channels, rate is either 85333 or 88200.
 *	__F12__: display statistics
+*	__Space__: Go to playlist screen
 *	__Arrow keys__: move selection
+
+### Playlist screen
+
+*	__Enter__: Play selected song
+*	__R__: Restart current song
+*	__N__: Play next song
+*	__B__: Play previous song
+
+### Main screen
+
 *	__0__-__9__: Preset action (song triggers, etc)
 	*	These are configured in the game config files, check the `/ini` directory.
 	
-###	if Track selected
+#### if Track selected
 
 *	__L__: display mode
 
-### if Track or Register selected
+#### if Track or Register selected
 
 *	__C__: clear register/track
 *	__S__: stop track
@@ -91,7 +104,7 @@ This might not be complete yet.
 	*	__Enter__: play song/change register
 	*	__Esc__: exit edit mode
 
-### if Voice selected
+#### if Voice selected
 
 *	__M__: Mute voice
 *	__S__: Solo voice
@@ -101,8 +114,6 @@ This might not be complete yet.
 
 *	Mostly everything works.
 *	Position envelopes (used by a few songs in _Cyber Commando_) are not supported.
-*	No playlist support. It won't happen until the frontend code is rewritten.
-*	The UI performance isn't great on Linux and macOS. This appears to be due to a prolem with SDL's own rendering API.
 
 ## Copyright
 
