@@ -19,14 +19,14 @@
     int curr_val_edit;    // Temp value used in editing.
     int curr_val_type;    // Type of current selected value (song request / register)
     int curr_val_offset;  // Offset in song req/register table.
-    int blink;
-
     char tempstring[512];
 
 const char regmatrix_key[] = "+0/8 +1/9 +2/a +3/b +4/c +5/d +6/e +7/f";
 
 void drawreg(int val,int y,int x)
 {
+    static int blink;
+
     uint16_t v, a;
 
     colorsel_t c = COLOR_N_GREY;

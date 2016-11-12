@@ -69,6 +69,9 @@ void scr_playlist_input()
 
 void scr_playlist()
 {
+    static int blink;
+    int disp_timer;
+
     if(refresh & R_SCR_PLAYLIST)
     {
         refresh &= ~R_SCR_PLAYLIST;
@@ -83,6 +86,7 @@ void scr_playlist()
 
     int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
 
+    disp_timer=0;
     switch(Game->PlaylistControl)
     {
     case 0:
@@ -90,13 +94,22 @@ void scr_playlist()
     default:
         break;
     case 1:
+        disp_timer=1;
     case 2:
         SCRN(3,1,FCOLUMNS-6,"Playing song %02d: %s",
              Game->PlaylistPosition+1,
              Game->Playlist[Game->PlaylistPosition].Title);
 
-        SCRN(3,FCOLUMNS-6,6,"%2.0f:%02.0f",
-             floor(QDrv->SongTimer[SongReq]/60),floor(fmod(QDrv->SongTimer[SongReq],60)));
+        if(Audio->Enabled && disp_timer)
+        {
+            blink++;
+            if(blink&0x20)
+                disp_timer=0;
+        }
+
+        if(disp_timer)
+            SCRN(3,FCOLUMNS-6,6,"%2.0f:%02.0f",
+                floor(QDrv->SongTimer[SongReq]/60),floor(fmod(QDrv->SongTimer[SongReq],60)));
         break;
     }
 
