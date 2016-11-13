@@ -212,11 +212,17 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
         // ptblank song 0xaa assumes the preset map to force the event
         // parameter mode to 'note'.
         // This song still exists in ptblank2 but sounds broken with the
-        // System11/12 sound drivers.
+        // System11/12 sound drivers, as they fixed the bug.
         if(Q->McuVer < Q_MCUVER_Q00)
         {
-            // ptblank song 0xaa
-            EventMode = Q_EVENTMODE_NOTE;
+            // the temporary ZP variable containing the event mode was reused
+            // by the preset map parser without pushing the previous value.
+            // this isn't a very accurate simulation of the bug but should
+            // work for now...
+            if(i==5) // gslugrsj song 0xa0
+                EventMode = Q_EVENTMODE_PAN;
+            else // ptblank song 0xaa
+                EventMode = Q_EVENTMODE_NOTE;
         }
     }
 
