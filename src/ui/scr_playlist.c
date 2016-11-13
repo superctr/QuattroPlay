@@ -35,6 +35,10 @@ void scr_playlist_input()
         displaypos_check();
         break;
     case SDLK_RETURN:
+        // force skip the boot song if RETURN is pressed twice
+        // while boot song still playing
+        if(QDrv->BootSong && Game->PlaylistControl==2)
+            QDrv->Track[0].SkipTrack=1;
         displaypos_check();
         Game->PlaylistPosition=displaypos;
     case SDLK_r:
