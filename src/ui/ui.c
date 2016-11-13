@@ -97,6 +97,7 @@ void ui_handleinput(SDL_Keysym* ks)
     case SDLK_F3:
         if(gameloaded)
         {
+            Game->PlaylistControl = 0;
             SDL_LockAudioDevice(Audio->dev);
             QDrv->BootSong=Game->BootSong;
             Q_Reset(QDrv);
