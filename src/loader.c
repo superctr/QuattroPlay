@@ -519,6 +519,9 @@ void GameDoUpdate(game_t *G)
 
     if(G->PlaylistControl == 2)
     {
+        for(i=0;i<Q_MAX_TRACKS;i++)
+            G->QDrv->SongRequest[i] &= 0x7ff;
+
         G->QueueSong = G->Playlist[G->PlaylistPosition].SongID;
         G->PlaylistSongID = G->Playlist[G->PlaylistPosition].SongID;
         G->PlaylistControl--;
