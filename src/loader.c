@@ -434,6 +434,9 @@ void GameDoAction(game_t *G,unsigned int id)
 
 void GameDoUpdate(game_t *G)
 {
+    int i;
+    int voicectr=0;
+
     if(QDrv->BootSong != 0)
         return;
 
@@ -480,10 +483,27 @@ void GameDoUpdate(game_t *G)
             }
             // or fade song
             else
+            {
+                G->PlaylistLoop=60;
                 G->QDrv->SongRequest[SongReq]|=0x2000;
+            }
             Q_LoopDetectionReset(G->QDrv);
             break;
         case 2:
+            G->PlaylistLoop++;
+            if(G->PlaylistLoop<2)
+            {
+                // if all voices are silent, advance immediately.
+                // otherwise, we will wait half a second before advancing
+                for(i=0;i<Q_MAX_VOICES;i++)
+                    if(!G->QDrv->Voice[i].Enabled)
+                        voicectr++;
+                if(voicectr != Q_MAX_VOICES)
+                    break;
+            }
+            else if(G->PlaylistLoop<60)
+                break;
+
             // advance playlist
             if(G->PlaylistPosition < G->SongCount-1)
             {
