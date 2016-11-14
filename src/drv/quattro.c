@@ -63,8 +63,10 @@ void Q_Reset(Q_State *Q)
     Q->VoiceCount=Q_MAX_VOICES;
 
     Q->FrameCnt=0;
-    Q->LFSR1 = 0x5500;
-    Q->LFSR2 = 0x5500;
+
+    Q->LFSR1 = Q->McuType <= Q_MCUTYPE_SS22 ? 0x0055 : 0x5500;
+    Q->LFSR2 = Q->McuType <= Q_MCUTYPE_SS22 ? 0x0055 : 0x5500;
+
     Q->PanMask=0xff;
 
     Q->MuteMask=0;
