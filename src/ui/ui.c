@@ -174,6 +174,7 @@ int ui_main(screen_mode_t sm)
 
     SDL_Event event;
 
+    screen.screen_dirty=1;
     screen_mode = sm;
     running = 1;
     returncode=0;
@@ -205,6 +206,9 @@ int ui_main(screen_mode_t sm)
                 break;
             case SDL_KEYDOWN:
                 ui_handleinput(&event.key.keysym);
+                break;
+            case SDL_RENDER_TARGETS_RESET:
+                screen.screen_dirty=1;
                 break;
             default:
                 break;

@@ -51,6 +51,7 @@ typedef struct {
     colorsel_t textcolor[FROWS][FCOLUMNS*2];
     colorsel_t bgcolor[FROWS][FCOLUMNS*2];
     uint8_t dirty[FROWS][FCOLUMNS*2];
+    int screen_dirty;
 } screen_t;
 
 void ui_update();

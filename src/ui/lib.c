@@ -55,6 +55,7 @@ void ui_update()
             c=0;
             if(y)
                 c = (screen.bgcolor[y-1][x] & CFLAG_YSHIFT) != (last_screen.bgcolor[y-1][x] & CFLAG_YSHIFT);
+            c|=screen.screen_dirty;
 
             if(c || screen.bgcolor[y][x] != last_screen.bgcolor[y][x] ||
                screen.textcolor[y][x] != last_screen.textcolor[y][x] ||
@@ -105,6 +106,8 @@ void ui_update()
 
         scrp.y -= FSIZE_Y;
     }
+
+    screen.screen_dirty=0;
 }
 
 void ui_refresh()
