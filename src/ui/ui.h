@@ -6,6 +6,8 @@
 // Amount of frames to sample for FPS counting
 #define UI_FPS_SAMPLES 16
 
+#define UI_NOTICE_TIME 100
+
 //#define FSIZE_X 8
 //#define FSIZE_Y 8
 #define FCOLUMNS 80
@@ -60,6 +62,9 @@ enum {
 
     screen_mode_t screen_mode;
     screen_mode_t last_scrmode;
+
+    char ui_notice[FCOLUMNS];
+    int ui_notice_timer;
 
 int ui_main(screen_mode_t);
 

@@ -52,12 +52,20 @@ void ui_drawscreen()
         break;
     }
 
+    if(ui_notice_timer)
+    {
+        SCRN(FROWS-1,1,FCOLUMNS,"%-80s",ui_notice);
+        --ui_notice_timer;
+    }
+
     got_input=0;
 }
 
 void ui_handleinput(SDL_Keysym* ks)
 {
     keycode = ks->sym;
+    const uint8_t * kbd;
+    kbd = SDL_GetKeyboardState(NULL);
 
     switch(keycode)
     {
@@ -143,6 +151,15 @@ void ui_handleinput(SDL_Keysym* ks)
     case SDLK_F12:
         debug_stat ^= 1;
         break;
+    case SDLK_RETURN:
+        if(kbd[SDL_SCANCODE_LALT])
+        {
+            if(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN)
+                SDL_SetWindowFullscreen(window,0);
+            else
+                SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN);
+            break;
+        }
     default:
         got_input=1;
         break;

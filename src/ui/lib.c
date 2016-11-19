@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "math.h"
 
 color_t Colors[14] = {
  {0x00,0x00,0x00}, // Black
@@ -31,7 +32,7 @@ void ui_update()
     int yshift_75 = yshift_50 + yshift_25;
 
     int y,x;
-    uint8_t c;
+    uint16_t c;
     color_t tc;
     color_t bc;
 
@@ -47,22 +48,27 @@ void ui_update()
     fntp.w = FSIZE_Y;
 
     colorsel_t bgc = 0;
+    colorsel_t fgc = 0;
+    colorsel_t pbgc= 0;
 
     for(y=FROWS;y--;)
     {
         for(x=0;x<FCOLUMNS;x++)
         {
+            bgc = screen.bgcolor[y][x];
+            fgc = screen.textcolor[y][x];
+            pbgc= screen.bgcolor[y-1][x];
+
             c=0;
             if(y)
-                c = (screen.bgcolor[y-1][x] & CFLAG_YSHIFT) != (last_screen.bgcolor[y-1][x] & CFLAG_YSHIFT);
-            c|=screen.screen_dirty;
+                c = (pbgc & CFLAG_YSHIFT) != (last_screen.bgcolor[y-1][x] & CFLAG_YSHIFT);
+            c|=screen.screen_dirty|screen.dirty[y][x];
 
-            if(c || screen.bgcolor[y][x] != last_screen.bgcolor[y][x] ||
-               screen.textcolor[y][x] != last_screen.textcolor[y][x] ||
+            if(c || bgc != last_screen.bgcolor[y][x] ||
+               fgc != last_screen.textcolor[y][x] ||
                screen.text[y][x] != last_screen.text[y][x])
             {
                 yshift=0;
-                bgc = screen.bgcolor[y][x];
                 if(bgc & CFLAG_YSHIFT_25)
                     yshift = yshift_25;
                 else if(bgc & CFLAG_YSHIFT_50)
@@ -71,20 +77,46 @@ void ui_update()
                     yshift = yshift_75;
 
                 if(yshift)
-                    scrp.y += yshift;
+                {
+                    bc = Colors[pbgc&0x7f];
+                    scrp.h = FSIZE_Y-yshift;
+                    if(scrp.h)
+                    {
+                        SDL_SetRenderDrawColor(rend,bc.red,bc.green,bc.blue,255);
+                        SDL_RenderFillRect(rend,&scrp);
+                    }
+                    scrp.h = FSIZE_Y;
+                }
+                if(pbgc & CFLAG_YSHIFT)
+                    screen.dirty[y-1][x]=1;
+
+                scrp.y += yshift;
 
                 // Draw background
                 bc = Colors[bgc&0x7f];
+                if(bgc&CFLAG_KEYBOARD)
+                    bc = Colors[COLOR_BLACK];
 
                 SDL_SetRenderDrawColor(rend,bc.red,bc.green,bc.blue,255);
                 SDL_RenderFillRect(rend,&scrp);
                 rect_count++;
 
                 // Draw text
-                c = (uint8_t)screen.text[y][x];
+                c = screen.text[y][x]&0xff;
+
                 if(c != 0x20 && c != 0x00)
                 {
-                    tc = Colors[screen.textcolor[y][x]&0x7f];
+                    // switch to keyboard char set
+                    if((fgc & CFLAG_KEYBOARD) && (c&0x80))
+                    {
+                        c+=0x80;
+                        SDL_SetTextureBlendMode(font,SDL_BLENDMODE_NONE);
+                    }
+                    else
+                    {
+                        SDL_SetTextureBlendMode(font,SDL_BLENDMODE_BLEND);
+                    }
+                    tc = Colors[fgc&0x7f];
                     //SDL_SetRenderDrawColor(rend,0,0x10,0,255);
                     SDL_SetTextureColorMod(font,tc.red,tc.green,tc.blue);
                     fntp.x = (c%32)*FSIZE_X;
@@ -93,12 +125,12 @@ void ui_update()
                     draw_count++;
                 }
 
-                if(yshift)
-                    scrp.y -= yshift;
+                scrp.y -= yshift;
 
                 last_screen.text[y][x] = screen.text[y][x];
-                last_screen.bgcolor[y][x] = screen.bgcolor[y][x];
-                last_screen.textcolor[y][x] = screen.textcolor[y][x];
+                last_screen.bgcolor[y][x] = bgc;
+                last_screen.textcolor[y][x] = fgc;
+                screen.dirty[y][x]=0;
             }
             scrp.x += FSIZE_X;
         }
@@ -112,6 +144,7 @@ void ui_update()
 
 void ui_refresh()
 {
+    SDL_SetRenderDrawColor(rend,0,0,0,255);
     SDL_SetRenderTarget(rend,NULL);
     SDL_RenderClear(rend);
     SDL_RenderCopy(rend,dispbuf,NULL,NULL);
@@ -145,10 +178,11 @@ int ui_init()
         return -1;
     }
     FSIZE_X = surface->w/32;
-    FSIZE_Y = surface->h/8;
+    FSIZE_Y = surface->h/10;
 
-    window = SDL_CreateWindow("QuattroPlay",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,0);
+    window = SDL_CreateWindow("QuattroPlay",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,SDL_WINDOW_RESIZABLE);
     rend = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
+    SDL_RenderSetLogicalSize(rend,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y);
     dispbuf = SDL_CreateTexture(rend,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y);
     #ifdef DEBUG
     SDL_RendererInfo info;
@@ -183,6 +217,57 @@ void ui_clear(colorsel_t bg,colorsel_t fg)
 {
 
 
+}
 
+uint8_t KeyboardPatterns[25][7] = {
+    {0x00,0x01,0x02,0x01,0x03,0x00,0x03}, // blank
+    {0x04,0x01,0x02,0x01,0x03,0x00,0x03}, // C
+    {0x08,0x01,0x02,0x01,0x03,0x00,0x03}, // C#
+    {0x0C,0x01,0x02,0x01,0x03,0x00,0x03}, // D
+    {0x10,0x05,0x02,0x01,0x03,0x00,0x03}, // D#
+    {0x00,0x09,0x02,0x01,0x03,0x00,0x03}, // E
+    {0x00,0x0D,0x02,0x01,0x03,0x00,0x03}, // F
+    {0x00,0x11,0x06,0x01,0x03,0x00,0x03}, // F#
+    {0x00,0x01,0x0A,0x01,0x03,0x00,0x03}, // G
+    {0x00,0x01,0x0E,0x01,0x03,0x00,0x03}, // G#
+    {0x00,0x01,0x12,0x01,0x03,0x00,0x03}, // A
+    {0x00,0x01,0x15,0x05,0x03,0x00,0x03}, // A#
+    {0x00,0x01,0x02,0x09,0x03,0x00,0x03}, // B
+    {0x00,0x01,0x02,0x0D,0x03,0x00,0x03}, // C
+    {0x00,0x01,0x02,0x11,0x07,0x00,0x03}, // C#
+    {0x00,0x01,0x02,0x01,0x0B,0x00,0x03}, // D
+    {0x00,0x01,0x02,0x01,0x0F,0x00,0x03}, // D#
+    {0x00,0x01,0x02,0x01,0x13,0x00,0x03}, // E
+    {0x00,0x01,0x02,0x01,0x03,0x04,0x03}, // F
+    {0x00,0x01,0x02,0x01,0x03,0x08,0x03}, // F¤
+    {0x00,0x01,0x02,0x01,0x03,0x0C,0x03}, // G
+    {0x00,0x01,0x02,0x01,0x03,0x10,0x07}, // G#
+    {0x00,0x01,0x02,0x01,0x03,0x00,0x0B}, // A
+    {0x00,0x01,0x02,0x01,0x03,0x00,0x0F}, // A#
+    {0x00,0x01,0x02,0x01,0x03,0x00,0x13}, // B
+};
 
+void ui_keyboard(int y,int x,int octaves,int note)
+{
+    int max = ceil(octaves*3.5);
+    int group,tile;
+    int index=0;
+    int offset=0;
+    if(note>0)
+    {
+        note-=1;
+        offset=note/24;
+        index=(note%24)+1;
+    }
+    int i,k;
+    for(i=0;i<max;i++)
+    {
+        group = i/7;
+        tile = i%7;
+        k = (group==offset) ? index : 0;
+
+        screen.text[y  ][x] = 0x80+KeyboardPatterns[k][tile];
+        screen.text[y+1][x] = 0xa0+KeyboardPatterns[k][tile];
+        x++;
+    }
 }

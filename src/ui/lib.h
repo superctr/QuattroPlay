@@ -9,6 +9,7 @@
 
 #define SCR(_y_,_x_,str,...) sprintf(&screen.text[_y_][_x_],str , ##__VA_ARGS__)
 #define SCRN(_y_,_x_,count,str,...) snprintf(&screen.text[_y_][_x_],count,str , ##__VA_ARGS__)
+#define NOTICE(str,...) {snprintf(ui_notice,80,str, ##__VA_ARGS__);ui_notice_timer=UI_NOTICE_TIME;}
 
 #define set_color ui_color
 
@@ -36,7 +37,9 @@ typedef enum {
     CFLAG_YSHIFT_25 = 0x100,
     CFLAG_YSHIFT_50 = 0x200,
     CFLAG_YSHIFT_75 = 0x400,
-    CFLAG_YSHIFT    = 0x700
+    CFLAG_YSHIFT    = 0x700,
+
+    CFLAG_KEYBOARD  = 0x800,
 
 } colorsel_t;
 
@@ -57,6 +60,7 @@ typedef struct {
 void ui_update();
 void ui_refresh();
 void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
+void ui_keyboard(int y,int x,int octaves,int note);
 
 int  ui_init();
 void ui_deinit();

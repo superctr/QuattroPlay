@@ -1,11 +1,15 @@
 #include "string.h"
 #include "math.h"
+#include "stdlib.h"
 #include "../qp.h"
 
 #include "ui.h"
 
 #define PLPAGE (FROWS-7)
     int displaypos;
+    int pl_mode;
+    int kbd_transpose;
+    int kbd_flag;
 
 void displaypos_check()
 {
@@ -14,6 +18,40 @@ void displaypos_check()
     if(displaypos >= Game->SongCount)
         displaypos = Game->SongCount-1;
 }
+
+void scr_playlist_input2()
+{
+    got_input=0;
+
+    switch(keycode)
+    {
+    case SDLK_l:
+        pl_mode^=1;
+        break;
+    case SDLK_i:
+        if(pl_mode==1)
+            kbd_transpose+=24;
+    case SDLK_d:
+        if(pl_mode==1)
+            kbd_transpose-=12;
+        NOTICE("Keyboard display octave set to %d",-(kbd_transpose/12));
+        break;
+    case SDLK_8:
+        if(pl_mode==1)
+            kbd_flag ^= 1;
+        NOTICE("Pitch mod display turned %s",kbd_flag&1?"ON":"OFF");
+        break;
+    case SDLK_9:
+        if(pl_mode==1)
+            kbd_flag ^= 2;
+        NOTICE("Volume mod display turned %s",kbd_flag&2?"ON":"OFF");
+        break;
+    default:
+        got_input=1;
+    }
+
+}
+
 void scr_playlist_input()
 {
     SDL_LockAudioDevice(Audio->dev);
@@ -65,10 +103,124 @@ void scr_playlist_input()
         Game->PlaylistPosition=displaypos;
         Game->PlaylistControl=2;
         break;
+    default:
+        got_input=1;
     }
 
     SDL_UnlockAudioDevice(Audio->dev);
 }
+
+void scr_playlist_kbd()
+{
+    Q_Voice* V;
+    char pandir;
+    int8_t pan;
+    int16_t vol;
+    int16_t pitch;
+    int16_t temp;
+    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
+    int i,n;
+    int x,y,flag,bg,color;
+    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
+    for(i=0;i<32;i++)
+    {
+        V = &QDrv->Voice[i];
+        n=0;
+        x = (i&16) ? 40 : 0;
+        y = ((i&15)>>1)*5 + ((i&1) * 2);
+        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
+        color = V->TrackNo ? COLOR_WHITE : COLOR_N_GREY;
+        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
+        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
+
+        if(V->TrackNo)
+        {
+            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
+        }
+
+        pitch=V->BaseNote;
+        if(kbd_flag&1)
+            pitch = ((V->Pitch+V->PitchEnvMod+V->LfoMod)&0xff00)>>8;
+
+        if(V->Enabled==1)
+            n=kbd_transpose-2+pitch;
+
+        ui_keyboard(5+y,1+x,8,n);
+
+        temp=0;
+        switch(V->PanMode)
+        {
+        case Q_PANMODE_IMM:
+        default:
+            temp = (signed)V->Pan;
+            break;
+        case Q_PANMODE_ENV:
+        case Q_PANMODE_ENV_SET:
+            temp = (V->PanEnvTarget-V->PanEnvValue)>>8;
+            break;
+        case Q_PANMODE_REG:
+        case Q_PANMODE_POSREG:
+            if(V->PanSource)
+                temp = *V->PanSource & 0xff;
+            break;
+        }
+        pan = temp;
+        if(!pan)
+            pandir='C';
+        else if(pan<0)
+            pandir='L';
+        else
+            pandir='R';
+        pan = abs(pan);
+
+        vol = V->Volume;
+        if(kbd_flag&2 && V->TrackVol)
+            vol += *V->TrackVol;
+
+        SCRN(5+y,29+x,16,"t%02xc%1x %c%s%02d",
+             V->TrackNo ? V->TrackNo-1 : 0,
+             V->ChannelNo,
+             pandir,
+             (pan>99) ? "" : "+",
+             pan);
+        SCRN(6+y,29+x,16,"w%04d v%03d",
+             V->WaveNo&0x1fff,
+             (vol>255) ? 255 : vol);
+    }
+}
+
+void scr_playlist_list(int ypos,int height)
+{
+    int y = 0;
+    int i = displaypos;
+    int offset = 0;
+    int max = height;
+    if(Game->SongCount < max)
+        max = Game->SongCount;
+    if(i>(height/2) && Game->SongCount > max)
+        offset = i-(height/2);
+    if(offset+max > Game->SongCount)
+        offset -= (offset+max)-Game->SongCount;
+
+    for(y=0;y<max;y++)
+    {
+        i=y+offset;
+        colorsel_t bg=COLOR_D_BLUE,fg=COLOR_L_GREY;
+
+        if(displaypos == i)
+            bg = COLOR_N_BLUE;
+        if(Game->PlaylistPosition == i)
+            fg = COLOR_WHITE;
+
+        set_color(ypos+y,1,1,FCOLUMNS-2,bg,fg);
+
+        SCRN(ypos+y,1,FCOLUMNS-2,"%02d %s",i+1,Game->Playlist[i].Title);
+    }
+}
+
 
 
 void scr_playlist()
@@ -80,6 +232,9 @@ void scr_playlist()
     {
         refresh &= ~R_SCR_PLAYLIST;
         displaypos=0;
+        pl_mode=0;
+        kbd_transpose=0;
+        kbd_flag=0;
     }
 
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
@@ -117,42 +272,31 @@ void scr_playlist()
         break;
     }
 
+    if(Game->SongCount)
+    {
+        SCRN(49,1,48,"ENTER: play song, S: stop, F: fade, P: pause");
+        if(got_input)
+            scr_playlist_input();
+    }
+    if(got_input)
+        scr_playlist_input2();
+
+    int ypos=5;
+    int max=PLPAGE;
+    if(pl_mode==1)
+    {
+        scr_playlist_kbd();
+        ypos+=40;
+        max-=40;
+    }
 
     if(Game->SongCount == 0)
     {
-        SCRN(5,1,FCOLUMNS-2,"Playlist not defined.");
+        SCRN(ypos,1,FCOLUMNS-2,"Playlist not defined.");
     }
     else
     {
-        if(got_input)
-            scr_playlist_input();
-
-        int y = 0;
-        int i = displaypos;
-        int offset = 0;
-        int max = PLPAGE;
-        if(Game->SongCount < max)
-            max = Game->SongCount;
-        if(i>(PLPAGE/2) && Game->SongCount > max)
-            offset = i-(PLPAGE/2);
-        if(offset+max > Game->SongCount)
-            offset -= (offset+max)-Game->SongCount;
-
-        for(y=0;y<max;y++)
-        {
-            i=y+offset;
-            colorsel_t bg=COLOR_D_BLUE,fg=COLOR_L_GREY;
-
-            if(displaypos == i)
-                bg = COLOR_N_BLUE;
-            if(Game->PlaylistPosition == i)
-                fg = COLOR_WHITE;
-
-            set_color(5+y,1,1,FCOLUMNS-2,bg,fg);
-
-            SCRN(5+y,1,FCOLUMNS-2,"%02d %s",i+1,Game->Playlist[i].Title);
-        }
-
-        SCRN(49,1,48,"ENTER: play song, S: stop, F: fade, P: pause");
+        scr_playlist_list(ypos,max);
     }
+
 }
