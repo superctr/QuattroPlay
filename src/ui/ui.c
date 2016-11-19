@@ -25,6 +25,8 @@ void ui_drawscreen()
     int i;
     set_color(0,0,FROWS,FCOLUMNS,COLOR_BLACK,COLOR_L_GREY);
 
+    static int last_song;
+
     memset(screen.text,0,sizeof(screen.text));
 
     if(!debug_stat && gameloaded)
@@ -50,6 +52,15 @@ void ui_drawscreen()
     default:
         scr_main();
         break;
+    }
+
+    if(gameloaded && last_song != Game->PlaylistPosition)
+    {
+        if(screen_mode != SCR_PLAYLIST)
+            NOTICE("Now playing %02d: %s",
+                   Game->PlaylistPosition,
+                   Game->Playlist[Game->PlaylistPosition].Title);
+        last_song = Game->PlaylistPosition;
     }
 
     if(ui_notice_timer)
