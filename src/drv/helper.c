@@ -14,9 +14,14 @@
 #define DISP_MCU_INFO 1
 #endif
 
+const char* Q_McuIds[Q_MCUTYPE_MAX] =
+{
+    "","C74","C75","C76","SS22","H8_ND","H8",
+};
+
 const char* Q_McuNames[Q_MCUTYPE_MAX] =
 {
-    "Unidentifed","C74/C75 (System22/NB)","C75 (NB-1/2, FL)","C76 (System11)","M37710 (SystemSuper22)","H8/3002 (ND-1)","H8/3002 (System12/23)",
+    "Unidentifed","C74 (System22)","C75 (NB-1/2, FL)","C76 (System11)","M37710 (SystemSuper22)","H8/3002 (ND-1)","H8/3002 (System12/23)",
 };
 
 const char* Q_NoteNames[12] =
@@ -80,6 +85,20 @@ uint16_t Q_ReadWordBE(Q_State *Q,uint32_t d)
     return ((Q->McuData[d]<<8) | (Q->McuData[d+1]<<0));
 }
 
+Q_McuType Q_GetMcuTypeFromString(char* s)
+{
+    Q_McuType a;
+    for(a=0;a<Q_MCUTYPE_MAX;a++)
+    {
+        if(!strcmp(s,Q_McuIds[a]))
+        {
+            Q_DEBUG("got MCU type from string\n");
+            return a;
+        }
+    }
+    return Q_MCUTYPE_UNIDENTIFIED;
+}
+
 Q_McuType Q_GetMcuType(Q_State* Q)
 {
     uint32_t d = (Q_ReadWordBE(Q,0)<<16)|Q_ReadWordBE(Q,2);
@@ -109,7 +128,8 @@ void Q_GetMcuVer(Q_State* Q)
     int i;
     int l;
 
-    Q->McuType = Q_GetMcuType(Q);
+    if(!Q->McuType)
+        Q->McuType = Q_GetMcuType(Q);
     Q->McuVer = Q_MCUVER_PRE;
     Q_DEBUG("Detected MCU Type: %s\n",Q_McuNames[Q->McuType]);
 
@@ -165,6 +185,9 @@ skip:
         {
         default:
             Q->ChipClock = 24576000;
+            break;
+        case Q_MCUTYPE_C75:
+            Q->ChipClock = 24192000;
             break;
         case Q_MCUTYPE_C76:
         case Q_MCUTYPE_S12:

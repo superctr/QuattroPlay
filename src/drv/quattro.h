@@ -38,8 +38,10 @@ void Q_Reset(Q_State* Q);
 // Call every 1/120 second
 void Q_UpdateTick(Q_State* Q);
 
-// TODO: ReadTrackData/WriteTrackData sounds better
+// get MCU type from string...
+Q_McuType Q_GetMcuTypeFromString(char* s);
 
+// TODO: ReadTrackData/WriteTrackData sounds better
 // Read byte from track struct
 uint8_t Q_ReadTrackInfo(Q_State* Q, int trk, int index);
 // Read byte from track channel struct

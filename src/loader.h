@@ -25,6 +25,7 @@ typedef struct {
 
     char Name[256]; // short name (filename-legal)
     char Title[1024]; // display title
+    char Type[64]; // driver type
 
     uint8_t *Data;
     uint32_t DataSize;

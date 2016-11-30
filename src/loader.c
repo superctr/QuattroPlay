@@ -26,7 +26,6 @@ int LoadGame(game_t *G)
     //static char gamehackname[128];
     static char wave0[16];
     static char wave1[16];
-    static char mcutype[16];
 
     int byteswap = 0;
     int wave_count = 0;
@@ -55,7 +54,6 @@ int LoadGame(game_t *G)
     static char data_filename[128];
 
     msgstring[0] = 0;
-    mcutype[0] = 0;
     path[0] = 0;
 
     sprintf(msgstring,"Failed to load '%s':",G->Name);
@@ -73,6 +71,7 @@ int LoadGame(game_t *G)
     memset(wave_offset,0,sizeof(wave_offset));
     memset(wave_filename,0,sizeof(wave_filename));
     memset(G->Action,0,sizeof(G->Action));
+    memset(G->Type,0,sizeof(G->Type));
 
     inifile_t initest;
     if(!ini_open(filename,&initest))
@@ -93,7 +92,7 @@ int LoadGame(game_t *G)
                 else if(!strcmp(initest.key,"filename"))
                     strcpy(data_filename,initest.value);
                 else if(!strcmp(initest.key,"type"))
-                    strcpy(mcutype,initest.value);
+                    strcpy(G->Type,initest.value);
                 else if(!strcmp(initest.key,"byteswap"))
                     byteswap = atoi(initest.value) & 1;
                 else if(!strcmp(initest.key,"gain"))
@@ -257,7 +256,7 @@ int LoadGame(game_t *G)
         else if(patchtype[i] == 3) // song table
         {
             patchaddr_set = patchaddr[i];
-            if(!strcmp(mcutype,"H8")) // for most cases....
+            if(!strcmp(G->Type,"H8") || !strcmp(G->Type,"H8_ND")) // for most cases....
             {
                 if(patchaddr_set < 0x1800)
                     patchaddr_set += 0x800e;
@@ -324,6 +323,7 @@ void InitGame(game_t *Game)
     // Initialize sound chip and some initial sound driver parameters.
     memset(&QDrv->Chip,0,sizeof(QDrv->Chip));
 
+    QDrv->McuType = Q_GetMcuTypeFromString(Game->Type);
     QDrv->ChipClock = Game->ChipFreq;
     C352_init(&QDrv->Chip,Game->ChipFreq);
     QDrv->Chip.vgm_log = 0;
