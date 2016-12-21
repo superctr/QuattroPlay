@@ -52,15 +52,15 @@ uint16_t pattern_arg_operand(uint32_t* TrackPos,uint8_t mode,uint16_t *regs)
 
 void ui_pattern_disp(int TrackNo)
 {
-    uint16_t regs[256];
+    static uint16_t regs[256];
     int i, left, skip;
     uint32_t pos, jump;
     uint8_t cmd, setflags;
     uint16_t mask, data, temp, dest, source, lfsr;
     int subpos, reppos, looppos;
-    uint32_t substack[Q_MAX_SUB_STACK], repstack[Q_MAX_REPEAT_STACK], loopstack[Q_MAX_LOOP_STACK];
-    uint8_t repcount[Q_MAX_REPEAT_STACK], loopcount[Q_MAX_LOOP_STACK];
-    uint8_t transpose[Q_MAX_TRKCHN];
+    static uint32_t substack[Q_MAX_SUB_STACK], repstack[Q_MAX_REPEAT_STACK], loopstack[Q_MAX_LOOP_STACK];
+    static uint8_t repcount[Q_MAX_REPEAT_STACK], loopcount[Q_MAX_LOOP_STACK];
+    static uint8_t transpose[Q_MAX_TRKCHN];
     int maxcommands = 50000;
 
     trackpattern_length = 0;
@@ -100,6 +100,12 @@ void ui_pattern_disp(int TrackNo)
 
     while(trackpattern_length < 32)
     {
+        if(pos>0x7ffff)
+        {
+            Q_DEBUG("WARNING: ui_pattern_disp read pos (%06x) (T=%02x at %06x)\n",pos,TrackNo,T->Position);
+            return;
+        }
+
         cmd = pattern_arg_byte(&pos);
         maxcommands--;
 
