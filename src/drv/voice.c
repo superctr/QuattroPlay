@@ -217,8 +217,8 @@ void Q_VoiceUpdate(Q_State *Q,int VoiceNo,Q_Voice* V)
     Q_VoiceLfoUpdate(Q,VoiceNo,V);
 
     // calculate pitch
-    pitch = V->Pitch+V->PitchEnvMod+V->LfoMod+Q->BasePitch;
-    pitch += V->WaveTranspose;
+    pitch = V->Pitch+V->PitchEnvMod+V->LfoMod+Q->BasePitch+V->WaveTranspose;
+    pitch &= 0x7fff;
 
     // get frequencies from table
     freq1 = Q->PitchTable[pitch>>8];
