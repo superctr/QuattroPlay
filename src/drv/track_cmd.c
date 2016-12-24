@@ -174,7 +174,7 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
     Q_VoiceEvent* E;
     uint8_t EventPos;
     uint32_t MapPos;
-    int i;
+    int i=0;
 
     uint8_t MapRes;
 
