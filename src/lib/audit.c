@@ -84,7 +84,10 @@ void WriteAuditEntry(QPAuditEntry *entry, char *name)
             }
             else if(!strcmp(initest.section,"playlist"))
             {
-                entry->HasPlaylist = 1;
+                if(!entry->HasPlaylist)
+                    entry->HasPlaylist = 1;
+                if(!strcmp(initest.key,"wip"))
+                    entry->HasPlaylist = 2;
             }
         }
     }

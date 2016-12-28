@@ -95,6 +95,9 @@ void scr_select()
             set_color(5+y,1,1,FCOLUMNS-2,bg,fg);
 
             SCRN(5+y,1,FCOLUMNS-2,"%-14s %s",Audit->Entry[i].Name,Audit->Entry[i].DisplayName);
+
+            if(Audit->Entry[i].HasPlaylist == 2)
+                set_color(5+y,FCOLUMNS-2,1,1,bg,COLOR_D_GREY);
             if(Audit->Entry[i].HasPlaylist)
                 SCRN(5+y,FCOLUMNS-2,2,"P");
         }
