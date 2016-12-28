@@ -17,7 +17,7 @@
 // Loads game ini, then the sound data and wave roms...
 int LoadGame(game_t *G)
 {
-    Q_State* Q = G->QDrv;
+    //Q_State* Q = G->QDrv;
 
     static char msgstring[2048];
 
@@ -305,7 +305,12 @@ int LoadGame(game_t *G)
         return -1;
     }
 
-    G->QDrv = Q;
+    DriverInterface = (struct _DriverInterface*)malloc(sizeof(struct _DriverInterface));
+    memset(DriverInterface,0,sizeof(struct _DriverInterface));
+
+    DriverCreate(DriverInterface,DRIVER_QUATTRO);
+    QDrv = DriverInterface->Driver.quattro;
+    //G->QDrv = Q;
     return 0;
 }
 
@@ -314,23 +319,16 @@ int UnloadGame(game_t *G)
     free(G->Data);
     free(G->WaveData);
     //free(Q_Chip);
+    QDrv = NULL;
+    DriverDestroy(DriverInterface);
     return 0;
 }
 
 void InitGame(game_t *Game)
 {
 
+    DriverInit();
     // Initialize sound chip and some initial sound driver parameters.
-    memset(&QDrv->Chip,0,sizeof(QDrv->Chip));
-
-    QDrv->McuType = Q_GetMcuTypeFromString(Game->Type);
-    QDrv->ChipClock = Game->ChipFreq;
-    C352_init(&QDrv->Chip,Game->ChipFreq);
-    QDrv->Chip.vgm_log = 0;
-
-    QDrv->Chip.wave = Game->WaveData;
-    QDrv->Chip.wave_mask = Game->WaveMask;
-    QDrv->McuData = Game->Data;
 
     Game->PlaylistPosition = 0;
     Game->PlaylistLoop = 0;
@@ -352,19 +350,18 @@ void InitGame(game_t *Game)
             sprintf(filename,"%s_%03x.vgm",Game->Name,Game->AutoPlay&0x7ff);
         }
         vgm_open(filename);
-        vgm_datablock(0x92,0x1000000,QDrv->Chip.wave,0x1000000,QDrv->Chip.wave_mask,0);
-        QDrv->Chip.vgm_log = 1;
+
+        DriverInitVgm();
     }
 
-    QDrv->PortaFix=Game->PortaFix;
-    QDrv->BootSong=Game->BootSong;
     Game->QueueSong=Game->AutoPlay;
-    Q_Init(QDrv);
+
+    DriverReset(1);
 
     QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,Game->AudioBuffer,audiodev);
 
-    if(Game->AutoPlay >= 0)
-        QDrv->BootSong=2;
+    //if(Game->AutoPlay >= 0)
+    //    QDrv->BootSong=2;
 
     Audio->state.AutoPlaySong = Game->AutoPlay;
     Audio->state.MuteRear = Game->MuteRear;
@@ -391,29 +388,25 @@ void DeInitGame(game_t *Game)
         SDL_UnlockAudioDevice(Audio->dev);
     }
 
-    if(QDrv->Chip.vgm_log)
+    if(Game->VgmLog)
     {
         SDL_LockAudioDevice(Audio->dev);
-        QDrv->Chip.vgm_log = 0;
-        vgm_poke32(0xdc,QDrv->ChipClock | Audio->state.MuteRear<<31);
-        vgm_poke8(0xd6,288/4);
+        DriverCloseVgm();
         vgm_stop();
         vgm_write_tag(strlen(Game->Title) ? Game->Title : Game->Name,Game->AutoPlay);
         vgm_close();
         SDL_UnlockAudioDevice(Audio->dev);
     }
 
-    Q_Deinit(QDrv);
+    DriverDeinit();
 }
 
 void ResetGame(game_t *Game)
 {
-    QDrv->BootSong=Game->BootSong;
-    Q_Reset(QDrv);
+    DriverReset(0);
     Game->PlaylistControl=0;
     Game->QueueSong=Game->AutoPlay;
 }
-
 
 // Perform register action (song triggers).
 void GameDoAction(game_t *G,unsigned int id)
@@ -425,7 +418,8 @@ void GameDoAction(game_t *G,unsigned int id)
     {
         reg = G->Action[id].reg[i];
         if(reg<0x100)
-            G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
+            DriverSetParameter(G->Action[id].reg[i],G->Action[id].data[i]);
+        //G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
         else if(reg<0x120)
             G->QDrv->SongRequest[G->Action[id].reg[i]&0x1f] = G->Action[id].data[i];
     }
@@ -435,7 +429,6 @@ void GameDoAction(game_t *G,unsigned int id)
 void GameDoUpdate(game_t *G)
 {
     int i;
-    int voicectr=0;
 
     if(QDrv->BootSong != 0)
         return;
@@ -447,7 +440,7 @@ void GameDoUpdate(game_t *G)
         int state = 0;
         int SongReq = G->PlaylistSongID & 0x800 ? 8 : 0;
 
-        int loopcnt = Q_LoopDetectionGetCount(G->QDrv,SongReq);
+        int loopcnt = DriverGetLoopCount(SongReq);
 
         // time out
         if(S->wait_type == 2)
@@ -456,13 +449,14 @@ void GameDoUpdate(game_t *G)
             if(++G->PlaylistLoop > 1)
                 state = 1;
         }
-        if(S->wait_type == 1 && G->QDrv->SongTimer[SongReq] > S->wait_count)
+        if(S->wait_type == 1 && DriverGetPlayingTime(SongReq) > S->wait_count)
             state=1;
         if(S->wait_type == 0 && loopcnt >= S->wait_count)
             state=1;
 
         // song is stopped
-        if((QDrv->SongRequest[SongReq]&0x8000) == 0)
+        //if((QDrv->SongRequest[SongReq]&0x8000) == 0)
+        if(DriverGetSongStatus(SongReq) != 1)
             state=2;
 
         switch(state)
@@ -485,9 +479,10 @@ void GameDoUpdate(game_t *G)
             else
             {
                 G->PlaylistLoop=60;
-                G->QDrv->SongRequest[SongReq]|=0x2000;
+                //G->QDrv->SongRequest[SongReq]|=0x2000;
+                DriverFadeOutSong(SongReq);
             }
-            Q_LoopDetectionReset(G->QDrv);
+            DriverResetLoopCount();
             break;
         case 2:
             G->PlaylistLoop++;
@@ -495,10 +490,7 @@ void GameDoUpdate(game_t *G)
             {
                 // if all voices are silent, advance immediately.
                 // otherwise, we will wait half a second before advancing
-                for(i=0;i<Q_MAX_VOICES;i++)
-                    if(!G->QDrv->Voice[i].Enabled)
-                        voicectr++;
-                if(voicectr != Q_MAX_VOICES)
+                if(DriverDetectSilence())
                     break;
             }
             else if(G->PlaylistLoop<60)
@@ -519,8 +511,8 @@ void GameDoUpdate(game_t *G)
 
     if(G->PlaylistControl == 2)
     {
-        for(i=0;i<Q_MAX_TRACKS;i++)
-            G->QDrv->SongRequest[i] &= 0x7ff;
+        for(i=0;i<DriverGetSlotCount();i++)
+            DriverStopSong(i);
 
         G->QueueSong = G->Playlist[G->PlaylistPosition].SongID;
         G->PlaylistSongID = G->Playlist[G->PlaylistPosition].SongID;
@@ -532,8 +524,10 @@ void GameDoUpdate(game_t *G)
 
     if(G->QueueSong >= 0)
     {
-        Q_LoopDetectionReset(G->QDrv);
-        G->QDrv->SongRequest[G->QueueSong & 0x800 ? 8 : 0] = 0x4000 | (G->QueueSong&0x7ff);
+        DriverResetLoopCount();
+        DriverRequestSong(G->QueueSong & 0x800 ? 8 : 0, G->QueueSong&0x7ff);
+        //Q_LoopDetectionReset(G->QDrv);
+        //G->QDrv->SongRequest[G->QueueSong & 0x800 ? 8 : 0] = 0x4000 | (G->QueueSong&0x7ff);
     }
 
     G->QueueSong = -1;

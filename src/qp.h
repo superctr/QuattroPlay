@@ -11,6 +11,7 @@
 #define QP_WEBSITE "https://github.com/superctr/QuattroPlay"
 
 #include "drv/quattro.h"
+#include "driver.h"
 #include "audio.h"
 #include "loader.h"
 #include "lib/audit.h"
@@ -23,5 +24,7 @@
     audio_t *Audio;
     game_t  *Game;
     QPAudit *Audit;
+
+    struct _DriverInterface *DriverInterface;
 
 #endif // QP_H_INCLUDED

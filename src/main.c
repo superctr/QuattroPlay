@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
 //    static char datapath[128];
 //    static char gamename[128];
 
-    QDrv = (Q_State*)malloc(sizeof(Q_State));
-    memset(QDrv,0,sizeof(Q_State));
+    //QDrv = (Q_State*)malloc(sizeof(Q_State));
+    //memset(QDrv,0,sizeof(Q_State));
 
     Audio = (audio_t*)malloc(sizeof(audio_t));
     memset(Audio,0,sizeof(audio_t));
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     Audit = (QPAudit*)malloc(sizeof(QPAudit));
     memset(Audit,0,sizeof(QPAudit));
 
-    if(!QDrv || !Audio || !Game)
+    if(/*!QDrv ||*/ !Audio || !Game)
         return -1;
 
     Game->AutoPlay = -1;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
     }
 
-    Game->QDrv = QDrv;
+    //Game->QDrv = QDrv;
 
     if(!strlen(Game->Name))
     {

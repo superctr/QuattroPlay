@@ -256,8 +256,9 @@ void scr_main_input()
             }
             if(curr_val_type == ENTRY_VOICE)
             {
-                QDrv->SoloMask ^= 1<<curr_val_offset;
-                Q_UpdateMuteMask(QDrv);
+                DriverSetSolo(DriverGetSolo() ^ 1<<curr_val_offset);
+                //QDrv->SoloMask ^= 1<<curr_val_offset;
+                //Q_UpdateMuteMask(QDrv);
             }
         }
         break;
@@ -267,8 +268,9 @@ void scr_main_input()
             ui_convert_currval();
             if(curr_val_type == ENTRY_VOICE)
             {
-                QDrv->MuteMask ^= 1<<curr_val_offset;
-                Q_UpdateMuteMask(QDrv);
+                DriverSetMute(DriverGetMute() ^ 1<<curr_val_offset);
+                //QDrv->MuteMask ^= 1<<curr_val_offset;
+                //Q_UpdateMuteMask(QDrv);
             }
         }
         break;
@@ -279,9 +281,7 @@ void scr_main_input()
 
             if(curr_val_type == ENTRY_VOICE)
             {
-                QDrv->MuteMask=0;
-                QDrv->SoloMask=0;
-                Q_UpdateMuteMask(QDrv);
+                DriverResetMute();
             }
             else
                 ui_entry_setvalue(1,curr_val_type,curr_val_offset,curr_val_edit);

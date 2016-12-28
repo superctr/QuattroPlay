@@ -22,8 +22,8 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
 
     int updatemode = S->UpdateRequest;
 
-    double ChipDelta = (double)S->QDrv->Chip.rate/S->SampleRate;
-    double DriverDelta = (double)120/S->SampleRate;
+    double ChipDelta = (double)DriverGetChipRate()/S->SampleRate;
+    double DriverDelta = (double)DriverGetTickRate()/S->SampleRate;
 
     if(S->FastForward)
         DriverDelta *= 32;
@@ -35,7 +35,8 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
             S->DriverUpdate += DriverDelta;
             while(S->DriverUpdate > 1)
             {
-                Q_UpdateTick(S->QDrv);
+                DriverUpdateTick();
+                //Q_UpdateTick(S->QDrv);
 
                 if(S->QDrv->Chip.vgm_log)
                 {
@@ -51,14 +52,16 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
             S->ChipUpdate += ChipDelta;
             while(S->ChipUpdate > 1)
             {
-                C352_update(&S->QDrv->Chip);
+                //C352_update(&S->QDrv->Chip);
+                DriverUpdateChip();
                 S->ChipUpdate-=1;
             }
 
-            ChipOut[0] = S->QDrv->Chip.out[0] / 268435456;
-            ChipOut[1] = S->QDrv->Chip.out[1] / 268435456;
-            ChipOut[2] = S->MuteRear ? 0 : S->QDrv->Chip.out[2] / 268435456;
-            ChipOut[3] = S->MuteRear ? 0 : S->QDrv->Chip.out[3] / 268435456;
+            DriverSampleChip(ChipOut,S->MuteRear ? 2 : 4);
+            //ChipOut[0] = S->QDrv->Chip.out[0] / 268435456;
+            //ChipOut[1] = S->QDrv->Chip.out[1] / 268435456;
+            //ChipOut[2] = S->MuteRear ? 0 : S->QDrv->Chip.out[2] / 268435456;
+            //ChipOut[3] = S->MuteRear ? 0 : S->QDrv->Chip.out[3] / 268435456;
 
             //printf("%08x %08x %08x %08x\n",ChipOut[0],ChipOut[1],ChipOut[2],ChipOut[3]);
 

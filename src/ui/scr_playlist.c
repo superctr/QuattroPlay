@@ -87,9 +87,9 @@ void scr_playlist_input()
         Game->PlaylistControl = 0;
         int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
         if(keycode==SDLK_f)
-            QDrv->SongRequest[SongReq] |= Q_TRACK_STATUS_FADE;
+            DriverFadeOutSong(SongReq);
         if(keycode==SDLK_s)
-            QDrv->SongRequest[SongReq] &= ~(Q_TRACK_STATUS_BUSY);
+            DriverStopSong(SongReq);
         break;
     case SDLK_n:
         displaypos = Game->PlaylistPosition+1;
@@ -241,7 +241,7 @@ void scr_playlist()
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
     set_color(5,1,FROWS-7,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
     set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
-    SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
+    SCRN(1,1,FCOLUMNS-2,"%s",DriverGetSongMessage());
 
     int SongReq = Game->PlaylistSongID & 0x800 ? 8 : 0;
 

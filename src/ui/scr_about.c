@@ -28,15 +28,23 @@ void scr_about()
              "Gain", Game->Gain);
 
         y+=h+1;
-        h=7;
+        h=8;
         set_color(y,1,h,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
         SCRN(y+1,2,FCOLUMNS-3,"Sound driver settings");
         SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
-             "Driver", "Quattro");
+             "Driver", DriverInterface->Name);
+        SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
+             "Driver type",DriverGetDriverInfo());
+        SCRN(y+4,3,FCOLUMNS-4,"%-20s%.0f Hz",
+             "Tick rate", DriverGetTickRate());
+        SCRN(y+5,3,FCOLUMNS-4,"%-20s%.0f Hz",
+             "Chip rate", DriverGetChipRate());
+/*
         SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
              "Driver type", Q_McuNames[QDrv->McuType] );
         SCRN(y+5,3,FCOLUMNS-4,"%-20s%s (%d Hz)",
              "Sound", "Namco C352", QDrv->ChipClock);
+*/
 
         y+=h+1;
         h=8;

@@ -81,7 +81,7 @@ void ui_handleinput(SDL_Keysym* ks)
     switch(keycode)
     {
     case SDLK_u:
-        Q_UpdateTick(QDrv);
+        DriverUpdateTick();
         break;
     case SDLK_q:
         if(screen_mode == SCR_MAIN || screen_mode == SCR_SELECT)
@@ -118,8 +118,7 @@ void ui_handleinput(SDL_Keysym* ks)
         {
             Game->PlaylistControl = 0;
             SDL_LockAudioDevice(Audio->dev);
-            QDrv->BootSong=Game->BootSong;
-            Q_Reset(QDrv);
+            DriverReset(0);
             SDL_UnlockAudioDevice(Audio->dev);
         }
         break;
@@ -129,9 +128,7 @@ void ui_handleinput(SDL_Keysym* ks)
     case SDLK_F6:
         if(gameloaded)
         {
-            QDrv->MuteMask=0;
-            QDrv->SoloMask=0;
-            Q_UpdateMuteMask(QDrv);
+            DriverResetMute();
         }
         break;
     case SDLK_F7:
@@ -195,7 +192,8 @@ int ui_main(screen_mode_t sm)
     printf("Base gain is %.3f\n",Game->BaseGain);
     printf("Game gain is %.3f\n",Game->Gain);
 
-    printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
+    if(QDrv)
+        printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
     #endif
 
     SDL_SetWindowTitle(window,windowtitle);

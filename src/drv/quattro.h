@@ -70,4 +70,6 @@ int8_t Q_LoopDetectionGetCount(Q_State *Q,int TrackNo);
 #define Q_LoopDetectionGetCount() 0
 #endif // Q_DISABLE_LOOP_DETECTION
 
+struct _DriverInterface Q_CreateInterface();
+
 #endif // QUATTRO_H_INCLUDED
