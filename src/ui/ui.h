@@ -20,6 +20,7 @@ typedef enum {
     SCR_ABOUT,
     SCR_PLAYLIST,
     SCR_SELECT,
+    SCR_MAIN2
 
 } screen_mode_t;
 
@@ -28,6 +29,7 @@ enum {
     R_SCR_ABOUT = 1<<1,
     R_SCR_PLAYLIST = 1<<2,
     R_SCR_SELECT = 1<<3,
+    R_SCR_MAIN2 = 1<<4,
 };
 
 
@@ -69,6 +71,7 @@ enum {
 int ui_main(screen_mode_t);
 
 void scr_main();
+void scr_main2();
 void scr_about();
 void scr_playlist();
 void scr_select();

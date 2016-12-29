@@ -14,16 +14,15 @@
 
     inputstate_t inpstate;
 
-    int displaymode;
-    int curr_val;         // Current selected value
-    int curr_val_edit;    // Temp value used in editing.
-    int curr_val_type;    // Type of current selected value (song request / register)
-    int curr_val_offset;  // Offset in song req/register table.
-    char tempstring[512];
+    static int displaymode;
+    static int curr_val;         // Current selected value
+    static int curr_val_edit;    // Temp value used in editing.
+    static int curr_val_type;    // Type of current selected value (song request / register)
+    static int curr_val_offset;  // Offset in song req/register table.
 
 const char regmatrix_key[] = "+0/8 +1/9 +2/a +3/b +4/c +5/d +6/e +7/f";
 
-void drawreg(int val,int y,int x)
+static void drawreg(int val,int y,int x)
 {
     static int blink;
 
@@ -83,13 +82,13 @@ void drawreg(int val,int y,int x)
     SCRN(y,x,5,"%04x",v);
 }
 
-void drawregkey(int y)
+static void drawregkey(int y)
 {
     set_color(y,4,1,40,COLOR_BLACK,COLOR_L_GREY);
     SCRN(y,4,40,"%s",regmatrix_key);
 }
 
-void drawregrow(int y,int val)
+static void drawregrow(int y,int val)
 {
     int dispval = val&0x1f;
     int i;
@@ -108,7 +107,7 @@ void drawregrow(int y,int val)
     }
 }
 
-void ui_entry_setvalue(int flag, int type, int offset, int value)
+static void ui_entry_setvalue(int flag, int type, int offset, int value)
 {
     int temp = 0;
     switch(type)
@@ -128,7 +127,7 @@ void ui_entry_setvalue(int flag, int type, int offset, int value)
     }
 }
 
-void ui_convert_currval()
+static void ui_convert_currval()
 {
     if(curr_val < 0x20)
     {
@@ -149,7 +148,7 @@ void ui_convert_currval()
     }
 }
 
-void ui_bounds_check()
+static void ui_bounds_check()
 {
     int song_max = QDrv->SongCount-1;
 
@@ -162,7 +161,7 @@ void ui_bounds_check()
         curr_val_edit=0xffff;
 }
 
-void scr_main_input()
+static void scr_main_input()
 {
     got_input=0;
 
@@ -351,6 +350,12 @@ void scr_main_input()
 
 void scr_main()
 {
+    if(DriverInterface->Type != DRIVER_QUATTRO)
+    {
+        screen_mode = SCR_MAIN2;
+        return;
+    }
+
     if(refresh & R_SCR_MAIN)
     {
         refresh &= ~R_SCR_MAIN;

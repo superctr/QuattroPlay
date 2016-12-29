@@ -4,16 +4,16 @@
 #include "ui.h"
 
 #define PLPAGE (FROWS-7)
-    int select_pos;
+    static int select_pos;
 
-void s_displaypos_check()
+static void select_pos_check()
 {
     if(select_pos < 0)
         select_pos = 0;
     if(select_pos >= Audit->Count)
         select_pos = Audit->Count-1;
 }
-void scr_select_input()
+static void scr_select_input()
 {
     got_input=0;
 
@@ -29,12 +29,12 @@ void scr_select_input()
         if(keycode == SDLK_PAGEUP || keycode == SDLK_PAGEDOWN)
             increment *= PLPAGE;
         select_pos  += increment;
-        s_displaypos_check();
+        select_pos_check();
         break;
     case SDLK_RETURN:
         running = 0;
         returncode = select_pos+1;
-        s_displaypos_check();
+        select_pos_check();
         Game->PlaylistPosition=select_pos;
     case SDLK_r: // refresh
 

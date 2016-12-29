@@ -6,17 +6,17 @@
 #include "ui.h"
 
 #define PLPAGE (FROWS-7)
-    int displaypos;
-    int pl_mode;
-    int kbd_transpose;
-    int kbd_flag;
+    static int select_pos;
+    static int pl_mode;
+    static int kbd_transpose;
+    static int kbd_flag;
 
-void displaypos_check()
+static void select_pos_check()
 {
-    if(displaypos < 0)
-        displaypos = 0;
-    if(displaypos >= Game->SongCount)
-        displaypos = Game->SongCount-1;
+    if(select_pos < 0)
+        select_pos = 0;
+    if(select_pos >= Game->SongCount)
+        select_pos = Game->SongCount-1;
 }
 
 void scr_playlist_input2()
@@ -69,16 +69,16 @@ void scr_playlist_input()
     case SDLK_PAGEDOWN:
         if(keycode == SDLK_PAGEUP || keycode == SDLK_PAGEDOWN)
             increment *= PLPAGE;
-        displaypos  += increment;
-        displaypos_check();
+        select_pos  += increment;
+        select_pos_check();
         break;
     case SDLK_RETURN:
         // force skip the boot song if RETURN is pressed twice
         // while boot song still playing
         if(QDrv->BootSong && Game->PlaylistControl==2)
             QDrv->Track[0].SkipTrack=1;
-        displaypos_check();
-        Game->PlaylistPosition=displaypos;
+        select_pos_check();
+        Game->PlaylistPosition=select_pos;
     case SDLK_r:
         Game->PlaylistControl=2;
         break;
@@ -92,15 +92,15 @@ void scr_playlist_input()
             DriverStopSong(SongReq);
         break;
     case SDLK_n:
-        displaypos = Game->PlaylistPosition+1;
-        displaypos_check();
-        Game->PlaylistPosition=displaypos;
+        select_pos = Game->PlaylistPosition+1;
+        select_pos_check();
+        Game->PlaylistPosition=select_pos;
         Game->PlaylistControl=2;
         break;
     case SDLK_b:
-        displaypos = Game->PlaylistPosition-1;
-        displaypos_check();
-        Game->PlaylistPosition=displaypos;
+        select_pos = Game->PlaylistPosition-1;
+        select_pos_check();
+        Game->PlaylistPosition=select_pos;
         Game->PlaylistControl=2;
         break;
     default:
@@ -112,6 +112,10 @@ void scr_playlist_input()
 
 void scr_playlist_kbd()
 {
+    // only supported for quattro atm
+    if(DriverInterface->Type != DRIVER_QUATTRO)
+        return;
+
     Q_Voice* V;
     char pandir;
     int8_t pan;
@@ -195,7 +199,7 @@ void scr_playlist_kbd()
 void scr_playlist_list(int ypos,int height)
 {
     int y = 0;
-    int i = displaypos;
+    int i = select_pos;
     int offset = 0;
     int max = height;
     if(Game->SongCount < max)
@@ -210,7 +214,7 @@ void scr_playlist_list(int ypos,int height)
         i=y+offset;
         colorsel_t bg=COLOR_D_BLUE,fg=COLOR_L_GREY;
 
-        if(displaypos == i)
+        if(select_pos == i)
             bg = COLOR_N_BLUE;
         if(Game->PlaylistPosition == i)
             fg = COLOR_WHITE;
@@ -231,7 +235,7 @@ void scr_playlist()
     if(refresh & R_SCR_PLAYLIST)
     {
         refresh &= ~R_SCR_PLAYLIST;
-        displaypos=0;
+        select_pos=0;
         pl_mode=0;
         kbd_transpose=0;
         kbd_flag=0;
@@ -267,8 +271,11 @@ void scr_playlist()
         }
 
         if(disp_timer)
+        {
+            double songtime = DriverGetPlayingTime(SongReq);
             SCRN(3,FCOLUMNS-6,6,"%2.0f:%02.0f",
-                floor(QDrv->SongTimer[SongReq]/60),floor(fmod(QDrv->SongTimer[SongReq],60)));
+                floor(songtime/60),floor(fmod(songtime,60)));
+        }
         break;
     }
 

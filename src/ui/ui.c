@@ -49,6 +49,9 @@ void ui_drawscreen()
     case SCR_SELECT:
         scr_select();
         break;
+    case SCR_MAIN2:
+        scr_main2();
+        break;
     default:
         scr_main();
         break;
@@ -111,6 +114,18 @@ void ui_handleinput(SDL_Keysym* ks)
                 screen_mode = SCR_MAIN;
             else
                 screen_mode = SCR_PLAYLIST;
+        }
+        break;
+    case SDLK_F4:
+        if(gameloaded)
+        {
+            if(screen_mode == SCR_MAIN2)
+                screen_mode = last_scrmode;
+            else
+            {
+                last_scrmode = screen_mode;
+                screen_mode = SCR_MAIN2;
+            }
         }
         break;
     case SDLK_F3:
