@@ -6,13 +6,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include "string.h"
+#include <string.h>
+#include <ctype.h>
 #include "SDL2/SDL.h"
 #include "qp.h"
 // #include "ui.h"
 #include "vgm.h"
 #include "ini.h"
 #include "fileio.h"
+
+
+
 
 // Loads game ini, then the sound data and wave roms...
 int LoadGame(game_t *G)
@@ -50,8 +54,8 @@ int LoadGame(game_t *G)
     int patchdata[64];
 
     static char wave_filename[16][128];
-
     static char data_filename[128];
+    static char driver_name[128];
 
     msgstring[0] = 0;
     path[0] = 0;
@@ -72,6 +76,7 @@ int LoadGame(game_t *G)
     memset(wave_filename,0,sizeof(wave_filename));
     memset(G->Action,0,sizeof(G->Action));
     memset(G->Type,0,sizeof(G->Type));
+    memset(driver_name,0,sizeof(driver_name));
 
     inifile_t initest;
     if(!ini_open(filename,&initest))
@@ -91,6 +96,8 @@ int LoadGame(game_t *G)
                     strcpy(path,initest.value);
                 else if(!strcmp(initest.key,"filename"))
                     strcpy(data_filename,initest.value);
+                else if(!strcmp(initest.key,"driver"))
+                    strcpy(driver_name,initest.value);
                 else if(!strcmp(initest.key,"type"))
                     strcpy(G->Type,initest.value);
                 else if(!strcmp(initest.key,"byteswap"))
@@ -308,10 +315,28 @@ int LoadGame(game_t *G)
     DriverInterface = (struct _DriverInterface*)malloc(sizeof(struct _DriverInterface));
     memset(DriverInterface,0,sizeof(struct _DriverInterface));
 
-    DriverCreate(DriverInterface,DRIVER_QUATTRO);
-    QDrv = DriverInterface->Driver.quattro;
-    //G->QDrv = Q;
-    return 0;
+    for(i=0;driver_name[i];i++)
+        driver_name[i] = tolower(driver_name[i]);
+
+    for(i=0;i<DRIVER_COUNT;i++)
+    {
+        if(!strcmp(driver_name,DriverTable[i].name))
+        {
+            printf("loading driver: %s\n",DriverTable[i].name);
+            if(DriverCreate(DriverInterface,i))
+                break;
+            QDrv = NULL;
+            if(i == DRIVER_QUATTRO)
+                QDrv = DriverInterface->Driver.quattro;
+            return 0;
+        }
+    }
+    if(i==DRIVER_COUNT)
+        sprintf(msgstring,"%s Unable to find matching driver type for \"%s\"",msgstring,driver_name);
+    else
+        sprintf(msgstring,"%s Failed to create driver \"%s\"",msgstring,driver_name);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",msgstring,NULL);
+    return -1;
 }
 
 int UnloadGame(game_t *G)
@@ -324,10 +349,13 @@ int UnloadGame(game_t *G)
     return 0;
 }
 
-void InitGame(game_t *Game)
+int InitGame(game_t *Game)
 {
-
-    DriverInit();
+    if(DriverInit())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","Failed to initialize driver",NULL);
+        return -1;
+    }
     // Initialize sound chip and some initial sound driver parameters.
 
     Game->PlaylistPosition = 0;
@@ -377,6 +405,7 @@ void InitGame(game_t *Game)
         QPAudio_WavOpen(Audio,filename);
     }
 
+    return 0;
 }
 
 void DeInitGame(game_t *Game)
@@ -456,7 +485,7 @@ void GameDoUpdate(game_t *G)
 
         // song is stopped
         //if((QDrv->SongRequest[SongReq]&0x8000) == 0)
-        if(DriverGetSongStatus(SongReq) != 1)
+        if(~DriverGetSongStatus(SongReq)&SONG_STATUS_PLAYING)
             state=2;
 
         switch(state)

@@ -143,25 +143,21 @@ int main(int argc, char *argv[])
             strcpy(Game->Name,Audit->Entry[val].Name);
         }
 
-        if(LoadGame(Game))
+        val = (LoadGame(Game) || InitGame(Game));
+        if(!val)
         {
-            SDL_Quit();
-            return -1;
+            QPAudio_SetPause(Audio,0);
+            Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
+
+            ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
+
+            QPAudio_Close(Audio);
+
+            // Audio must be closed or locked before calling this
+            DeInitGame(Game);
+
+            UnloadGame(Game);
         }
-
-        InitGame(Game);
-
-        QPAudio_SetPause(Audio,0);
-        Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
-
-        ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
-
-        QPAudio_Close(Audio);
-
-        // Audio must be closed or locked before calling this
-        DeInitGame(Game);
-
-        UnloadGame(Game);
 
         if(!loop)
             break;

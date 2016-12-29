@@ -70,7 +70,7 @@ typedef struct {
 int LoadGame(game_t *Game);
 int UnloadGame(game_t *Game);
 
-void InitGame(game_t *Game);
+int  InitGame(game_t *Game);
 void DeInitGame(game_t *Game);
 
 void GameDoAction(game_t *G,unsigned int actionid);

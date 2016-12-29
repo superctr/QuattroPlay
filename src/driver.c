@@ -3,6 +3,12 @@
 #include "qp.h"
 #include "vgm.h"
 
+const struct _DriverTable DriverTable[DRIVER_COUNT] = {
+    {0,"none"},
+    {DRIVER_QUATTRO,"quattro"},
+    {DRIVER_SYSTEM2,"system2x"},
+};
+
 int DriverCreate(struct _DriverInterface *di,enum _DriverType dt)
 {
     switch(dt)

@@ -7,11 +7,15 @@ enum _DriverType {
     DRIVER_NOT_LOADED = 0,
     DRIVER_QUATTRO,
     DRIVER_SYSTEM2,
+    DRIVER_COUNT
 };
+// bit mask, same values as quattro....
 enum {
     SONG_STATUS_NOT_PLAYING = 0,
-    SONG_STATUS_PLAYING = 1,
-    SONG_STATUS_STARTING = 2
+    SONG_STATUS_PLAYING = 0x8000,
+    SONG_STATUS_STARTING = 0x4000,
+    SONG_STATUS_FADEOUT = 0x2000,
+    SONG_STATUS_SUBSONG = 0x0800,
 };
 
 union _Driver {
@@ -67,6 +71,12 @@ struct _DriverInterface {
     void (*ISetSolo)(union _Driver,uint32_t data);
 };
 
+struct _DriverTable {
+    enum _DriverType type;
+    char* name;
+};
+
+const struct _DriverTable DriverTable[DRIVER_COUNT];
 int DriverCreate(struct _DriverInterface *di,enum _DriverType dt);
 void DriverDestroy(struct _DriverInterface *di);
 

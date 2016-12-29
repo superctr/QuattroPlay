@@ -89,8 +89,7 @@ void Q_ISongFade(union _Driver d,int slot)
 }
 int Q_ISongStatus(union _Driver d,int slot)
 {
-    if(d.quattro->SongRequest[slot&0x3f] & Q_TRACK_STATUS_START) return SONG_STATUS_STARTING;
-    return (d.quattro->SongRequest[slot&0x3f] & Q_TRACK_STATUS_BUSY) ? SONG_STATUS_PLAYING : SONG_STATUS_NOT_PLAYING;
+    return (d.quattro->SongRequest[slot&0x3f] & 0xf800);
 }
 int Q_ISongId(union _Driver d,int slot)
 {
