@@ -10,6 +10,7 @@ int Q_IInit(union _Driver d,game_t *g)
     d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
     d.quattro->ChipClock = g->ChipFreq;
     C352_init(&d.quattro->Chip,g->ChipFreq);
+    d.quattro->Chip.mulaw_type = C352_MULAW_TYPE_C352;
     d.quattro->Chip.vgm_log = 0;
 
     d.quattro->Chip.wave = g->WaveData;
@@ -36,7 +37,11 @@ void Q_IReset(union _Driver d,game_t* g,int initial)
 {
     d.quattro->PortaFix=g->PortaFix;
     d.quattro->BootSong=g->BootSong;
-    Q_Init(d.quattro);
+
+    if(initial)
+        Q_Init(d.quattro);
+    else
+        Q_Reset(d.quattro);
 
     if(initial && g->AutoPlay >= 0)
         d.quattro->BootSong=2;

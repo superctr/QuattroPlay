@@ -273,7 +273,6 @@ struct Q_State {
     // List of allocated voices for each track and the associated priority.
     Q_ChannelPriority ChannelPriority[Q_MAX_VOICES][Q_MAX_TRACKS];
 
-
     uint16_t BasePitch;
     uint8_t BaseFadeout;
     uint8_t BaseAttenuation;

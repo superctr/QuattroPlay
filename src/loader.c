@@ -386,7 +386,7 @@ int InitGame(game_t *Game)
 
     DriverReset(1);
 
-    QPAudio_Init(Audio,QDrv,QDrv->Chip.rate,Game->AudioBuffer,audiodev);
+    QPAudio_Init(Audio,NULL,DriverGetChipRate(),Game->AudioBuffer,audiodev);
 
     //if(Game->AutoPlay >= 0)
     //    QDrv->BootSong=2;
@@ -459,7 +459,8 @@ void GameDoUpdate(game_t *G)
 {
     int i;
 
-    if(QDrv->BootSong != 0)
+    // todo...
+    if(DriverInterface->Type == DRIVER_QUATTRO && QDrv->BootSong != 0)
         return;
 
     if(G->PlaylistControl == 1)

@@ -38,7 +38,7 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
                 DriverUpdateTick();
                 //Q_UpdateTick(S->QDrv);
 
-                if(S->QDrv->Chip.vgm_log)
+                if(Game->VgmLog)
                 {
                     vgm_delay(441000/120);
                 }

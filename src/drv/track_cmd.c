@@ -15,28 +15,28 @@
 
 // the following could be moved to track.c
 // parse byte operands
-uint8_t arg_byte(Q_State *Q,uint32_t* TrackPos)
+static uint8_t arg_byte(Q_State *Q,uint32_t* TrackPos)
 {
     uint8_t r = Q->McuData[*TrackPos];
     *TrackPos += 1;
     return r;
 }
 // parse word operands
-uint16_t arg_word(Q_State *Q,uint32_t* TrackPos)
+static uint16_t arg_word(Q_State *Q,uint32_t* TrackPos)
 {
     uint16_t r = (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0);
     *TrackPos += 2;
     return r;
 }
 // parse track position operands
-uint32_t arg_pos(Q_State *Q,uint32_t* TrackPos)
+static uint32_t arg_pos(Q_State *Q,uint32_t* TrackPos)
 {
     uint32_t r = ((Q->McuData[*TrackPos+2]<<16) | (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0)) - Q->McuPosBase;
     *TrackPos += 3;
     return r;
 }
 // parse operands for conditional jumps / set register commands
-uint16_t arg_operand(Q_State *Q,uint32_t* TrackPos,uint8_t mode)
+static uint16_t arg_operand(Q_State *Q,uint32_t* TrackPos,uint8_t mode)
 {
     uint16_t val;
     if(mode&0x80)
@@ -59,7 +59,7 @@ uint16_t arg_operand(Q_State *Q,uint32_t* TrackPos,uint8_t mode)
 
 // parse "write track" commands
 // source: 0x51ac
-void WriteTrack(Q_State* Q,int TrackNo,uint32_t* TrackPos)
+static void WriteTrack(Q_State* Q,int TrackNo,uint32_t* TrackPos)
 {
     uint8_t dest = arg_byte(Q,TrackPos);
     uint8_t data = arg_byte(Q,TrackPos);
@@ -70,7 +70,7 @@ void WriteTrack(Q_State* Q,int TrackNo,uint32_t* TrackPos)
 
 // parse "write channel" commands
 // source: 0x51f4
-void WriteChannel(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command,uint8_t WordMode,Q_WriteCallback callback)
+static void WriteChannel(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command,uint8_t WordMode,Q_WriteCallback callback)
 {
     int ChannelNo;
     uint8_t IndirectMode=0;
@@ -144,7 +144,7 @@ void WriteChannel(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t C
 
 // write channel or macro preset
 // source: 0x545c
-void WriteMultiple(Q_State* Q,Q_Channel* ch,uint32_t* TrackPos)
+static void WriteMultiple(Q_State* Q,Q_Channel* ch,uint32_t* TrackPos)
 {
     uint16_t mask = arg_word(Q,TrackPos);
     int regno = 2;
@@ -165,7 +165,7 @@ void WriteMultiple(Q_State* Q,Q_Channel* ch,uint32_t* TrackPos)
 
 // add events to the channel allocated voice
 // source: 0x59f8
-void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8_t data)
+static void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8_t data)
 {
     if(!ch->Enabled)
         return;
@@ -255,7 +255,7 @@ void WriteKeyOnEvent(Q_State* Q,Q_Track *T,Q_Channel* ch,uint8_t EventMode,uint8
 
 // parse key-on commands
 // source: 0x58f4
-void WriteKeyOn(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command,uint8_t EventMode,uint8_t IndirectMode)
+static void WriteKeyOn(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command,uint8_t EventMode,uint8_t IndirectMode)
 {
     uint8_t mask_byte = arg_byte(Q,TrackPos);
     uint8_t mask = mask_byte;

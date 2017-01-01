@@ -63,6 +63,7 @@ static void generate_items()
     item_max[ITEM_PARAMETER] = DriverGetParameterCount();
     item_max[ITEM_VOICE] = 32;
 
+    item_cnt=0;
     while(item_cnt<1000)
     {
         if(item_index[item_type_max] >= item_max[item_type_max])
@@ -250,7 +251,16 @@ static void check_input()
             if(item_can_be_edited(&item[select_pos]))
                 edit_mode=1;
             break;
-        case SDLK_r: // refresh
+        case SDLK_s: // refresh
+            switch(item[select_pos].type)
+            {
+            case ITEM_SONGREQ:
+                DriverStopSong(item[select_pos].index);
+                break;
+            case ITEM_VOICE:
+                DriverSetSolo(DriverGetSolo() ^ 1<<item[select_pos].index);
+                break;
+            }
 
         default:
             break;
@@ -267,6 +277,7 @@ void scr_main2()
         generate_items();
         select_pos=0;
         blink=0;
+        edit_mode=0;
     }
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);

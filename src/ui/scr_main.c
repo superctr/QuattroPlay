@@ -352,8 +352,9 @@ void scr_main()
 {
     if(DriverInterface->Type != DRIVER_QUATTRO)
     {
-        screen_mode = SCR_MAIN2;
-        return;
+        return scr_main2();
+        //screen_mode = SCR_MAIN2;
+        //return;
     }
 
     if(refresh & R_SCR_MAIN)

@@ -20,7 +20,15 @@ int DriverCreate(struct _DriverInterface *di,enum _DriverType dt)
         if(!di->Driver.quattro)
             return -1;
         memset(di->Driver.quattro,0,sizeof(Q_State));
+        break;
+    case DRIVER_SYSTEM2:
+        *di = S2X_CreateInterface();
 
+        di->Driver.s2x = (S2X_State*)malloc(sizeof(S2X_State));
+        if(!di->Driver.s2x)
+            return -1;
+
+        memset(di->Driver.s2x,0,sizeof(S2X_State));
         break;
     default:
         return -1;

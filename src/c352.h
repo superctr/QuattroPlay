@@ -42,6 +42,11 @@ enum {
     C352_FLG_REVERSE    = 0x0001    // play sample backwards
 };
 
+enum {
+    C352_MULAW_TYPE_C352,
+    C352_MULAW_TYPE_C140, // simulate C140 mulaw samples
+};
+
 typedef struct {
 
     uint16_t latch_flags;
@@ -86,6 +91,7 @@ typedef struct {
     uint32_t mute_mask;
     uint8_t mute_rear;
     int vgm_log;
+    int mulaw_type;
 
 } C352;
 

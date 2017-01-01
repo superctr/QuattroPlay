@@ -21,6 +21,7 @@ enum {
 union _Driver {
     void* drv;
     Q_State *quattro;
+    S2X_State *s2x;
 };
 
 struct _DriverInterface {

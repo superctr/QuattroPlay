@@ -103,16 +103,38 @@ void C352_fetch_sample(C352 *c, int i)
 	}
 	else
 	{
-		int8_t s, s2;
+		int8_t s, s1,s2;
 
 		s = (int8_t)c->wave[v->pos&c->wave_mask];
 
 		if(v->flags & C352_FLG_MULAW)
         {
-            // mulaw output output should be 9-bit (+sign) from OST recordings
-            s2 = (s&0x7f)>>4;
-            v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s&0x0f);
-            v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
+            // rom encoding differs a bit
+            if(c->mulaw_type == C352_MULAW_TYPE_C140)
+            {
+                s1=s&7;
+                s2=s>>3;
+                v->sample = (s2<<s1)<<3;
+                if (s1 && s2<0)
+                    v->sample -= ((2<<(s1-1))-1)<<7;
+                else if (s1)
+                    v->sample += ((2<<(s1-1))-1)<<7;
+            }
+            else
+            {
+                s2 = (s&0x7f)>>4;
+                s1=s;
+
+                v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
+                v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
+            }
+
+            //v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
+            //v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
+
+            //v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
+            //v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
+
         }
 		else
         {

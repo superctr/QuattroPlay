@@ -11,6 +11,7 @@
 #define QP_WEBSITE "https://github.com/superctr/QuattroPlay"
 
 #include "drv/quattro.h"
+#include "s2x/s2x.h"
 #include "driver.h"
 #include "audio.h"
 #include "loader.h"
