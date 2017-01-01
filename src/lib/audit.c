@@ -10,7 +10,7 @@
 #include "string.h"
 
 #include "../qp.h"
-#include "../ini.h"
+#include "ini.h"
 #include "audit.h"
 
 

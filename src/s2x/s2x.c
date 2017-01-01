@@ -40,7 +40,7 @@ void S2X_Reset(S2X_State *S)
 */
     S->PCMChip.mute_mask=0;
 
-    for(i=0;i<Q_MAX_TRACKS;i++)
+    for(i=0;i<S2X_MAX_TRACKS;i++)
     {
         S->ParentSong[i] = S2X_MAX_TRACKS;
         //S->SongTimer[i] = 0;

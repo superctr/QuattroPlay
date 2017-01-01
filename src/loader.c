@@ -11,12 +11,9 @@
 #include "SDL2/SDL.h"
 #include "qp.h"
 // #include "ui.h"
-#include "vgm.h"
-#include "ini.h"
-#include "fileio.h"
-
-
-
+#include "lib/vgm.h"
+#include "lib/ini.h"
+#include "lib/fileio.h"
 
 // Loads game ini, then the sound data and wave roms...
 int LoadGame(game_t *G)

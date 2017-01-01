@@ -10,7 +10,7 @@
 
 #include "qp.h"
 #include "audio.h"
-#include "vgm.h"
+#include "lib/vgm.h"
 
 void QPAudio_Callback(void* data,Uint8* astream,int len)
 {

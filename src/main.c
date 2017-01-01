@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "string.h"
-#include "vgm.h"
+#include "lib/vgm.h"
 #include "qp.h"
 //#include "SDL2/SDL.h"
 //#include "SDL2/SDL_audio.h"
 #include "lib/audit.h"
 #include "ui/ui.h"
-#include "ini.h"
+#include "lib/ini.h"
 //#include "loader.h"
 //#include "drv/quattro.h"
 

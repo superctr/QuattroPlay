@@ -1,6 +1,6 @@
 #include "string.h"
 #include "../qp.h"
-#include "../vgm.h"
+#include "../lib/vgm.h"
 #include "helper.h"
 
 int Q_IInit(union _Driver d,game_t *g)

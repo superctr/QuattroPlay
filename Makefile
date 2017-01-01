@@ -51,6 +51,7 @@ OUT = ./bin
 OUTBIN = $(OUT)/QuattroPlay
 
 OBJS = \
+	$(OBJ)/drv/_interface.o \
 	$(OBJ)/drv/helper.o \
 	$(OBJ)/drv/quattro.o \
 	$(OBJ)/drv/tables.o \
@@ -63,22 +64,32 @@ OBJS = \
 	$(OBJ)/drv/voice_pan.o \
 	$(OBJ)/drv/voice_pitch.o \
 	$(OBJ)/drv/wave.o \
+	$(OBJ)/s2x/_interface.o \
+	$(OBJ)/s2x/helper.o \
+	$(OBJ)/s2x/s2x.o \
+	$(OBJ)/s2x/tables.o \
+	$(OBJ)/s2x/track.o \
+	$(OBJ)/s2x/voice.o \
+	$(OBJ)/s2x/voice_pcm.o \
+	$(OBJ)/emu/c352.o \
 	$(OBJ)/lib/audit.o \
+	$(OBJ)/lib/fileio.o \
+	$(OBJ)/lib/ini.o \
+	$(OBJ)/lib/q_detect.o \
 	$(OBJ)/lib/q_pattern.o \
+	$(OBJ)/lib/vgm.o \
 	$(OBJ)/ui/info.o \
 	$(OBJ)/ui/lib.o \
 	$(OBJ)/ui/scr_about.o \
 	$(OBJ)/ui/scr_main.o \
+	$(OBJ)/ui/scr_main2.o \
 	$(OBJ)/ui/scr_playlist.o \
 	$(OBJ)/ui/scr_select.o \
 	$(OBJ)/ui/ui.o \
 	$(OBJ)/audio.o \
-	$(OBJ)/c352.o \
-	$(OBJ)/fileio.o \
-	$(OBJ)/ini.o \
+	$(OBJ)/driver.o \
 	$(OBJ)/loader.o \
 	$(OBJ)/main.o \
-	$(OBJ)/vgm.o
 
 build: $(OBJS)
 	@echo linking...
@@ -91,7 +102,7 @@ $(OBJ)/%.o: $(SRC)/%.c
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 clean:
-	rm -f $(OBJ)/drv/*.o $(OBJ)/*.o $(OUTBIN)
+	rm -rf $(OBJ)/*.o $(OUTBIN)
 
 clean_dirs: clean
 	rm -rf $(OBJ) $(OUT)

@@ -1,7 +1,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "qp.h"
-#include "vgm.h"
+#include "lib/vgm.h"
 
 const struct _DriverTable DriverTable[DRIVER_COUNT] = {
     {0,"none"},

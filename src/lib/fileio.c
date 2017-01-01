@@ -1,12 +1,13 @@
 /*
     Generic helper functions to help with file I/O
 */
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdint.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
+
 #include "fileio.h"
-#include "string.h"
-#include "errno.h"
 
     char fileio_error[100];
 

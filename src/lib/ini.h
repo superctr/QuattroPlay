@@ -1,6 +1,7 @@
 #ifndef INI_H_INCLUDED
 #define INI_H_INCLUDED
-#include "stdint.h"
+
+#include <stdint.h>
 
 enum {
     INI_OK = 0,
@@ -28,6 +29,5 @@ const char* ini_error[INI_MAX_STATUS];
 int ini_open(char* filename, inifile_t* ini);
 int ini_readnext();
 int ini_close(inifile_t* ini);
-
 
 #endif // INI_H_INCLUDED

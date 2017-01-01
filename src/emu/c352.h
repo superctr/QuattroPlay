@@ -7,7 +7,7 @@
 #ifndef C352_H_INCLUDED
 #define C352_H_INCLUDED
 
-#include "stdint.h"
+#include <stdint.h>
 
 #define C352_VOICES 32
 

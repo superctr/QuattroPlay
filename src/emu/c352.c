@@ -6,12 +6,13 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include "stddef.h"
-#include "stdint.h"
-#include "string.h"
-#include "math.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+
 #include "c352.h"
-#include "vgm.h"
+#include "../lib/vgm.h"
 
 int C352_init(C352 *c, uint32_t clk)
 {

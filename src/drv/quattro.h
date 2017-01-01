@@ -10,7 +10,7 @@
 #define Q_MAX_TRACKS 32
 #define Q_MAX_REGISTER 256
 
-#include "../c352.h"
+#include "../emu/c352.h"
 
 #include "enum.h"
 #include "struct.h"
