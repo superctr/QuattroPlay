@@ -51,6 +51,9 @@ void S2X_IReset(union _Driver d,game_t* g,int initial)
     Q_DEBUG("S2X: Reset\n");
     YM2151_reset(&d.s2x->FMChip);
 
+    d.s2x->FMQueueRead=0;
+    d.s2x->FMQueueWrite=0;
+
     if(initial)
         S2X_Init(d.s2x);
     else
@@ -163,6 +166,8 @@ void S2X_IUpdateChip(union _Driver d)
     S->FMTicks += S->FMDelta;
     while(S->FMTicks > 1.0)
     {
+        if(S->FMQueueRead != S->FMQueueWrite)
+            S2X_OPMReadQueue(S);
         YM2151_update(&d.s2x->FMChip);
         S->FMTicks-=1.0;
     }

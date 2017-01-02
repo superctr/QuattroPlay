@@ -26,6 +26,7 @@ void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
     //printf("fm v=%02x key off\n",V->VoiceNo);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0);
     V->Length=0;
+    V->Flag&=~(0x10);
 }
 
 void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
@@ -44,6 +45,7 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     V->Carrier = S2X_FMConnection[S2X_ReadByte(S,pos)&0x07];
     V->ChipFlags = S2X_ReadByte(S,pos)&0x3f;
     V->InsLfo = S2X_ReadByte(S,pos+3);
+    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
     for(i=1;i<28;i++)
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
     for(i=0;i<V->Carrier;i++)
@@ -146,7 +148,7 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                 {
                     S2X_FMKeyOff(S,V);
                     V->Delay = C->Vars[S2X_CHN_DEL];
-                    V->Flag |= 0x40;
+                    V->Flag |= 0x50;
                 }
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
@@ -262,7 +264,7 @@ void S2X_FMUpdate(S2X_State *S,S2X_FMVoice *V)
     else if(V->Flag&0x40)
     {
         //printf("fm v=%02x key on\n",V->VoiceNo);
-        S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0);
+        //S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0);
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0x78);
         V->Length = V->Channel->Vars[S2X_CHN_GTM];
         V->Flag &= ~(0x40);

@@ -19,6 +19,7 @@ typedef struct S2X_PCMVoice S2X_PCMVoice;
 typedef struct S2X_FMVoice S2X_FMVoice;
 typedef struct S2X_ChannelPriority S2X_ChannelPriority;
 typedef struct S2X_State S2X_State;
+typedef struct S2X_FMWrite S2X_FMWrite;
 
 struct S2X_Channel {
     uint8_t Enabled;
@@ -163,6 +164,11 @@ struct S2X_FMVoice {
     S2X_Channel* Channel;
 };
 
+struct S2X_FMWrite {
+    uint8_t Reg;
+    uint8_t Data;
+};
+
 struct S2X_State {
     double SoundRate;
     double FMDelta;
@@ -198,6 +204,10 @@ struct S2X_State {
     uint8_t FMLfoPms;
     uint8_t FMLfoAms;
     uint16_t FMLfoDepthDelta;
+
+    uint8_t FMQueueWrite;
+    uint8_t FMQueueRead;
+    S2X_FMWrite FMQueue[256];
 
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];
