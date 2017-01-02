@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "../qp.h"
+#include "helper.h"
 #include "track.h"
 #include "voice.h"
 
@@ -54,8 +55,16 @@ void S2X_Reset(S2X_State *S)
     //Q->BaseAttenuation=0x1c;
 
     S->FrameCnt=0;
+
     S->FMBase = 0x4000;
     S->PCMBase = 0x10000;
+
+    // some early games have PCM and FM swapped
+    if(S2X_ReadWord(S,0x10000) == 0x0008)
+    {
+        S->PCMBase=0x4000;
+        S->FMBase=0x10000;
+    }
 
     S->FMLfo=0xff;
 

@@ -11,6 +11,7 @@ void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
     memset(V,0,sizeof(S2X_FMVoice));
     V->Flag=0;
     V->VoiceNo=VoiceNo;
+    V->Lfo=0;
 
     //Q_DEBUG("clear FM %02d\n",VoiceNo);
 
@@ -48,7 +49,7 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
     for(i=1;i<28;i++)
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
-    for(i=0;i<V->Carrier;i++)
+    for(i=0;i<=V->Carrier;i++)
         S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
@@ -110,8 +111,9 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo)
         S->FMLfoDepthDelta = i ? ((0x80-i)>>1) : 0;
         S->FMLfoDepthDelta *= S->FMLfoDepthDelta;
 
-        Q_DEBUG("fm v=%02x lfo set %02x = %06x\n",V->VoiceNo,LfoNo,pos);
+        //Q_DEBUG("fm v=%02x lfo set %02x = %06x\n",V->VoiceNo,LfoNo,pos);
     }
+    V->Lfo=LfoNo;
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,V->InsLfo);
 }
 
@@ -188,7 +190,7 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
     if(V->Pitch.EnvNo)
     {
         if(C->Vars[S2X_CHN_ENV])
-            Q_DEBUG("FM v=%02x Volume envelope requested (%02x)",V->VoiceNo,C->Vars[S2X_CHN_ENV]);
+            Q_DEBUG("FM v=%02x Volume envelope requested (%02x)\n",V->VoiceNo,C->Vars[S2X_CHN_ENV]);
         V->Pitch.EnvDepth = C->Vars[S2X_CHN_PITDEP];
         V->Pitch.EnvSpeed = C->Vars[S2X_CHN_PITRAT];
     }
@@ -199,6 +201,7 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
     // lfo setup
     if(V->Lfo)
     {
+        //Q_DEBUG("FM v=%02x Lfo flag set.\n",V->VoiceNo);
         V->LfoFlag=V->Lfo;
         V->LfoDepthCounter=0;
         S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0);
@@ -229,10 +232,12 @@ void S2X_FMUpdateLfo(S2X_State *S,S2X_FMVoice *V)
             d = (V->LfoDepthCounter>>8)&0x7f;
             S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80|((d>S->FMLfoPms) ? S->FMLfoPms : d));
             S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x00|((d>S->FMLfoAms) ? S->FMLfoAms : d));
+            return;
         }
     }
-    S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80|((d>S->FMLfoPms) ? S->FMLfoPms : d));
-    S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x00|((d>S->FMLfoAms) ? S->FMLfoAms : d));
+    //Q_DEBUG("FM v=%02x Lfo PMS/AMS written.\n",V->VoiceNo);
+    S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80|(S->FMLfoPms&0x7f));
+    S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x00|(S->FMLfoAms&0x7f));
     V->LfoFlag=0;
 }
 

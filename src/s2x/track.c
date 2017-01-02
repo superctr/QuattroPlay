@@ -66,6 +66,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->RestCount = 0;
     T->SubStackPos = 0;
     T->LoopStackPos = 0;
+    T->InitFlag = 0;
 
     T->Tempo=0;
     T->BaseTempo=1;
@@ -230,6 +231,9 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             i = (Command&1)<<3;
 
         mask = arg_byte(S,T->PositionBase,&T->Position);
+
+        mask &= ~T->InitFlag;
+        T->InitFlag |= mask;
         while(mask)
         {
             if(mask&0x80)
@@ -247,7 +251,10 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
                 pos = S2X_VoiceGetPriority(S,i,NULL,NULL);
                 // no higher priority tracks on the voice? if so, allocate
                 if(pos == temp)
+                {
                     S2X_VoiceSetChannel(S,i,TrackNo,i&7);
+                    S2X_VoiceClear(S,i);
+                }
 
             }
             mask<<=1;
@@ -432,4 +439,6 @@ void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo)
     C->VoiceNo = VoiceNo;
     C->Track = &S->Track[TrackNo];
     C->Vars[S2X_CHN_LFO] = 0xff; // disables LFO
+    C->Vars[S2X_CHN_PAN] = 0x80;
+    C->Vars[S2X_CHN_WAV] = 0xff;
 }

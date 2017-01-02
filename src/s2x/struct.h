@@ -59,6 +59,8 @@ struct S2X_Track {
 
     uint32_t LoopStack[S2X_MAX_LOOP_STACK];
     uint8_t LoopCount[S2X_MAX_LOOP_STACK];
+
+    uint8_t InitFlag; // bitmask of initialized channels
 };
 
 struct S2X_ChannelPriority {

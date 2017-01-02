@@ -13,6 +13,8 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     V->VoiceNo=VoiceNo;
 
     //Q_DEBUG("initialize ch %02d\n",VoiceNo);
+    V->Pan = 0x80;
+    V->WaveNo = 0xff;
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,0);
 }
@@ -330,7 +332,7 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
     reg = (temp*V->WavePitch)>>8;
 
     //if(V->VoiceNo == 5)
-    //    Q_DEBUG("p=%04x,%04x,%04x,%04x,%04x (W=%04x)\n",pitch,freq1,freq2,temp,reg,V->WavePitch);
+    //Q_DEBUG("p=%04x,%04x,%04x,%04x,%04x (W=%04x)\n",pitch,freq1,freq2,temp,reg,V->WavePitch);
     S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
 }
 
