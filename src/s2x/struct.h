@@ -205,9 +205,9 @@ struct S2X_State {
     uint8_t FMLfoAms;
     uint16_t FMLfoDepthDelta;
 
-    uint8_t FMQueueWrite;
-    uint8_t FMQueueRead;
-    S2X_FMWrite FMQueue[256];
+    uint16_t FMQueueWrite;
+    uint16_t FMQueueRead;
+    S2X_FMWrite FMQueue[512];
 
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];

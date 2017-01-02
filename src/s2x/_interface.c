@@ -166,7 +166,7 @@ void S2X_IUpdateChip(union _Driver d)
     S->FMTicks += S->FMDelta;
     while(S->FMTicks > 1.0)
     {
-        if(S->FMQueueRead != S->FMQueueWrite)
+        if((S->FMQueueRead&0x1ff) != (S->FMQueueWrite&0x1ff))
             S2X_OPMReadQueue(S);
         YM2151_update(&d.s2x->FMChip);
         S->FMTicks-=1.0;
