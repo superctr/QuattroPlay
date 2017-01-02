@@ -128,9 +128,12 @@ int AuditGames(QPAudit* audit)
                 //ae = (QPAuditEntry*)malloc(sizeof(QPAuditEntry));
                 WriteAuditEntry(&audit->Entry[i],temp);
                 //audit->Entry[i] = ae;
-                ++audit->Count;
-                if(++i == AUDIT_MAX_COUNT)
-                    break;
+                if(audit->Entry[i].IniOk)
+                {
+                    ++audit->Count;
+                    if(++i == AUDIT_MAX_COUNT)
+                        break;
+                }
             }
         }
         (void)closedir(dp);
