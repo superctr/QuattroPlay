@@ -83,6 +83,8 @@ struct S2X_Pitch {
     uint8_t EnvData;
     uint8_t EnvCounter;
     uint16_t EnvMod;
+
+    S2X_FMVoice* FM;
 };
 
 struct S2X_PCMVoice {
@@ -127,15 +129,45 @@ struct S2X_PCMVoice {
 };
 
 struct S2X_FMVoice {
+    int VoiceNo;
+
+    uint8_t Flag;
+    uint8_t Delay;
+    uint8_t Length;
+
+    uint8_t Lfo;
+    uint8_t LfoFlag;
+    uint32_t LfoDepthCounter;
+
+    uint32_t InsPtr;
+    uint8_t InsNo;
+    uint8_t InsLfo; // PMS/AMS sensitivity setting
+    uint8_t Carrier;
+    uint8_t TL[4];
+
+    uint8_t Volume;
+    // volume 'envelopes' work by piggybacking on pitch envelopes
+    // also only does attenuation.
+    uint8_t EnvDepth;
+    uint8_t EnvBase;
+    uint8_t EnvMod;
+
+    struct S2X_Pitch Pitch;
+
+    uint8_t Key; // we'll see if needed
+    uint8_t ChipFlags; // pan flags
+
     S2X_Track* Track;
+    S2X_Channel* Channel;
 };
 
 struct S2X_State {
+    double SoundRate;
     double FMDelta;
     double FMTicks;
 
     uint32_t FMClock;
-    // YM2151 FMChip;
+    YM2151 FMChip;
     // no C140
     uint32_t PCMClock;
     C352 PCMChip;
@@ -158,6 +190,12 @@ struct S2X_State {
     S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
     S2X_FMVoice FM[S2X_MAX_VOICES_FM];
     S2X_PCMVoice SE[S2X_MAX_VOICES_PCM]; // temp
+
+    // global FM settings
+    uint8_t FMLfo;
+    uint8_t FMLfoPms;
+    uint8_t FMLfoAms;
+    uint16_t FMLfoDepthDelta;
 
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];

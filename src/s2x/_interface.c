@@ -9,7 +9,7 @@ int S2X_IInit(union _Driver d,game_t *g)
     memset(&d.s2x->PCMChip,0,sizeof(C352));
 
     //d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
-    d.s2x->PCMClock = 85333*288; // temporary
+    d.s2x->PCMClock = 24576000; // temporary
     C352_init(&d.s2x->PCMChip,d.s2x->PCMClock);
     d.s2x->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
     d.s2x->PCMChip.vgm_log = 0;
@@ -17,6 +17,13 @@ int S2X_IInit(union _Driver d,game_t *g)
     d.s2x->PCMChip.wave = g->WaveData;
     d.s2x->PCMChip.wave_mask = g->WaveMask;
     d.s2x->Data = g->Data;
+
+    d.s2x->FMClock = 3579545;
+    d.s2x->FMTicks = 0;
+    YM2151_init(&d.s2x->FMChip,d.s2x->FMClock);
+
+    d.s2x->SoundRate = d.s2x->PCMChip.rate;
+    d.s2x->FMDelta = d.s2x->FMChip.rate / d.s2x->SoundRate;
 
     return 0;
 }
@@ -27,22 +34,22 @@ void S2X_IDeinit(union _Driver d)
 }
 void S2X_IVgmOpen(union _Driver d)
 {
-#if 0
-    vgm_datablock(0x92,0x1000000,d.quattro->Chip.wave,0x1000000,d.quattro->Chip.wave_mask,0);
-    d.quattro->Chip.vgm_log = 1;
-#endif
+    vgm_datablock(0x92,0x1000000,d.s2x->PCMChip.wave,0x1000000,d.s2x->PCMChip.wave_mask,0);
+    d.s2x->PCMChip.vgm_log = 1;
+
 }
 void S2X_IVgmClose(union _Driver d)
 {
-#if 0
-    d.quattro->Chip.vgm_log = 0;
-    vgm_poke32(0xdc,d.quattro->ChipClock | Audio->state.MuteRear<<31);
+    d.s2x->PCMChip.vgm_log = 0;
+    vgm_poke32(0xdc,d.s2x->PCMClock | Audio->state.MuteRear<<31);
     vgm_poke8(0xd6,288/4);
-#endif
+
+    vgm_poke32(0x30,d.s2x->FMClock);
 }
 void S2X_IReset(union _Driver d,game_t* g,int initial)
 {
     Q_DEBUG("S2X: Reset\n");
+    YM2151_reset(&d.s2x->FMChip);
 
     if(initial)
         S2X_Init(d.s2x);
@@ -147,11 +154,19 @@ void S2X_IUpdateTick(union _Driver d)
 }
 double S2X_IChipRate(union _Driver d)
 {
-    return 85333;// d.quattro->Chip.rate;
+    return d.s2x->SoundRate;// d.quattro->Chip.rate;
     //return 85562;
 }
 void S2X_IUpdateChip(union _Driver d)
 {
+    S2X_State *S = d.s2x;
+    S->FMTicks += S->FMDelta;
+    while(S->FMTicks > 1.0)
+    {
+        YM2151_update(&d.s2x->FMChip);
+        S->FMTicks-=1.0;
+    }
+
     C352_update(&d.s2x->PCMChip);
 }
 void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
@@ -161,6 +176,10 @@ void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
         samples[i] = d.s2x->PCMChip.out[i] / 268435456;
+    if(samplecnt > 2)
+        samplecnt=2;
+    for(i=0;i<samplecnt;i++)
+        samples[i] += d.s2x->FMChip.out[i] / 6;
 }
 
 uint32_t S2X_IGetMute(union _Driver d)

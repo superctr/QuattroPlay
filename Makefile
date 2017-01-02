@@ -1,7 +1,7 @@
 #==============================================================================
 #
 #  QuattroPlay
-#  Copyright 2016 Ian Karlsson
+#  Copyright 2016-2017 Ian Karlsson
 #
 #==============================================================================
 
@@ -70,8 +70,10 @@ OBJS = \
 	$(OBJ)/s2x/tables.o \
 	$(OBJ)/s2x/track.o \
 	$(OBJ)/s2x/voice.o \
+	$(OBJ)/s2x/voice_fm.o \
 	$(OBJ)/s2x/voice_pcm.o \
 	$(OBJ)/emu/c352.o \
+	$(OBJ)/emu/ym2151.o \
 	$(OBJ)/lib/audit.o \
 	$(OBJ)/lib/fileio.o \
 	$(OBJ)/lib/ini.o \

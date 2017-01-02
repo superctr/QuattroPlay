@@ -54,8 +54,10 @@ void S2X_VoiceSetPriority(S2X_State *S,int VoiceNo,int TrackNo,int ChannelNo,int
 
 int S2X_GetVoiceType(S2X_State *S,int VoiceNo)
 {
-    if(VoiceNo < 24)
+    if(VoiceNo < 16)
         return S2X_VOICE_TYPE_PCM;
+    if(VoiceNo < 24)
+        return 0; // PCM sound effects, no need to update
     if(VoiceNo < 32)
         return S2X_VOICE_TYPE_FM;
     return 0;
@@ -83,6 +85,8 @@ void S2X_VoiceClear(S2X_State *S,int VoiceNo)
     {
     default:
         return;
+    case S2X_VOICE_TYPE_FM:
+        return S2X_FMClear(S,&S->FM[index],index);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMClear(S,&S->PCM[index],index);
     }
@@ -97,6 +101,8 @@ void S2X_VoiceCommand(S2X_State *S,S2X_Channel *C,int Command,uint8_t Data)
     {
     default:
         return;
+    case S2X_VOICE_TYPE_FM:
+        return S2X_FMCommand(S,C,&S->FM[index]);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMCommand(S,C,&S->PCM[index]);
     }
@@ -109,6 +115,8 @@ void S2X_VoiceUpdate(S2X_State *S,int VoiceNo)
     {
     default:
         return;
+    case S2X_VOICE_TYPE_FM:
+        return S2X_FMUpdate(S,&S->FM[index]);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMUpdate(S,&S->PCM[index]);
     }
@@ -125,9 +133,9 @@ void S2X_VoicePitchEnvSet(S2X_State *S,struct S2X_Pitch *P)
     if(!P->EnvNo)
         return;
 
-    P->EnvPos = S2X_ReadWord(S,(P->EnvBase&0xff0000)+S2X_ReadWord(S,P->EnvBase)+(2*(P->EnvNo)));
+    P->EnvPos = S2X_ReadWord(S,(P->EnvBase&0xffff00)+S2X_ReadWord(S,P->EnvBase)+(2*(P->EnvNo)));
 
-    P->EnvPos += P->EnvBase&0xff0000;
+    P->EnvPos += P->EnvBase&0xffff00;
 
     P->EnvLoop = P->EnvPos;
     P->EnvData = S2X_ReadByte(S,P->EnvPos++);
@@ -210,9 +218,3 @@ void S2X_VoicePitchUpdate(S2X_State *S,struct S2X_Pitch *P)
     if(((P->Target-P->Value) ^ difference) < 0)
         P->Value = P->Target;
 }
-
-
-
-
-
-

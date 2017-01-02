@@ -19,6 +19,16 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo);
 void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V);
 void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V);
 
+void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo);
+void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V);
+void S2X_FMUpdate(S2X_State *S,S2X_FMVoice *V);
+
+void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V);
+void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo);
+void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V);
+void S2X_FMWriteVol(S2X_State *S,S2X_FMVoice *V,int Attenuation);
+void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo);
+
 void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int WaveNo,int VolMod);
 
 

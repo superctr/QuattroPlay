@@ -6,5 +6,6 @@ uint8_t S2X_ReadByte(S2X_State *S,uint32_t d);
 uint16_t S2X_ReadWord(S2X_State *S,uint32_t d);
 // uint16_t S2X_ReadWordBE(Q_State *Q,uint32_t d);
 void S2X_UpdateMuteMask(S2X_State *S);
+void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data);
 
 #endif // S2X_HELPER_H_INCLUDED

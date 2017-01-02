@@ -148,6 +148,11 @@ void vgm_write(uint8_t command, uint8_t port, uint16_t reg, uint16_t value)
         *data++ = value>>8;
         *data++ = value&0xff;
     }
+    else if(command == 0x54) // YM2151
+    {
+        *data++ = reg;
+        *data++ = value;
+    }
     else // following is for D0-D6 commands...
     {
         *data++ = port;

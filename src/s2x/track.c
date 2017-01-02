@@ -23,6 +23,15 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*SongNo));
     Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
+    // the sound driver does a check to make sure first byte is either 0x20 or 0x21
+    uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position);
+    if(header_byte != 0x20 && header_byte != 0x21)
+    {
+        Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
+        S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
+        return;
+    }
+
     /*
     if(T->Position>0x1ffff)
     {
@@ -41,7 +50,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->Flags = (T->Flags&~(S2X_TRACK_STATUS_START))|S2X_TRACK_STATUS_BUSY;
     S->SongRequest[TrackNo] = T->Flags;
 
-    Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->Position);
+    Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->PositionBase+T->Position);
 
     T->SubStackPos=0;
     memset(T->SubStack,0,sizeof(T->SubStack));
@@ -213,7 +222,10 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         break;
     case 0x20: // different syntax on NA-1/NA-2
     case 0x21:
-        i = (Command&1)<<3;
+        if(TrackNo & 8) // FM
+            i = 24;
+        else // PCM
+            i = (Command&1)<<3;
 
         mask = arg_byte(S,T->PositionBase,&T->Position);
         while(mask)
@@ -245,8 +257,11 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         temp = arg_byte(S,T->PositionBase,&T->Position);
         break;
     case 0x1d:
-        i = (arg_byte(S,T->PositionBase,&T->Position)+8)&0x07;
+        i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
         temp = arg_byte(S,T->PositionBase,&T->Position);
+
+        S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
+        S->ParentSong[i] = TrackNo;
         break;
     case 0x1e:
         i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;
@@ -391,6 +406,8 @@ void S2X_TrackDisable(S2X_State *S,int TrackNo)
             {
                 Q_DEBUG("Voice %02x free, Now enabling trk %02x ch %02x\n",c->VoiceNo,next_track,next_channel);
                 S2X_VoiceSetChannel(S,c->VoiceNo,next_track,next_channel);
+
+                S->Track[next_track].Channel[next_channel].UpdateMask=~((1<<S2X_CHN_PANENV)|(1<<S2X_CHN_FRQ));
                 S2X_VoiceCommand(S,&S->Track[next_track].Channel[next_channel],0,0);
             }
         }
@@ -414,4 +431,5 @@ void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo)
     memset(C,0,sizeof(S2X_Channel));
     C->VoiceNo = VoiceNo;
     C->Track = &S->Track[TrackNo];
+    C->Vars[S2X_CHN_LFO] = 0xff; // disables LFO
 }

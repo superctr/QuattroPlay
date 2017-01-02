@@ -12,7 +12,7 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     V->Flag=0;
     V->VoiceNo=VoiceNo;
 
-    Q_DEBUG("initialize ch %02d\n",VoiceNo);
+    //Q_DEBUG("initialize ch %02d\n",VoiceNo);
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,0);
 }
@@ -164,7 +164,8 @@ void S2X_PCMPanSlideUpdate(S2X_State* S,S2X_PCMVoice *V)
 void S2X_PCMPanUpdate(S2X_State* S,S2X_PCMVoice *V)
 {
     uint8_t v=(V->Volume),e=(V->EnvValue>>8);
-    uint16_t vol,left,right;
+    uint16_t left,right;
+    int32_t vol;
     vol=(v*e);
     vol-=V->Track->Fadeout;
     if(vol<0)
@@ -279,8 +280,8 @@ void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
 
 void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
 {
-    if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
-        return;
+    //if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
+    //    return;
     V->WaveNo = V->Channel->Vars[S2X_CHN_WAV];
     uint32_t pos = S->PCMBase+S2X_ReadWord(S,S->PCMBase+0x02)+(10*V->WaveNo);
 
@@ -315,7 +316,7 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
 {
     uint16_t freq1,freq2,reg,temp;
 
-    uint32_t pitch = V->Pitch.Value + V->Pitch.EnvMod;
+    uint16_t pitch = V->Pitch.Value + V->Pitch.EnvMod;
     pitch += (V->Channel->Vars[S2X_CHN_TRS]<<8)|V->Channel->Vars[S2X_CHN_DTN];
 
     pitch &= 0x7fff;

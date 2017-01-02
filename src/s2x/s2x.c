@@ -57,8 +57,10 @@ void S2X_Reset(S2X_State *S)
     S->FMBase = 0x4000;
     S->PCMBase = 0x10000;
 
-    //S->MuteMask=0;
-    //S->SoloMask=0;
+    S->FMLfo=0xff;
+
+    S->MuteMask=0;
+    S->SoloMask=0;
 }
 
 void S2X_UpdateTick(S2X_State *S)
