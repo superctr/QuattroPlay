@@ -20,6 +20,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
 {
     V->Track = C->Track;
     V->Channel = C;
+    V->BaseAddr = V->Track->PositionBase;
 
     int i=0;
     uint8_t data;
@@ -51,7 +52,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
             case S2X_CHN_ENV: // envelope
-                V->EnvPtr = S->PCMBase+S2X_ReadWord(S,S->PCMBase+S2X_ReadWord(S,S->PCMBase+0x0a)+(2*data));
+                V->EnvPtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0a)+(2*data));
                 //Q_DEBUG("ch %02d env set %02x = %06x\n",V->VoiceNo,data,V->EnvPtr);
                 break;
             case S2X_CHN_VOL: // volume
@@ -62,7 +63,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 V->PanSlide=0;
                 break;
             case S2X_CHN_PANENV:
-                V->PanSlidePtr = S->PCMBase+S2X_ReadWord(S,S->PCMBase+0x0c)+(4*data);
+                V->PanSlidePtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0c)+(4*data);
                 //Q_DEBUG("V=%02d pan slide set  %06x\n",V->VoiceNo,V->PanSlidePtr);
                 V->PanSlide = S2X_ReadByte(S,V->PanSlidePtr+3);
                 break;
@@ -94,7 +95,7 @@ void S2X_PCMUpdateReset(S2X_State *S,S2X_PCMVoice *V)
         V->Pitch.EnvDepth = C->Vars[S2X_CHN_PITDEP];
         V->Pitch.EnvSpeed = C->Vars[S2X_CHN_PITRAT];
     }
-    V->Pitch.EnvBase = S->PCMBase + 0x08;
+    V->Pitch.EnvBase = V->BaseAddr + 0x08;
     S2X_VoicePitchEnvSet(S,&V->Pitch);
     V->Pitch.PortaFlag = V->Pitch.Portamento;
 
@@ -104,6 +105,7 @@ void S2X_PCMUpdateReset(S2X_State *S,S2X_PCMVoice *V)
     V->EnvDelta  = S2X_EnvelopeRateTable[temp&0x7f];
     V->EnvTarget = S2X_ReadByte(S,V->EnvPos++)<<8;
     V->EnvValue  = temp&0x80 ? V->EnvValue : 0;
+    V->Length=0;
 
     // pan slide setup
     V->PanSlideSpeed = V->PanSlide;
@@ -283,7 +285,7 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
     //if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
     //    return;
     V->WaveNo = V->Channel->Vars[S2X_CHN_WAV];
-    uint32_t pos = S->PCMBase+S2X_ReadWord(S,S->PCMBase+0x02)+(10*V->WaveNo);
+    uint32_t pos = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x02)+(10*V->WaveNo);
 
     S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
 
@@ -366,9 +368,9 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
     }
 }
 
-void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int WaveNo,int VolMod)
+void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int VolMod)
 {
-    uint32_t pos = S->PCMBase+S2X_ReadWord(S,S->PCMBase+0x04)+(10*WaveNo);
+    uint32_t pos = BaseAddr+S2X_ReadWord(S,BaseAddr+0x04)+(10*WaveNo);
 
     uint8_t bank = S2X_ReadByte(S,pos);
     uint8_t flag = S2X_ReadByte(S,pos+1);

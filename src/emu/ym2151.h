@@ -165,7 +165,7 @@ struct YM2151
 	uint32_t      timer_B_index_old;      /* timer B previous index */
 
     uint32_t mute_mask;
-    double out[2];
+    double out[4];
 
     int rate;
 

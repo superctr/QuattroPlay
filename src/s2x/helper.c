@@ -42,6 +42,7 @@ void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data)
 
     //printf(" -FM write %02x = %02x (Ch %d Op %d Reg %02x)\n",fmreg,data,ch,op,reg);
     return YM2151_write_reg(&S->FMChip,fmreg,data);
-    // optional: delay for a few frames after key off to let channel stabilize
-
+    // there really should be a delay for a few frames to let the sound chip breathe....
+    // i plan to implement an FM command queue, this should solve the problem of popping
+    // when starting a new note
 }

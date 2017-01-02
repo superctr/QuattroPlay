@@ -29,7 +29,7 @@ void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V);
 void S2X_FMWriteVol(S2X_State *S,S2X_FMVoice *V,int Attenuation);
 void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo);
 
-void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int WaveNo,int VolMod);
+void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int VolMod);
 
 
 #endif // S2X_VOICE_H_INCLUDED

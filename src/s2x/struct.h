@@ -124,6 +124,7 @@ struct S2X_PCMVoice {
 
     uint8_t Legato;
 
+    uint32_t BaseAddr;
     S2X_Track* Track;
     S2X_Channel* Channel;
 };
@@ -157,6 +158,7 @@ struct S2X_FMVoice {
     uint8_t Key; // we'll see if needed
     uint8_t ChipFlags; // pan flags
 
+    uint32_t BaseAddr;
     S2X_Track* Track;
     S2X_Channel* Channel;
 };

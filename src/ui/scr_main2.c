@@ -255,6 +255,7 @@ static void check_input()
             switch(item[select_pos].type)
             {
             case ITEM_SONGREQ:
+                Game->PlaylistControl = 0;
                 DriverStopSong(item[select_pos].index);
                 break;
             case ITEM_VOICE:

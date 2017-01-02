@@ -29,6 +29,11 @@ int LoadGame(game_t *G)
     static char wave1[16];
 
     int byteswap = 0;
+
+    int data_count = 0;
+    int data_pos = 0;
+    uint32_t data_size = 0;
+
     int wave_count = 0;
     int wave_pos[16];
     int wave_length[16];
@@ -46,12 +51,12 @@ int LoadGame(game_t *G)
     unsigned int action_reg = 0;
     unsigned int action_data = 0;
 
-    int patchtype[64];
-    int patchaddr[64];
-    int patchdata[64];
+    static int patchtype[64];
+    static int patchaddr[64];
+    static int patchdata[64];
 
     static char wave_filename[16][128];
-    static char data_filename[128];
+    static char data_filename[16][128];
     static char driver_name[128];
 
     msgstring[0] = 0;
@@ -92,7 +97,13 @@ int LoadGame(game_t *G)
                 else if(!strcmp(initest.key,"path"))
                     strcpy(path,initest.value);
                 else if(!strcmp(initest.key,"filename"))
-                    strcpy(data_filename,initest.value);
+                {
+                    if(data_count < 16)
+                    {
+                        strcpy(data_filename[data_count],initest.value);
+                        data_count++;
+                    }
+                }
                 else if(!strcmp(initest.key,"driver"))
                     strcpy(driver_name,initest.value);
                 else if(!strcmp(initest.key,"type"))
@@ -226,29 +237,46 @@ int LoadGame(game_t *G)
 
     ini_close(&initest);
 
+    int i;
+
     if(strlen(path) == 0)
         strcpy(path,G->Name);
 
     G->WaveMask=0;
     G->DataSize = 0x80000;
     G->Data = (uint8_t*)malloc(G->DataSize);
+    data_pos = G->DataSize;
 
 #ifdef DEBUG
     printf("Game title: '%s'\n",G->Title);
-    printf("Data filename: '%s'\n",data_filename);
+    //printf("Data filename: '%s'\n",data_filename);
     printf("Wave count: %d\n",wave_count+1);
     if(byteswap)
         printf("Data file byteswapped\n");
     printf("Playlist Song count: %d\n",G->SongCount);
 #endif
-    snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename);
-    if(read_file(filename,G->Data,0,0,byteswap,&G->DataSize))
-    {
-        strcat(msgstring,my_strerror(filename));
-        //return -1;
-    }
 
-    int i;
+    // quick and dirty way to handle multiple data roms for now
+    data_pos=0;
+    for(i=0;i<data_count;i++)
+    {
+        data_size = G->DataSize-data_size;
+        snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename[i]);
+        if(read_file(filename,G->Data+data_pos,0,0,byteswap,&data_size))
+        {
+            strcat(msgstring,my_strerror(filename));
+            //return -1;
+        }
+#ifdef DEBUG
+        printf("Data %d\n",i);
+        printf("\tFilename: '%s'\n",data_filename[i]);
+        printf("\tPosition: %06x\n",data_pos);
+        printf("\tLength: %06x\n",data_size);
+#endif // DEBUG
+        data_pos += data_size;
+    }
+    G->DataSize = data_size;
+
     for(i=0;i<patchcount;i++)
     {
         printf("Patch type %d addr %06x data %06x\n",patchtype[i],patchaddr[i],patchdata[i]);

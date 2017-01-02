@@ -91,7 +91,7 @@ int S2X_IRequestSlotCnt(union _Driver d)
 }
 int S2X_ISongCnt(union _Driver d,int slot)
 {
-    return 256; //d.quattro->SongCount;
+    return 512; //d.quattro->SongCount;
 }
 void S2X_ISongRequest(union _Driver d,int slot,int val)
 {
@@ -179,7 +179,11 @@ void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
     if(samplecnt > 2)
         samplecnt=2;
     for(i=0;i<samplecnt;i++)
-        samples[i] += d.s2x->FMChip.out[i] / 6;
+    {
+        double last = d.s2x->FMChip.out[i+2];
+        double next = d.s2x->FMChip.out[i];
+        samples[i] += (last+(d.s2x->FMTicks*(next-last)))/6;
+    }
 }
 
 uint32_t S2X_IGetMute(union _Driver d)

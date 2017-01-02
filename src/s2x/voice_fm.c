@@ -31,7 +31,7 @@ void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
 void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
 {
     int i;
-    uint32_t pos = S->FMBase + S2X_ReadWord(S,S->FMBase+0x06)+(32*InsNo);
+    uint32_t pos = V->BaseAddr + S2X_ReadWord(S,V->BaseAddr+0x06)+(32*InsNo);
     //Q_DEBUG("fm v=%02x set ins %02x at %06x\n",V->VoiceNo,InsNo,pos);
 
     S2X_FMKeyOff(S,V);
@@ -99,7 +99,7 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo)
 
         S->FMLfo = LfoNo;
         // read new preset
-        uint32_t pos = S->FMBase + S2X_ReadWord(S,S->FMBase+0x02)+(5*LfoNo);
+        uint32_t pos = V->BaseAddr + S2X_ReadWord(S,V->BaseAddr+0x02)+(5*LfoNo);
         S2X_OPMWrite(S,0,0,OPM_LFO_WAV,S2X_ReadByte(S,pos));
         S2X_OPMWrite(S,0,0,OPM_LFO_FRQ,S2X_ReadByte(S,pos+1));
         S->FMLfoPms = S2X_ReadByte(S,pos+2);
@@ -117,9 +117,12 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
 {
     V->Track = C->Track;
     V->Channel = C;
+    V->BaseAddr = V->Track->PositionBase;
+    //V->BaseAddr = S->FMBase;
 
     int i=0;
     uint8_t data;
+    uint16_t temp;
     while(C->UpdateMask)
     {
         if(C->UpdateMask & 1)
@@ -133,20 +136,23 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                 break;
             case S2X_CHN_FRQ:
                 if(data == 0xff)
+                {
                     S2X_FMKeyOff(S,V);
+                    break;
+                }
                 else if(C->Vars[S2X_CHN_LEG])
                     C->Vars[S2X_CHN_LEG]--;
                 else
                 {
+                    S2X_FMKeyOff(S,V);
                     V->Delay = C->Vars[S2X_CHN_DEL];
                     V->Flag |= 0x40;
                 }
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
             case S2X_CHN_VOL:
-                V->Volume = ~data + ~C->Track->TrackVolume;
-                if(V->Volume > 127)
-                    V->Volume=127;
+                temp = (~data&0xff) + (~C->Track->TrackVolume&0xff);
+                V->Volume = temp>127 ? 127 : temp;
                 //Q_DEBUG("FM v=%02x volume set to %02x (%02x + %02x)\n",V->VoiceNo,V->Volume,~data&0xff,~C->Track->TrackVolume&0xff);
                 S2X_FMSetVol(S,V);
                 break;
@@ -184,7 +190,7 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
         V->Pitch.EnvDepth = C->Vars[S2X_CHN_PITDEP];
         V->Pitch.EnvSpeed = C->Vars[S2X_CHN_PITRAT];
     }
-    V->Pitch.EnvBase = S->FMBase + 0x04;
+    V->Pitch.EnvBase = V->BaseAddr + 0x04;
     S2X_VoicePitchEnvSet(S,&V->Pitch);
     V->Pitch.PortaFlag = V->Pitch.Portamento;
 

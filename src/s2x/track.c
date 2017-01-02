@@ -16,11 +16,13 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     if(T->Flags & S2X_TRACK_STATUS_BUSY)
         S2X_TrackStop(S,TrackNo);
 
-    uint16_t SongNo = S->SongRequest[TrackNo]&0x0ff;
+    uint16_t SongNo = S->SongRequest[TrackNo]&0x1ff;
 
     //T->Position = S2X_GetSongPos(S,SongNo);
     T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
-    T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*SongNo));
+    T->PositionBase += (SongNo & 0x100) ? 0x20000 : 0;
+
+    T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
     Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
@@ -105,7 +107,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
 {
     S2X_Track *T = &S->Track[TrackNo];
     //S2X_Channel *C;
-    int i, pos, temp;
+    int i=-1, pos, temp;
     uint8_t mask;
 
     //Q_DEBUG("T=%02x parse cmd %02x at %06x\n",TrackNo,Command,T->PositionBase+T->Position-1);
@@ -258,14 +260,12 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         break;
     case 0x1d:
         i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
-        temp = arg_byte(S,T->PositionBase,&T->Position);
-
-        S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
-        S->ParentSong[i] = TrackNo;
-        break;
     case 0x1e:
-        i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;
+        if(i<0)
+            i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;
+
         temp = arg_byte(S,T->PositionBase,&T->Position);
+        temp += S->SongRequest[TrackNo]&0x100;
 
         S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
         S->ParentSong[i] = TrackNo;
@@ -283,7 +283,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
                 if(~Command&0x40)
                     temp = arg_byte(S,T->PositionBase,&T->Position);
                 // play sample on channel i
-                S2X_PlayPercussion(S,i,temp,(T->Fadeout)>>8);
+                S2X_PlayPercussion(S,i,T->PositionBase,temp,(T->Fadeout)>>8);
             }
             mask<<=1;
             i++;

@@ -1447,6 +1447,8 @@ void YM2151_reset(YM2151* ym)
 	{
 		YM2151_write_reg(ym, i, 0);
 	}
+
+    ym->out[0] = ym->out[1] = ym->out[2] = ym->out[3] = 0;
 }
 
 
@@ -1480,6 +1482,10 @@ void YM2151_update(YM2151* ym)
         outr = 32767;
     else if (outr < -32768)
         outr = -32768;
+
+    // last samples, used for interpolation
+    ym->out[2] = ym->out[0];
+    ym->out[3] = ym->out[1];
 
     //printf("%d %d\n",outl,outr);
     ym->out[0] = outl/32768.0;
