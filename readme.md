@@ -117,7 +117,7 @@ This might not be complete yet.
 
 ## Copyright
 
-&copy; 2016 Ian Karlsson
+&copy; 2016-2017 Ian Karlsson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
