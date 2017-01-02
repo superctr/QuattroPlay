@@ -189,7 +189,7 @@ void scr_playlist_kbd2()
 void scr_playlist_kbd()
 {
     // only supported for quattro atm
-    if(DriverInterface->Type != DRIVER_SYSTEM2)
+    if(DriverInterface->Type == DRIVER_SYSTEM2)
         return scr_playlist_kbd2();
     else if(DriverInterface->Type != DRIVER_QUATTRO)
         return;
