@@ -136,6 +136,7 @@ static void item_set_value(struct main2_item *i,int value)
     {
     case ITEM_SONGREQ:
         Game->PlaylistControl = 0;
+        DriverResetLoopCount();
         return DriverRequestSong(i->index,value);
     case ITEM_PARAMETER:
         return DriverSetParameter(i->index,value);
@@ -176,6 +177,7 @@ static char* item_display_value(struct main2_item *i,char* buffer,int len)
         if(i->type == ITEM_SONGREQ)
         {
             int status = DriverGetSongStatus(i->index);
+            int loopcnt = DriverGetLoopCount(i->index);
 
             switch(status&(SONG_STATUS_STARTING|SONG_STATUS_PLAYING))
             {
@@ -186,6 +188,8 @@ static char* item_display_value(struct main2_item *i,char* buffer,int len)
                 songtime = DriverGetPlayingTime(i->index);
                 if(status & SONG_STATUS_SUBSONG)
                     snprintf(buffer,len,"%s (Sub)",buffer);
+                else if(loopcnt>0)
+                    snprintf(buffer,len,"%s (Playing %2.0f:%02.0f) L%d",buffer,floor(songtime/60),floor(fmod(songtime,60)),loopcnt);
                 else
                     snprintf(buffer,len,"%s (Playing %2.0f:%02.0f)",buffer,floor(songtime/60),floor(fmod(songtime,60)));
                 if(status & SONG_STATUS_FADEOUT)
@@ -256,6 +260,7 @@ static void check_input()
             {
             case ITEM_SONGREQ:
                 Game->PlaylistControl = 0;
+                DriverResetLoopCount();
                 DriverStopSong(item[select_pos].index);
                 break;
             case ITEM_VOICE:

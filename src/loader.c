@@ -459,6 +459,7 @@ void ResetGame(game_t *Game)
 {
     DriverReset(0);
     Game->PlaylistControl=0;
+    Game->Fadeout=0;
     Game->QueueSong=Game->AutoPlay;
 }
 
@@ -488,6 +489,9 @@ void GameDoUpdate(game_t *G)
     if(DriverInterface->Type == DRIVER_QUATTRO && QDrv->BootSong != 0)
         return;
 
+    if(!G->PlaylistControl)
+        G->Fadeout=0;
+
     if(G->PlaylistControl == 1)
     {
         playlist_script_t* S = &G->Playlist[G->PlaylistPosition].script[G->PlaylistScript];
@@ -514,9 +518,20 @@ void GameDoUpdate(game_t *G)
         if(~DriverGetSongStatus(SongReq)&SONG_STATUS_PLAYING)
             state=2;
 
+        if(G->Fadeout>1)
+        {
+            for(i=0;i<DriverGetSlotCount();i++)
+                DriverStopSong(i);
+            for(i=0;i<15;i++)
+                DriverUpdateTick();
+            G->Fadeout=0;
+        }
+
         switch(state)
         {
         default:
+            if(G->Fadeout > 0)
+                G->Fadeout += 0.005;
             break;
         case 1:
             // do action and read next length
@@ -535,7 +550,11 @@ void GameDoUpdate(game_t *G)
             {
                 G->PlaylistLoop=60;
                 //G->QDrv->SongRequest[SongReq]|=0x2000;
-                DriverFadeOutSong(SongReq);
+
+                if(DriverInterface->Type == DRIVER_QUATTRO)
+                    DriverFadeOutSong(SongReq);
+                else
+                    G->Fadeout+=0.01;
             }
             DriverResetLoopCount();
             break;
@@ -566,6 +585,8 @@ void GameDoUpdate(game_t *G)
 
     if(G->PlaylistControl == 2)
     {
+        G->Fadeout=0;
+
         for(i=0;i<DriverGetSlotCount();i++)
             DriverStopSong(i);
 
@@ -589,4 +610,6 @@ void GameDoUpdate(game_t *G)
 
     if(G->ActionTimer && --G->ActionTimer == 0)
         GameDoAction(G,G->QueueAction);
+
+    Audio->state.Gain = G->BaseGain*G->Gain*G->UIGain*(1-G->Fadeout);
 }

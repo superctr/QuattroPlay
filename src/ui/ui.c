@@ -155,7 +155,8 @@ void ui_handleinput(SDL_Keysym* ks)
             vol=9.95;
         if(vol<0)
             vol=0;
-        Audio->state.Gain = Game->BaseGain*Game->Gain*vol;
+        Game->UIGain = vol;
+
         break;
     case SDLK_F10:
         Audio->state.FastForward ^= 1;
@@ -202,6 +203,7 @@ int ui_main(screen_mode_t sm)
         sprintf(windowtitle,"%s - QuattroPlay",Game->Title);
 
     vol = 1.0;
+    Game->UIGain = vol;
 
     #ifdef DEBUG
     printf("Base gain is %.3f\n",Game->BaseGain);

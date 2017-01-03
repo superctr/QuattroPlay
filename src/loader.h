@@ -47,6 +47,8 @@ typedef struct {
     float BaseGain;
 
     // Game configuration
+    float UIGain;
+    float Fadeout;
     float Gain;
     int MuteRear;
     int ChipFreq; // sound chip frequency, best to not touch this.
