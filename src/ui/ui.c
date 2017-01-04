@@ -173,7 +173,14 @@ void ui_handleinput(SDL_Keysym* ks)
         }
         break;
     case SDLK_F12:
-        debug_stat ^= 1;
+        if(kbd[SDL_SCANCODE_LSHIFT] || kbd[SDL_SCANCODE_RSHIFT])
+        {
+            DriverDebugAction(DEBUG_ACTION_DISPLAY_INFO);
+        }
+        else
+        {
+            debug_stat ^= 1;
+        }
         break;
     case SDLK_RETURN:
         if(kbd[SDL_SCANCODE_LALT])

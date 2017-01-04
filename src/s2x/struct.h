@@ -3,9 +3,9 @@
 
 #define S2X_MAX_TRACKS 16
 #define S2X_MAX_TRKCHN 8
-#define S2X_MAX_SUB_STACK 6
-#define S2X_MAX_REPEAT_STACK 4
-#define S2X_MAX_LOOP_STACK 3
+#define S2X_MAX_SUB_STACK 16
+#define S2X_MAX_REPEAT_STACK 12
+#define S2X_MAX_LOOP_STACK 12
 // PCM instruments
 #define S2X_MAX_VOICES_PCM 16
 // PCM sound effects / percussion
@@ -87,6 +87,10 @@ struct S2X_Pitch {
     uint8_t EnvCounter;
     uint16_t EnvMod;
 
+    uint8_t VolDepth; // Set to enable volume envelope
+    uint8_t VolBase;
+    uint8_t VolMod;
+
     S2X_FMVoice* FM;
 };
 
@@ -111,6 +115,14 @@ struct S2X_PCMVoice {
     uint16_t EnvValue;
     uint16_t EnvDelta;
     uint16_t EnvTarget;
+
+    uint8_t EnvAttack;
+    uint8_t EnvAttackFine;
+    uint8_t EnvDecay;
+    uint8_t EnvDecayFine;
+    uint8_t EnvSustain;
+    uint8_t EnvRelease;
+    uint8_t EnvReleaseFine;
 
     //uint8_t PitchEnvNo;
     struct S2X_Pitch Pitch;
@@ -152,9 +164,9 @@ struct S2X_FMVoice {
     uint8_t Volume;
     // volume 'envelopes' work by piggybacking on pitch envelopes
     // also only does attenuation.
-    uint8_t EnvDepth;
-    uint8_t EnvBase;
-    uint8_t EnvMod;
+    //uint8_t EnvDepth;
+    //uint8_t EnvBase;
+    //uint8_t EnvMod;
 
     struct S2X_Pitch Pitch;
 
@@ -189,6 +201,12 @@ struct S2X_State {
     uint32_t FMBase;
 
     double SongTimer[Q_MAX_TRACKS];
+#ifndef Q_DISABLE_LOOP_DETECTION
+    uint32_t* LoopCounterFlags;
+    uint32_t TrackLoopId[0x800];
+    uint8_t TrackLoopCount[0x800];
+    uint16_t NextLoopId; // set 0 to disable loop detection
+#endif
 
     uint16_t SongRequest[S2X_MAX_TRACKS+1];
     uint16_t ParentSong[S2X_MAX_TRACKS];
@@ -216,6 +234,9 @@ struct S2X_State {
 
     uint32_t SoloMask;
     uint32_t MuteMask;
+
+    // various config flags
+    uint32_t ConfigFlags;
 };
 
 

@@ -9,19 +9,19 @@
 
 void S2X_Init(S2X_State *S)
 {
-    //Q_LoopDetectionInit(S);
+    S2X_LoopDetectionInit(S);
     //Q_GetMcuVer(S);
     S2X_Reset(S);
 }
 
 void S2X_Deinit(S2X_State *S)
 {
-    //Q_LoopDetectionFree(Q);
+    S2X_LoopDetectionFree(S);
 }
 
 void S2X_Reset(S2X_State *S)
 {
-    //Q_LoopDetectionReset(Q);
+    S2X_LoopDetectionReset(S);
     int i;
 
     memset(S->PCMChip.v,0,sizeof(S->PCMChip.v));

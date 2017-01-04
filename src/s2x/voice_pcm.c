@@ -6,6 +6,10 @@
 #include "track.h"
 #include "voice.h"
 
+#define ADSR_ENV (S->ConfigFlags & (S2X_CFG_PCM_ADSR|S2X_CFG_PCM_NEWADSR))
+#define NEW_ADSR (S->ConfigFlags & S2X_CFG_PCM_NEWADSR)
+#define PAN_INVERT (S->ConfigFlags & S2X_CFG_PCM_PAN)
+
 void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
 {
     memset(V,0,sizeof(S2X_PCMVoice));
@@ -15,6 +19,7 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     //Q_DEBUG("initialize ch %02d\n",VoiceNo);
     V->Pan = 0x80;
     V->WaveNo = 0xff;
+    V->Pitch.FM = 0;
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,0);
 }
@@ -54,7 +59,8 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
             case S2X_CHN_ENV: // envelope
-                V->EnvPtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0a)+(2*data));
+                V->EnvPtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0a)+(data*2));
+                S2X_PCMAdsrSet(S,V,data);
                 //Q_DEBUG("ch %02d env set %02x = %06x\n",V->VoiceNo,data,V->EnvPtr);
                 break;
             case S2X_CHN_VOL: // volume
@@ -73,6 +79,9 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 if(data)
                     data = -data;
                 V->Pitch.Portamento= data;
+                break;
+            case S2X_CHN_C18:
+                Q_DEBUG("ch %02d enable link effect, param: %02d \n",V->VoiceNo,data);
             default:
                 break;
             }
@@ -80,6 +89,36 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
         i++;
         C->UpdateMask >>= 1;
     }
+}
+
+static void S2X_PCMAdsrSetVal(S2X_State *S,uint8_t val,uint8_t *v1,uint8_t *v2)
+{
+    if(!NEW_ADSR)
+    {
+        *v1 = val;
+        *v2 = 0;
+        return;
+    }
+    else if(val<0xf8)
+    {
+        *v1 = val>>3;
+        *v2 = S2X_AdsrTable[val&7];
+    }
+    else
+    {
+        *v1 = S2X_AdsrTable[val^0xf7];
+        *v2 = 0;
+    }
+
+    //printf("val=%02x,v1=%02x,v2=%02x\n",val,*v1,v2 ? *v2 : 0);
+}
+void S2X_PCMAdsrSet(S2X_State *S,S2X_PCMVoice *V,uint8_t EnvNo)
+{
+    uint32_t pos = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0a)+(EnvNo*4);
+    S2X_PCMAdsrSetVal(S,S2X_ReadByte(S,pos+0),&V->EnvAttack,&V->EnvAttackFine);
+    S2X_PCMAdsrSetVal(S,S2X_ReadByte(S,pos+1),&V->EnvDecay,&V->EnvDecayFine);
+    S2X_PCMAdsrSetVal(S,S2X_ReadByte(S,pos+3),&V->EnvRelease,&V->EnvReleaseFine);
+    V->EnvSustain = S2X_ReadByte(S,pos+2);
 }
 
 // 0xdb72
@@ -103,10 +142,18 @@ void S2X_PCMUpdateReset(S2X_State *S,S2X_PCMVoice *V)
 
     // envelope setup
     V->EnvPos=V->EnvPtr;
-    temp = S2X_ReadByte(S,V->EnvPos++);
-    V->EnvDelta  = S2X_EnvelopeRateTable[temp&0x7f];
-    V->EnvTarget = S2X_ReadByte(S,V->EnvPos++)<<8;
-    V->EnvValue  = temp&0x80 ? V->EnvValue : 0;
+
+    if(ADSR_ENV)
+    {
+        V->EnvTarget=1;
+    }
+    else
+    {
+        temp = S2X_ReadByte(S,V->EnvPos++);
+        V->EnvDelta  = S2X_EnvelopeRateTable[temp&0x7f];
+        V->EnvTarget = S2X_ReadByte(S,V->EnvPos++)<<8;
+        V->EnvValue  = temp&0x80 ? V->EnvValue : 0;
+    }
     V->Length=0;
 
     // pan slide setup
@@ -168,6 +215,7 @@ void S2X_PCMPanSlideUpdate(S2X_State* S,S2X_PCMVoice *V)
 void S2X_PCMPanUpdate(S2X_State* S,S2X_PCMVoice *V)
 {
     uint8_t v=(V->Volume),e=(V->EnvValue>>8);
+
     uint16_t left,right;
     int32_t vol;
     vol=(v*e);
@@ -181,9 +229,74 @@ void S2X_PCMPanUpdate(S2X_State* S,S2X_PCMVoice *V)
         left = (left>>8) * (-V->Pan&0x7f);
 
     //printf("Ch %02d L=%04x, R=%04x, Vl=%02x, Ev=%02x, Fv=%04x\n",V->VoiceNo,left,right,v,e,vol);
-    S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(left&0xff00)|(right>>8));
+    if(PAN_INVERT)
+        S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(right&0xff00)|(left>>8));
+    else
+        S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(left&0xff00)|(right>>8));
 }
 
+
+#define UPDATE_FINE(_v_) if(NEW_ADSR) _v_=(_v_<<1)|(_v_>>7);
+// updates the ADSR envelope
+void S2X_PCMAdsrUpdate(S2X_State* S, S2X_PCMVoice *V)
+{
+    if(V->Length && !(--V->Length))
+        V->EnvTarget=4;
+
+    int d = V->EnvValue>>8;
+
+    uint8_t atk = V->EnvAttack + (V->EnvAttackFine>>7);
+    uint8_t dec = V->EnvDecay + (V->EnvDecayFine>>7);
+    uint8_t sus = V->EnvSustain;
+    uint8_t rel = V->EnvRelease + (V->EnvReleaseFine>>7);
+
+    switch(V->EnvTarget&7)
+    {
+    case 0:
+        return;
+    case 1: // attack
+        d+=atk;
+        if(d>0xff)
+        {
+            d=0xff;
+            V->EnvTarget++;
+        }
+        UPDATE_FINE(V->EnvAttackFine);
+        break;
+    case 2: // decay
+        d-=dec;
+        if(d<=sus)
+        {
+            d=sus;
+            V->EnvTarget++;
+        }
+        UPDATE_FINE(V->EnvDecayFine);
+        break;
+    case 4: // release
+        V->EnvTarget^=8;
+        if((V->EnvTarget&8) || NEW_ADSR)
+        {
+            d-=rel;
+            if(d<0)
+            {
+                V->EnvValue=V->EnvTarget=0;
+                S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
+                V->Flag &= 0x7f;
+                return;
+            }
+        }
+        UPDATE_FINE(V->EnvReleaseFine);
+    default:
+        break;
+    }
+
+    V->EnvValue=d<<8;
+
+    //if(V->VoiceNo==3)
+    //Q_DEBUG("v=%02x ep=%06x s=%02x d=%02x, a=%02x d=%02x s=%02x r=%02x\n",V->VoiceNo,V->EnvPos,V->EnvTarget,d,atk,dec,sus,rel);
+
+    return S2X_PCMPanUpdate(S,V);
+}
 
 void S2X_PCMEnvelopeAdvance(S2X_State* S,S2X_PCMVoice *V)
 {
@@ -227,6 +340,7 @@ void S2X_PCMEnvelopeCommand(S2X_State* S,S2X_PCMVoice *V)
     return S2X_PCMEnvelopeAdvance(S,V);
 }
 
+// updates the volume table envelope
 void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
 {
     uint32_t pos = V->EnvPos;
@@ -284,8 +398,8 @@ void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
 
 void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
 {
-    //if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
-    //    return;
+    if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
+        return;
     V->WaveNo = V->Channel->Vars[S2X_CHN_WAV];
     uint32_t pos = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x02)+(10*V->WaveNo);
 
@@ -304,7 +418,7 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
     if(V->WaveFlag & 0x08)
         V->ChipFlag |= C352_FLG_MULAW;
 #if 0
-    Q_DEBUG("ch %02d wave %02x (Pos: %06x, B:%02x F:%02x S:%04x E:%04X L:%04x P:%04x)\n",
+    Q_DEBUG("ch %02x wave %02x (Pos: %06x, B:%02x F:%02x S:%04x E:%04X L:%04x P:%04x)\n",
             V->VoiceNo,
             V->WaveNo,
             pos,
@@ -331,8 +445,9 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
 
     reg = (temp*V->WavePitch)>>8;
 
-    //if(V->VoiceNo == 5)
-    //Q_DEBUG("p=%04x,%04x,%04x,%04x,%04x (W=%04x)\n",pitch,freq1,freq2,temp,reg,V->WavePitch);
+    //if(V->VoiceNo == 0x0d)
+    //    Q_DEBUG("%04x, %04x\n",V->Pitch.Value,V->Pitch.EnvValue);
+    //    Q_DEBUG("p=%04x,%04x,%04x,%04x,%04x (W=%04x)\n",pitch,freq1,freq2,temp,reg,V->WavePitch);
     S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
 }
 
@@ -345,7 +460,10 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
     //V->Pitch.Portamento = V->Channel->Vars[S2X_CHN_PTA];
 
     S2X_PCMUpdateReset(S,V);
-    S2X_PCMEnvelopeUpdate(S,V);
+    if(ADSR_ENV)
+        S2X_PCMAdsrUpdate(S,V);
+    else
+        S2X_PCMEnvelopeUpdate(S,V);
     S2X_PCMPanSlideUpdate(S,V);
     S2X_VoicePitchUpdate(S,&V->Pitch);
 
@@ -390,14 +508,17 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     if(flag & 0x08)
         ChipFlag |= C352_FLG_MULAW;
 
-    S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(left<<8)|(right&0xff));
+    if(PAN_INVERT)
+        S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(right<<8)|(left&0xff));
+    else
+        S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(left<<8)|(right&0xff));
     S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4)>>1);
     S2X_C352_W(S,VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos+6));
     S2X_C352_W(S,VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+8));
     S2X_C352_W(S,VoiceNo,C352_WAVE_BANK,bank);
     S2X_C352_W(S,VoiceNo,C352_FLAGS,ChipFlag|C352_FLG_KEYON);
 #if 0
-    Q_DEBUG("ch %02d perc %02x %06x Vol:%04x Freq=%04x Start=%04x End=%04x Bank=%04x Flag=%04x\n",VoiceNo,WaveNo,pos,
+    Q_DEBUG("ch %02x perc %02x %06x Vol:%04x Freq=%04x Start=%04x End=%04x Bank=%04x Flag=%04x\n",VoiceNo,WaveNo,pos,
             S2X_C352_R(S,VoiceNo,C352_VOL_FRONT),
             S2X_C352_R(S,VoiceNo,C352_FREQUENCY),
             S2X_C352_R(S,VoiceNo,C352_WAVE_START),

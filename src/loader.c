@@ -41,6 +41,7 @@ int LoadGame(game_t *G)
     unsigned int wave_maxlen; // max length of wave roms.
     G->ChipFreq = 0;
     G->SongCount = 0;
+    G->ConfigCount = 0;
 
     int patchtype_set = 0;
     int patchaddr_set = 0;
@@ -77,6 +78,7 @@ int LoadGame(game_t *G)
     memset(wave_offset,0,sizeof(wave_offset));
     memset(wave_filename,0,sizeof(wave_filename));
     memset(G->Action,0,sizeof(G->Action));
+    memset(G->Config,0,sizeof(G->Config));
     memset(G->Type,0,sizeof(G->Type));
     memset(driver_name,0,sizeof(driver_name));
 
@@ -219,6 +221,11 @@ int LoadGame(game_t *G)
                     Q_DEBUG("action %d (%02x) =  t%02x = %04x\n",action_id,G->Action[action_id].cnt,action_reg,action_data);
                     G->Action[action_id].cnt++;
                 }
+            }
+            if(!strcmp(initest.section,"config"))
+            {
+                strncpy(G->Config[G->ConfigCount].name,initest.key,15);
+                strncpy(G->Config[G->ConfigCount++].data,initest.value,45);
             }
         }
     }

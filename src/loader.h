@@ -22,6 +22,11 @@ typedef struct {
 } playlist_entry_t;
 
 typedef struct {
+    char name[16];
+    char data[48];
+} config_t;
+
+typedef struct {
 
     char Name[256]; // short name (filename-legal)
     char Title[1024]; // display title
@@ -54,6 +59,8 @@ typedef struct {
     int ChipFreq; // sound chip frequency, best to not touch this.
 
     action_t Action[256];
+    config_t Config[32];
+    int ConfigCount;
 
     int SongCount;
     playlist_entry_t Playlist[256];

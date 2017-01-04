@@ -123,8 +123,12 @@ void S2X_VoiceUpdate(S2X_State *S,int VoiceNo)
 
 }
 
-// pitch envelope support is copied straight from quattro
-// should work the same, only real difference is that depth/rate is set separately here
+static void S2X_VoicePitchEnvSetPos(S2X_State *S,struct S2X_Pitch *P)
+{
+    P->EnvPos = P->EnvBase&0xffff00;
+    P->EnvPos += S2X_ReadWord(S,P->EnvPos+S2X_ReadWord(S,P->EnvBase)+(2*(P->EnvNo)));
+    P->EnvLoop = P->EnvPos;
+}
 
 void S2X_VoicePitchEnvSet(S2X_State *S,struct S2X_Pitch *P)
 {
@@ -133,13 +137,11 @@ void S2X_VoicePitchEnvSet(S2X_State *S,struct S2X_Pitch *P)
     if(!P->EnvNo)
         return;
 
-    P->EnvPos = S2X_ReadWord(S,(P->EnvBase&0xffff00)+S2X_ReadWord(S,P->EnvBase)+(2*(P->EnvNo)));
+    S2X_VoicePitchEnvSetPos(S,P);
 
-    P->EnvPos += P->EnvBase&0xffff00;
-
-    P->EnvLoop = P->EnvPos;
-    P->EnvData = S2X_ReadByte(S,P->EnvPos++);
+    //P->EnvData = S2X_ReadByte(S,P->EnvPos++);
     P->EnvCounter=0;
+    P->VolBase=0;
 }
 
 void S2X_VoicePitchEnvUpdate(S2X_State *S,struct S2X_Pitch *P)
@@ -149,18 +151,22 @@ void S2X_VoicePitchEnvUpdate(S2X_State *S,struct S2X_Pitch *P)
 
     uint16_t counter = P->EnvCounter+P->EnvSpeed;
     uint16_t step;
-    int16_t target;
-    P->EnvCounter = counter&0xff;
-    if(counter>0xff)
-        P->EnvData = S2X_ReadByte(S,P->EnvPos++);
-    counter&=0xff;
 
-    target = S2X_ReadByte(S,P->EnvPos);
+    if(counter>0xff)
+        P->EnvPos++;
+
+    uint8_t data = S2X_ReadByte(S,P->EnvPos);
+    int16_t target = S2X_ReadByte(S,P->EnvPos+1);
+
+    P->EnvCounter = counter&0xff;
+    counter &= 0xff;
+
     if(target==0xfd)
     {
         // continue reading next envelope
-        P->EnvPos++;
-        P->EnvLoop = P->EnvPos;
+        P->EnvNo++;
+        S2X_VoicePitchEnvSetPos(S,P);
+        P->EnvCounter=0;
         return;
     }
     else if(target==0xfe)
@@ -170,17 +176,19 @@ void S2X_VoicePitchEnvUpdate(S2X_State *S,struct S2X_Pitch *P)
         P->EnvCounter=0;
         return;
     }
-    else if(target>=0xf0)
+    else if(target>0xf0)
     {
         // end
-        P->EnvValue=P->EnvData<<8;
+        P->EnvValue=data<<8;
         S2X_VoicePitchEnvSetMod(S,P);
         P->EnvNo=0;
         return;
     }
 
-    step = (target-P->EnvData)*counter;
-    P->EnvValue = (P->EnvData<<8) + step;
+    step = (target-data)*counter;
+    P->EnvValue = (data<<8) + step;
+    P->VolMod = P->EnvValue>>8;
+    S2X_VoicePitchEnvSetVol(S,P);
     return S2X_VoicePitchEnvSetMod(S,P);
 }
 
@@ -190,6 +198,26 @@ void S2X_VoicePitchEnvSetMod(S2X_State *S,struct S2X_Pitch *P)
     int16_t val = (P->EnvValue-0x6400)>>1; // 100<<8
     int32_t mod = (val*depth)>>8;
     P->EnvMod = mod&0xffff;
+}
+
+// not fully sure if this works, we'll see...
+void S2X_VoicePitchEnvSetVol(S2X_State *S,struct S2X_Pitch *P)
+{
+    if(!P->VolDepth)
+        return;
+
+    int8_t mod = P->VolBase - P->VolMod;
+    uint16_t d = 0;
+    if(mod < 0)
+        P->VolBase = P->VolMod;
+    else
+        d = (mod*P->VolDepth)>>9;
+
+    if(P->FM)
+    {
+        //Q_DEBUG("FM v=%d Volume envelope = depth=%02x, mod=%02x, mod2=%04x, vol=%02x\n",P->FM->VoiceNo,P->VolDepth,P->VolMod,mod,d);
+        return S2X_FMWriteVol(S,P->FM,(P->FM->Track->Fadeout>>8)+d);
+    }
 }
 
 void S2X_VoicePitchUpdate(S2X_State *S,struct S2X_Pitch *P)

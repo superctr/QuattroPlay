@@ -193,3 +193,9 @@ void DriverResetMute()
     DriverSetMute(0);
     DriverSetSolo(0);
 }
+
+void DriverDebugAction(int id)
+{
+    if(DriverInterface->IDebugAction)
+        return DriverInterface->IDebugAction(DriverInterface->Driver,id);
+}

@@ -27,7 +27,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
 
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
     uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position);
-    if(header_byte != 0x20 && header_byte != 0x21)
+    if(header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
     {
         Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
@@ -127,8 +127,23 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         break;
     case 0x04:
         temp = arg_word(S,T->PositionBase,&T->Position);
+
+        // if calling the same subroutine inside itself, do not increase the stack
+        if(T->SubStackPos && T->SubStack[T->SubStackPos-1] == T->Position)
+        {
+            T->Position = temp;
+            break;
+        }
+
         T->SubStack[T->SubStackPos++] = T->Position;
         T->Position = temp;
+
+        if(T->SubStackPos == S2X_MAX_SUB_STACK)
+        {
+            Q_DEBUG("T=%02x smashed subroutine stack!\n",TrackNo);
+            S2X_LoopDetectionCheck(S,TrackNo,1);
+            S2X_TrackDisable(S,TrackNo);
+        }
         break;
     case 0x05:
         if(T->SubStackPos > 0)
@@ -136,7 +151,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             T->Position = T->SubStack[--T->SubStackPos];
             break;
         }
-        //Q_LoopDetectionCheck(Q,TrackNo,1);
+        S2X_LoopDetectionCheck(S,TrackNo,1);
         S2X_TrackDisable(S,TrackNo);
         break;
     case 0x19:
@@ -146,10 +161,11 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             T->Flags |= 0x400;
             break;
         }
-    case 0x09:
+    case 0x09: // jump
         T->Position = arg_word(S,T->PositionBase,&T->Position);
+        S2X_LoopDetectionJumpCheck(S,TrackNo);
         break;
-    case 0x0a:
+    case 0x0a: // repeat
         i = arg_byte(S,T->PositionBase,&T->Position);
         temp = arg_word(S,T->PositionBase,&T->Position);
         pos = T->RepeatStackPos;
@@ -170,9 +186,16 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             T->RepeatCount[pos] = i;
             T->RepeatStackPos++;
             T->Position = temp;
+
+            if(T->RepeatStackPos == S2X_MAX_REPEAT_STACK)
+            {
+                Q_DEBUG("T=%02x smashed repeat stack!\n",TrackNo);
+                S2X_LoopDetectionCheck(S,TrackNo,1);
+                S2X_TrackDisable(S,TrackNo);
+            }
         }
         break;
-    case 0x0b:
+    case 0x0b: // loop
         i = arg_byte(S,T->PositionBase,&T->Position);
         temp = arg_word(S,T->PositionBase,&T->Position);
         pos = T->LoopStackPos;
@@ -193,6 +216,13 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             T->LoopStack[pos] = T->Position;
             T->LoopCount[pos] = i;
             T->LoopStackPos++;
+
+            if(T->LoopStackPos == S2X_MAX_LOOP_STACK)
+            {
+                Q_DEBUG("T=%02x smashed loop stack!\n",TrackNo);
+                S2X_LoopDetectionCheck(S,TrackNo,1);
+                S2X_TrackDisable(S,TrackNo);
+            }
         }
         break;
     case 0x06: case 0x07: case 0x08:
@@ -229,6 +259,9 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             i = 24;
         else // PCM
             i = (Command&1)<<3;
+    case 0x1a:
+        if((Command&0x3f) == 0x1a)
+            i = 8;
 
         mask = arg_byte(S,T->PositionBase,&T->Position);
 
@@ -238,14 +271,14 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         {
             if(mask&0x80)
             {
-                printf("voice %d to be allocated\n",i);
+                //printf("voice %d to be allocated\n",i);
                 S2X_ChannelClear(S,TrackNo,i&7);
                 T->Channel[i&7].VoiceNo = i;
                 //T->Channel[ChannelNo].Voice = &Q->Voice[VoiceNo];
 
                 temp=100;
 
-                S2X_VoiceSetPriority(S,i,TrackNo,i,temp);
+                S2X_VoiceSetPriority(S,i,TrackNo,i&7,temp);
 
                 // check for other tracks
                 pos = S2X_VoiceGetPriority(S,i,NULL,NULL);
@@ -317,7 +350,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
     //uint32_t TempoVar;
     //Q_TrackCommand* CommandFunc;
 
-    if(~T->Flags & Q_TRACK_STATUS_BUSY)
+    if(~T->Flags & S2X_TRACK_STATUS_BUSY)
         return S2X_TrackDisable(S,TrackNo);
 
     if((int16_t)(T->UpdateTime-S->FrameCnt) > 0)
@@ -338,7 +371,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
         {
             T->TicksLeft--;
 
-            //Q_LoopDetectionCheck(Q,TrackNo,0);
+            S2X_LoopDetectionCheck(S,TrackNo,0);
             Command = arg_byte(S,T->PositionBase,&T->Position);
 
             if(Command&0x80)
@@ -366,7 +399,7 @@ void S2X_TrackCalcVolume(S2X_State* S,int TrackNo)
 
     if(T->Flags & S2X_TRACK_STATUS_ATTENUATE)
         T->Fadeout = 0x10;//S2X->BaseAttenuation;
-    else if(T->Flags & Q_TRACK_STATUS_FADE)
+    else if(T->Flags & S2X_TRACK_STATUS_FADE)
     {
         T->Fadeout += 0x40;//Q->BaseFadeout;
         if(T->Fadeout > 0xd000) // above threshold?

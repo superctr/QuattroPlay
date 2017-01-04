@@ -6,14 +6,16 @@
 #include "track.h"
 #include "voice.h"
 
+#define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
+//#define OLD_VOL_MODE (~S->ConfigFlags & S2X_CFG_FM_VOL) /* just for testing */
+
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
     memset(V,0,sizeof(S2X_FMVoice));
     V->Flag=0;
     V->VoiceNo=VoiceNo;
     V->Lfo=0;
-
-    //Q_DEBUG("clear FM %02d\n",VoiceNo);
+    V->Pitch.FM = V;
 
     S2X_OPMWrite(S,VoiceNo,0,OPM_OP_TL,127);
     S2X_OPMWrite(S,VoiceNo,1,OPM_OP_TL,127);
@@ -66,7 +68,16 @@ void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V)
     int i,d;
     for(i=0;i<=V->Carrier;i++)
     {
-        d = S2X_ReadByte(S,V->InsPtr+0x0b-i)+V->Volume;
+        if(OLD_VOL_MODE)
+        {
+            d = ~((S2X_ReadByte(S,V->InsPtr+0x0b-i)^0x7f)*V->Volume) >> 8;
+            //Q_DEBUG("d=%02x, V->Volume=%02x, InsTL=%02x\n",d&0x7f,V->Volume,S2X_ReadByte(S,V->InsPtr+0x0b-i));
+            d &= 0x7f;
+        }
+        else
+        {
+            d = S2X_ReadByte(S,V->InsPtr+0x0b-i)+V->Volume;
+        }
         V->TL[i] = (d>127) ? 127 : d;
     }
 }
@@ -155,8 +166,15 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
             case S2X_CHN_VOL:
-                temp = (~data&0xff) + (~C->Track->TrackVolume&0xff);
-                V->Volume = temp>127 ? 127 : temp;
+                if(OLD_VOL_MODE)
+                {
+                    V->Volume = (data*C->Track->TrackVolume)>>8;
+                }
+                else
+                {
+                    temp = (~data&0xff) + (~C->Track->TrackVolume&0xff);
+                    V->Volume = temp>127 ? 127 : temp;
+                }
                 //Q_DEBUG("FM v=%02x volume set to %02x (%02x + %02x)\n",V->VoiceNo,V->Volume,~data&0xff,~C->Track->TrackVolume&0xff);
                 S2X_FMSetVol(S,V);
                 break;
@@ -191,6 +209,7 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
     {
         if(C->Vars[S2X_CHN_ENV])
             Q_DEBUG("FM v=%02x Volume envelope requested (%02x)\n",V->VoiceNo,C->Vars[S2X_CHN_ENV]);
+        V->Pitch.VolDepth = C->Vars[S2X_CHN_ENV];
         V->Pitch.EnvDepth = C->Vars[S2X_CHN_PITDEP];
         V->Pitch.EnvSpeed = C->Vars[S2X_CHN_PITRAT];
     }

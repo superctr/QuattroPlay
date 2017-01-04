@@ -17,6 +17,9 @@ enum {
     SONG_STATUS_FADEOUT = 0x2000,
     SONG_STATUS_SUBSONG = 0x0800,
 };
+enum {
+    DEBUG_ACTION_DISPLAY_INFO = 0
+};
 
 union _Driver {
     void* drv;
@@ -70,6 +73,8 @@ struct _DriverInterface {
     void (*ISetMute)(union _Driver,uint32_t data);
     uint32_t (*IGetSolo)(union _Driver);
     void (*ISetSolo)(union _Driver,uint32_t data);
+
+    void (*IDebugAction)(union _Driver,int id);
 };
 
 struct _DriverTable {
@@ -113,5 +118,6 @@ void DriverSetMute(uint32_t data);
 uint32_t DriverGetSolo();
 void DriverSetSolo(uint32_t data);
 void DriverResetMute();
+void DriverDebugAction(int id);
 
 #endif // DRIVER_H_INCLUDED

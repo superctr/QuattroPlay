@@ -1,12 +1,14 @@
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
+
 #include "../qp.h"
 #include "../lib/vgm.h"
 #include "helper.h"
 
 int S2X_IInit(union _Driver d,game_t *g)
 {
-    Q_DEBUG("S2X: Initialize\n");
     memset(&d.s2x->PCMChip,0,sizeof(C352));
+    memset(&d.s2x->FMChip,0,sizeof(YM2151));
 
     //d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
     d.s2x->PCMClock = 24576000; // temporary
@@ -25,11 +27,28 @@ int S2X_IInit(union _Driver d,game_t *g)
     d.s2x->SoundRate = d.s2x->PCMChip.rate;
     d.s2x->FMDelta = d.s2x->FMChip.rate / d.s2x->SoundRate;
 
+    config_t* cfg;
+
+    d.s2x->ConfigFlags=0;
+    int i,v;
+    for(i=0;i<g->ConfigCount;i++)
+    {
+        cfg = &g->Config[i];
+        v = atoi(cfg->data);
+        if(!strcmp(cfg->name,"fm_volcalc") && v)
+            d.s2x->ConfigFlags |= S2X_CFG_FM_VOL;
+        if(!strcmp(cfg->name,"pcm_adsr") && v>0)
+            d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
+        if(!strcmp(cfg->name,"pcm_adsr") && v>1)
+            d.s2x->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
+        if(!strcmp(cfg->name,"pcm_paninvert") && v)
+            d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
+    }
+
     return 0;
 }
 void S2X_IDeinit(union _Driver d)
 {
-    Q_DEBUG("S2X: Goodbye\n");
     S2X_Deinit(d.s2x);
 }
 void S2X_IVgmOpen(union _Driver d)
@@ -98,17 +117,14 @@ int S2X_ISongCnt(union _Driver d,int slot)
 }
 void S2X_ISongRequest(union _Driver d,int slot,int val)
 {
-    Q_DEBUG("S2X: Requesting song %02x in slot %02x\n",val,slot);
     d.s2x->SongRequest[slot&0x3f] = val | S2X_TRACK_STATUS_START;
 }
 void S2X_ISongStop(union _Driver d,int slot)
 {
-    Q_DEBUG("S2X: Requesting stop slot %02x\n",slot);
     d.s2x->SongRequest[slot&0x3f] &= 0x7ff;
 }
 void S2X_ISongFade(union _Driver d,int slot)
 {
-    Q_DEBUG("S2X: Requesting fade slot %02x\n",slot);
     d.s2x->SongRequest[slot&0x3f] |= S2X_TRACK_STATUS_FADE;
 }
 int S2X_ISongStatus(union _Driver d,int slot)
@@ -126,11 +142,11 @@ double S2X_ISongTime(union _Driver d,int slot)
 
 int S2X_IGetLoopCnt(union _Driver d,int slot)
 {
-    return 0; //Q_LoopDetectionGetCount(d.quattro,slot);
+    return S2X_LoopDetectionGetCount(d.s2x,slot);
 }
 void S2X_IResetLoopCnt(union _Driver d)
 {
-    //Q_LoopDetectionReset(d.quattro);
+    S2X_LoopDetectionReset(d.s2x);
 }
 
 int S2X_IDetectSilence(union _Driver d)
@@ -188,6 +204,7 @@ void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
         double last = d.s2x->FMChip.out[i+2];
         double next = d.s2x->FMChip.out[i];
         samples[i] += (last+(d.s2x->FMTicks*(next-last)))/6;
+        //samples[i] += (last+(d.s2x->FMTicks*(next-last)))/12; // for finallap
     }
 }
 
@@ -208,6 +225,35 @@ void S2X_ISetSolo(union _Driver d,uint32_t data)
 {
     d.s2x->SoloMask = data;
     S2X_UpdateMuteMask(d.s2x);
+}
+
+void S2X_IDebugAction(union _Driver d,int id)
+{
+    int i,j;
+    uint32_t startpos,currpos;
+    S2X_Track *T;
+
+    printf("Currently playing tracks:\n");
+    for(i=0;i<S2X_MAX_TRACKS;i++)
+    {
+        T = &d.s2x->Track[i];
+        if(T->Flags & S2X_TRACK_STATUS_BUSY)
+        {
+            j=d.s2x->SongRequest[i]&0x1ff;
+            startpos = T->PositionBase+S2X_ReadWord(d.s2x,T->PositionBase);
+            startpos = T->PositionBase+S2X_ReadWord(d.s2x,startpos+(2*(j&0xff)));
+            currpos = T->PositionBase+T->Position;
+            printf("Track %02x: ID=%03x, start=%06x, current pos=%06x, loops=%d (%04x/%d)\n",i,j,startpos,currpos,
+                   S2X_LoopDetectionGetCount(d.s2x,i),
+                   d.s2x->TrackLoopId[j],
+                   d.s2x->TrackLoopCount[j]);
+            for(j=0;j<S2X_MAX_TRKCHN;j++)
+            {
+                if(T->Channel[j].Enabled)
+                    printf("| Channel %d => Voice %02x\n",j,T->Channel[j].VoiceNo);
+            }
+        }
+    }
 }
 
 struct _DriverInterface S2X_CreateInterface()
@@ -257,6 +303,8 @@ struct _DriverInterface S2X_CreateInterface()
         .ISetMute = &S2X_ISetMute,
         .IGetSolo = &S2X_IGetSolo,
         .ISetSolo = &S2X_ISetSolo,
+
+        .IDebugAction = &S2X_IDebugAction
     };
     return d;
 }

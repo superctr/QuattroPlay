@@ -41,5 +41,20 @@ enum {
     S2X_CHN_MAX    = 0x23 - S2X_CHN_OFFSET,
 };
 
+enum {
+    // FM volume handlign
+    // 0=calculate FM volume by adding/subtracting (default) (example: Dragon Saber)
+    // 1=by multiplying. (example: Final Lap)
+    S2X_CFG_FM_VOL = 1<<0,
+    // PCM envelope type
+    // 0=use table envelope (default) (example: Dragon Saber)
+    // 1=use ADSR envelope (example: Assault)
+    S2X_CFG_PCM_ADSR = 1<<1,
+    // 'new' ADSR envelope type
+    S2X_CFG_PCM_NEWADSR = 1<<2,
+    // invert pan for PCM channels
+    S2X_CFG_PCM_PAN = 1<<3,
+};
+
 
 #endif // S2X_ENUM_H_INCLUDED
