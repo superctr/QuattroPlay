@@ -16,7 +16,7 @@
 #include "lib/fileio.h"
 
 // Loads game ini, then the sound data and wave roms...
-int LoadGame(game_t *G)
+int LoadGame(QP_Game *G)
 {
     //Q_State* Q = G->QDrv;
 
@@ -344,8 +344,8 @@ int LoadGame(game_t *G)
         return -1;
     }
 
-    DriverInterface = (struct _DriverInterface*)malloc(sizeof(struct _DriverInterface));
-    memset(DriverInterface,0,sizeof(struct _DriverInterface));
+    DriverInterface = (struct QP_DriverInterface*)malloc(sizeof(struct QP_DriverInterface));
+    memset(DriverInterface,0,sizeof(struct QP_DriverInterface));
 
     for(i=0;driver_name[i];i++)
         driver_name[i] = tolower(driver_name[i]);
@@ -371,7 +371,7 @@ int LoadGame(game_t *G)
     return -1;
 }
 
-int UnloadGame(game_t *G)
+int UnloadGame(QP_Game *G)
 {
     free(G->Data);
     free(G->WaveData);
@@ -381,7 +381,7 @@ int UnloadGame(game_t *G)
     return 0;
 }
 
-int InitGame(game_t *Game)
+int InitGame(QP_Game *Game)
 {
     if(DriverInit())
     {
@@ -418,7 +418,7 @@ int InitGame(game_t *Game)
 
     DriverReset(1);
 
-    QPAudio_Init(Audio,NULL,DriverGetChipRate(),Game->AudioBuffer,audiodev);
+    QP_AudioInit(Audio,NULL,DriverGetChipRate(),Game->AudioBuffer,audiodev);
 
     //if(Game->AutoPlay >= 0)
     //    QDrv->BootSong=2;
@@ -434,18 +434,18 @@ int InitGame(game_t *Game)
         {
             sprintf(filename,"%s_%03x.wav",Game->Name,Game->AutoPlay&0x7ff);
         }
-        QPAudio_WavOpen(Audio,filename);
+        QP_AudioWavOpen(Audio,filename);
     }
 
     return 0;
 }
 
-void DeInitGame(game_t *Game)
+void DeInitGame(QP_Game *Game)
 {
     if(Audio->state.FileLogging)
     {
         SDL_LockAudioDevice(Audio->dev);
-        QPAudio_WavClose(Audio);
+        QP_AudioWavClose(Audio);
         SDL_UnlockAudioDevice(Audio->dev);
     }
 
@@ -462,7 +462,7 @@ void DeInitGame(game_t *Game)
     DriverDeinit();
 }
 
-void ResetGame(game_t *Game)
+void ResetGame(QP_Game *Game)
 {
     DriverReset(0);
     Game->PlaylistControl=0;
@@ -471,7 +471,7 @@ void ResetGame(game_t *Game)
 }
 
 // Perform register action (song triggers).
-void GameDoAction(game_t *G,unsigned int id)
+void GameDoAction(QP_Game *G,unsigned int id)
 {
     if(id > 255)
         return;
@@ -483,12 +483,13 @@ void GameDoAction(game_t *G,unsigned int id)
             DriverSetParameter(G->Action[id].reg[i],G->Action[id].data[i]);
         //G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
         else if(reg<0x120)
-            G->QDrv->SongRequest[G->Action[id].reg[i]&0x1f] = G->Action[id].data[i];
+            DriverRequestSong(G->Action[id].reg[i]&0x1f,G->Action[id].data[i]&0x7ff);
+        //G->QDrv->SongRequest[G->Action[id].reg[i]&0x1f] = G->Action[id].data[i];
     }
     return;
 }
 
-void GameDoUpdate(game_t *G)
+void GameDoUpdate(QP_Game *G)
 {
     int i;
 

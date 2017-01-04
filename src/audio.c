@@ -12,9 +12,9 @@
 #include "audio.h"
 #include "lib/vgm.h"
 
-void QPAudio_Callback(void* data,Uint8* astream,int len)
+void QP_AudioCallback(void* data,Uint8* astream,int len)
 {
-    audiocb_t* S = (audiocb_t*)data;
+    QP_AudioCallbackData* S = (QP_AudioCallbackData*)data;
     float* stream = (float*)astream;
 
     int i,j;
@@ -106,10 +106,10 @@ void QPAudio_Callback(void* data,Uint8* astream,int len)
 
 }
 
-void QPAudio_Init(audio_t* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice)
+void QP_AudioInit(QP_Audio* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice)
 {
     audio->Enabled = 0;
-    audio->state.QDrv = driver;
+    //audio->state.QDrv = driver;
     //audio->state.SampleRate = SampleRate;
     audio->state.ChipUpdate = 0;
     audio->state.DriverUpdate=0;
@@ -121,7 +121,7 @@ void QPAudio_Init(audio_t* audio,Q_State* driver,int SampleRate,int SampleCount,
 
     SDL_AudioSpec req;
     SDL_zero(req);
-    req.callback = QPAudio_Callback;
+    req.callback = QP_AudioCallback;
     req.channels = 4;
     req.freq = SampleRate;
     req.format = AUDIO_F32;
@@ -144,7 +144,7 @@ void QPAudio_Init(audio_t* audio,Q_State* driver,int SampleRate,int SampleCount,
     }
 }
 
-void QPAudio_Close(audio_t* audio)
+void QP_AudioClose(QP_Audio* audio)
 {
     if(!audio->Initialized)
         return;
@@ -152,7 +152,7 @@ void QPAudio_Close(audio_t* audio)
     SDL_CloseAudioDevice(audio->dev);
 }
 
-void QPAudio_SetPause(audio_t* audio,int pause)
+void QP_AudioSetPause(QP_Audio* audio,int pause)
 {
     if(!audio->Initialized)
         return;
@@ -160,7 +160,7 @@ void QPAudio_SetPause(audio_t* audio,int pause)
     SDL_PauseAudioDevice(audio->dev,pause);
 }
 
-void QPAudio_TogglePause(audio_t* audio)
+void QP_AudioTogglePause(QP_Audio* audio)
 {
     if(!audio->Initialized)
         return;
@@ -168,7 +168,7 @@ void QPAudio_TogglePause(audio_t* audio)
     SDL_PauseAudioDevice(audio->dev,audio->Enabled);
 }
 
-int QPAudio_WavOpen(audio_t* audio, char* filename)
+int QP_AudioWavOpen(QP_Audio* audio, char* filename)
 {
     audio->state.logfile = NULL;
     audio->state.logfile = fopen(filename,"wb");
@@ -187,7 +187,7 @@ int QPAudio_WavOpen(audio_t* audio, char* filename)
     return 0;
 }
 
-void QPAudio_WavClose(audio_t* audio)
+void QP_AudioWavClose(QP_Audio* audio)
 {
     audio->state.FileLogging=0;
     FILE* f = audio->state.logfile;

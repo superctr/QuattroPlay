@@ -37,7 +37,7 @@ typedef struct {
     uint8_t *WaveData;
     uint32_t WaveMask;
 
-    Q_State *QDrv;
+    //Q_State *QDrv;
 
     // audio configuration
     char AudioDevice[256];
@@ -74,15 +74,15 @@ typedef struct {
     int QueueSong;
     int QueueAction;
     int ActionTimer;
-} game_t;
+} QP_Game;
 
-int LoadGame(game_t *Game);
-int UnloadGame(game_t *Game);
+int LoadGame(QP_Game *Game);
+int UnloadGame(QP_Game *Game);
 
-int  InitGame(game_t *Game);
-void DeInitGame(game_t *Game);
+int  InitGame(QP_Game *Game);
+void DeInitGame(QP_Game *Game);
 
-void GameDoAction(game_t *G,unsigned int actionid);
-void GameDoUpdate(game_t *G);
+void GameDoAction(QP_Game *G,unsigned int actionid);
+void GameDoUpdate(QP_Game *G);
 
 #endif // LOADER_H_INCLUDED

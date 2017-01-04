@@ -22,10 +22,10 @@
     char QP_DataPath[128];
 
     Q_State *QDrv;
-    audio_t *Audio;
-    game_t  *Game;
-    QPAudit *Audit;
+    QP_Audio *Audio;
+    QP_Game  *Game;
+    QP_Audit *Audit;
 
-    struct _DriverInterface *DriverInterface;
+    struct QP_DriverInterface *DriverInterface;
 
 #endif // QP_H_INCLUDED

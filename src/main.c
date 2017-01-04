@@ -27,14 +27,14 @@ int main(int argc, char *argv[])
     //QDrv = (Q_State*)malloc(sizeof(Q_State));
     //memset(QDrv,0,sizeof(Q_State));
 
-    Audio = (audio_t*)malloc(sizeof(audio_t));
-    memset(Audio,0,sizeof(audio_t));
+    Audio = (QP_Audio*)malloc(sizeof(QP_Audio));
+    memset(Audio,0,sizeof(QP_Audio));
 
-    Game = (game_t*)malloc(sizeof(game_t));
-    memset(Game,0,sizeof(game_t));
+    Game = (QP_Game*)malloc(sizeof(QP_Game));
+    memset(Game,0,sizeof(QP_Game));
 
-    Audit = (QPAudit*)malloc(sizeof(QPAudit));
-    memset(Audit,0,sizeof(QPAudit));
+    Audit = (QP_Audit*)malloc(sizeof(QP_Audit));
+    memset(Audit,0,sizeof(QP_Audit));
 
     if(/*!QDrv ||*/ !Audio || !Game)
         return -1;
@@ -146,12 +146,12 @@ int main(int argc, char *argv[])
         val = (LoadGame(Game) || InitGame(Game));
         if(!val)
         {
-            QPAudio_SetPause(Audio,0);
+            QP_AudioSetPause(Audio,0);
             Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
 
             ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
 
-            QPAudio_Close(Audio);
+            QP_AudioClose(Audio);
 
             // Audio must be closed or locked before calling this
             DeInitGame(Game);

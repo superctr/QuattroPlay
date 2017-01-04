@@ -19,6 +19,6 @@ void S2X_Deinit(S2X_State *S);
 void S2X_Reset(S2X_State *S);
 void S2X_UpdateTick(S2X_State *S);
 
-struct _DriverInterface S2X_CreateInterface();
+struct QP_DriverInterface S2X_CreateInterface();
 
 #endif // S2X_H_INCLUDED

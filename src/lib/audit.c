@@ -14,7 +14,7 @@
 #include "audit.h"
 
 
-void WriteRomEntry(struct QPAuditRom *rom,int PathType,char* Path1,char* Path2)
+void WriteRomEntry(struct QP_AuditRom *rom,int PathType,char* Path1,char* Path2)
 {
     switch(PathType)
     {
@@ -46,7 +46,7 @@ void WriteRomEntry(struct QPAuditRom *rom,int PathType,char* Path1,char* Path2)
     */
 }
 
-void WriteAuditEntry(QPAuditEntry *entry, char *name)
+void WriteAuditEntry(QP_AuditEntry *entry, char *name)
 {
     char filename[128];
     char rompath[128];
@@ -100,12 +100,12 @@ void WriteAuditEntry(QPAuditEntry *entry, char *name)
 
 int AuditSortCompare(const void *a, const void *b)
 {
-    QPAuditEntry *ea = (QPAuditEntry*)a;
-    QPAuditEntry *eb = (QPAuditEntry*)b;
+    QP_AuditEntry *ea = (QP_AuditEntry*)a;
+    QP_AuditEntry *eb = (QP_AuditEntry*)b;
     return strcmp(ea->Name,eb->Name);
 }
 
-int AuditGames(QPAudit* audit)
+int AuditGames(QP_Audit* audit)
 {
     char dir[128], temp[128];
 
@@ -115,17 +115,17 @@ int AuditGames(QPAudit* audit)
 
     DIR* dp;
     struct dirent *ep;
-    //QPAuditEntry *ae;
+    //QP_AuditEntry *ae;
 
     dp = opendir(dir);
     if(dp != NULL)
     {
         while((ep=readdir(dp)) != NULL)
         {
-            //ae = (QPAuditEntry*)malloc(sizeof(QPAuditEntry));
+            //ae = (QP_AuditEntry*)malloc(sizeof(QP_AuditEntry));
             if(sscanf(ep->d_name,"%[^.].ini",temp))
             {
-                //ae = (QPAuditEntry*)malloc(sizeof(QPAuditEntry));
+                //ae = (QP_AuditEntry*)malloc(sizeof(QP_AuditEntry));
                 WriteAuditEntry(&audit->Entry[i],temp);
                 //audit->Entry[i] = ae;
                 if(audit->Entry[i].IniOk)
@@ -141,7 +141,7 @@ int AuditGames(QPAudit* audit)
     else
         return -1;
 
-    qsort(audit->Entry,audit->Count,sizeof(QPAuditEntry),AuditSortCompare);
+    qsort(audit->Entry,audit->Count,sizeof(QP_AuditEntry),AuditSortCompare);
 
     return 0;
 }

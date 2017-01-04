@@ -94,7 +94,7 @@ void ui_handleinput(SDL_Keysym* ks)
         break;
     case SDLK_p:
         if(gameloaded)
-            QPAudio_TogglePause(Audio);
+            QP_AudioTogglePause(Audio);
         break;
     case SDLK_F1:
         if(screen_mode == SCR_ABOUT)
@@ -166,9 +166,9 @@ void ui_handleinput(SDL_Keysym* ks)
         {
             SDL_LockAudioDevice(Audio->dev);
             if(Audio->state.FileLogging == 0)
-                QPAudio_WavOpen(Audio,"qp_log.wav");
+                QP_AudioWavOpen(Audio,"qp_log.wav");
             else
-                QPAudio_WavClose(Audio);
+                QP_AudioWavClose(Audio);
             SDL_UnlockAudioDevice(Audio->dev);
         }
         break;

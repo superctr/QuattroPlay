@@ -4,34 +4,34 @@
 #define AUDIT_MAX_COUNT 512
 #define AUDIT_MAX_ROMS 8
 
-typedef struct QPAuditEntry QPAuditEntry;
-typedef struct QPAudit QPAudit;
+typedef struct QP_AuditEntry QP_AuditEntry;
+typedef struct QP_Audit QP_Audit;
 
 enum {
     AUDIT_PATH_DATA,
     AUDIT_PATH_WAVE
 };
-struct QPAuditRom{
+struct QP_AuditRom{
     char Path[128];
     int Ok;
 };
 
-struct QPAuditEntry{
+struct QP_AuditEntry{
     char Name[256];
     char DisplayName[256];
     int HasPlaylist;
     int HasMeta;
     int RomCount;
-    struct QPAuditRom Rom[AUDIT_MAX_ROMS];
+    struct QP_AuditRom Rom[AUDIT_MAX_ROMS];
     int IniOk;
 };
 
-struct QPAudit{
+struct QP_Audit{
     int Count;
-    QPAuditEntry Entry[AUDIT_MAX_COUNT];
+    QP_AuditEntry Entry[AUDIT_MAX_COUNT];
 };
 
-int AuditGames(QPAudit* audit);
-void FreeAudit(QPAudit* audit);
+int AuditGames(QP_Audit* audit);
+void FreeAudit(QP_Audit* audit);
 
 #endif // AUDIT_H_INCLUDED

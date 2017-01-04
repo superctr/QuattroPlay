@@ -3,13 +3,13 @@
 #include "qp.h"
 #include "lib/vgm.h"
 
-const struct _DriverTable DriverTable[DRIVER_COUNT] = {
+const struct QP_DriverTable DriverTable[DRIVER_COUNT] = {
     {0,"none"},
     {DRIVER_QUATTRO,"quattro"},
     {DRIVER_SYSTEM2,"system2x"},
 };
 
-int DriverCreate(struct _DriverInterface *di,enum _DriverType dt)
+int DriverCreate(struct QP_DriverInterface *di,enum QP_DriverType dt)
 {
     switch(dt)
     {
@@ -36,7 +36,7 @@ int DriverCreate(struct _DriverInterface *di,enum _DriverType dt)
     return 0;
 }
 
-void DriverDestroy(struct _DriverInterface *di)
+void DriverDestroy(struct QP_DriverInterface *di)
 {
     if(!di)
         return;

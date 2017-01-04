@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "loader.h"
 
-enum _DriverType {
+enum QP_DriverType {
     DRIVER_NOT_LOADED = 0,
     DRIVER_QUATTRO,
     DRIVER_SYSTEM2,
@@ -21,70 +21,70 @@ enum {
     DEBUG_ACTION_DISPLAY_INFO = 0
 };
 
-union _Driver {
+union QP_Driver {
     void* drv;
     Q_State *quattro;
     S2X_State *s2x;
 };
 
-struct _DriverInterface {
+struct QP_DriverInterface {
     char* Name;
 
-    enum _DriverType Type;
-    union _Driver Driver;
+    enum QP_DriverType Type;
+    union QP_Driver Driver;
 
     // IInit is allowed to fail, this aborts the program
-    int (*IInit)(union _Driver, game_t *game);
+    int (*IInit)(union QP_Driver,QP_Game *game);
 
-    void (*IDeinit)(union _Driver);
-    void (*IVgmOpen)(union _Driver);
-    void (*IVgmClose)(union _Driver);
-    void (*IReset)(union _Driver,game_t *game,int initial);
+    void (*IDeinit)(union QP_Driver);
+    void (*IVgmOpen)(union QP_Driver);
+    void (*IVgmClose)(union QP_Driver);
+    void (*IReset)(union QP_Driver,QP_Game *game,int initial);
 
-    int (*IGetParamCnt)(union _Driver);
-    void (*ISetParam)(union _Driver,int id,int val);
-    int (*IGetParam)(union _Driver,int id);
+    int (*IGetParamCnt)(union QP_Driver);
+    void (*ISetParam)(union QP_Driver,int id,int val);
+    int (*IGetParam)(union QP_Driver,int id);
 
-    int (*IGetParamName)(union _Driver,int id,char* buffer,int len);
-    char* (*IGetSongMessage)(union _Driver);
-    char* (*IGetDriverInfo)(union _Driver);
+    int (*IGetParamName)(union QP_Driver,int id,char* buffer,int len);
+    char* (*IGetSongMessage)(union QP_Driver);
+    char* (*IGetDriverInfo)(union QP_Driver);
 
-    int (*IRequestSlotCnt)(union _Driver);
-    int (*ISongCnt)(union _Driver,int slot);
-    void (*ISongRequest)(union _Driver,int slot,int val);
-    void (*ISongStop)(union _Driver,int slot);
-    void (*ISongFade)(union _Driver,int slot);
-    int (*ISongStatus)(union _Driver,int slot);
-    int (*ISongId)(union _Driver,int slot);
-    double (*ISongTime)(union _Driver,int slot);
+    int (*IRequestSlotCnt)(union QP_Driver);
+    int (*ISongCnt)(union QP_Driver,int slot);
+    void (*ISongRequest)(union QP_Driver,int slot,int val);
+    void (*ISongStop)(union QP_Driver,int slot);
+    void (*ISongFade)(union QP_Driver,int slot);
+    int (*ISongStatus)(union QP_Driver,int slot);
+    int (*ISongId)(union QP_Driver,int slot);
+    double (*ISongTime)(union QP_Driver,int slot);
 
-    int (*IGetLoopCnt)(union _Driver,int slot);
-    void (*IResetLoopCnt)(union _Driver);
+    int (*IGetLoopCnt)(union QP_Driver,int slot);
+    void (*IResetLoopCnt)(union QP_Driver);
 
-    int (*IDetectSilence)(union _Driver);
+    int (*IDetectSilence)(union QP_Driver);
 
-    double (*ITickRate)(union _Driver);
-    void (*IUpdateTick)(union _Driver);
-    double (*IChipRate)(union _Driver);
-    void (*IUpdateChip)(union _Driver);
-    void (*ISampleChip)(union _Driver,float* samples,int samplecnt);
+    double (*ITickRate)(union QP_Driver);
+    void (*IUpdateTick)(union QP_Driver);
+    double (*IChipRate)(union QP_Driver);
+    void (*IUpdateChip)(union QP_Driver);
+    void (*ISampleChip)(union QP_Driver,float* samples,int samplecnt);
 
-    uint32_t (*IGetMute)(union _Driver);
-    void (*ISetMute)(union _Driver,uint32_t data);
-    uint32_t (*IGetSolo)(union _Driver);
-    void (*ISetSolo)(union _Driver,uint32_t data);
+    uint32_t (*IGetMute)(union QP_Driver);
+    void (*ISetMute)(union QP_Driver,uint32_t data);
+    uint32_t (*IGetSolo)(union QP_Driver);
+    void (*ISetSolo)(union QP_Driver,uint32_t data);
 
-    void (*IDebugAction)(union _Driver,int id);
+    void (*IDebugAction)(union QP_Driver,int id);
 };
 
-struct _DriverTable {
-    enum _DriverType type;
+struct QP_DriverTable {
+    enum QP_DriverType type;
     char* name;
 };
 
-const struct _DriverTable DriverTable[DRIVER_COUNT];
-int DriverCreate(struct _DriverInterface *di,enum _DriverType dt);
-void DriverDestroy(struct _DriverInterface *di);
+const struct QP_DriverTable DriverTable[DRIVER_COUNT];
+int DriverCreate(struct QP_DriverInterface *di,enum QP_DriverType dt);
+void DriverDestroy(struct QP_DriverInterface *di);
 
 int DriverInit();
 void DriverDeinit();

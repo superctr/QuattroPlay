@@ -3,7 +3,7 @@
 #include "../lib/vgm.h"
 #include "helper.h"
 
-int Q_IInit(union _Driver d,game_t *g)
+int Q_IInit(union QP_Driver d,QP_Game *g)
 {
     memset(&d.quattro->Chip,0,sizeof(C352));
 
@@ -18,22 +18,22 @@ int Q_IInit(union _Driver d,game_t *g)
     d.quattro->McuData = g->Data;
     return 0;
 }
-void Q_IDeinit(union _Driver d)
+void Q_IDeinit(union QP_Driver d)
 {
     Q_Deinit(d.quattro);
 }
-void Q_IVgmOpen(union _Driver d)
+void Q_IVgmOpen(union QP_Driver d)
 {
     vgm_datablock(0x92,0x1000000,d.quattro->Chip.wave,0x1000000,d.quattro->Chip.wave_mask,0);
     d.quattro->Chip.vgm_log = 1;
 }
-void Q_IVgmClose(union _Driver d)
+void Q_IVgmClose(union QP_Driver d)
 {
     d.quattro->Chip.vgm_log = 0;
     vgm_poke32(0xdc,d.quattro->ChipClock | Audio->state.MuteRear<<31);
     vgm_poke8(0xd6,288/4);
 }
-void Q_IReset(union _Driver d,game_t* g,int initial)
+void Q_IReset(union QP_Driver d,QP_Game* g,int initial)
 {
     d.quattro->PortaFix=g->PortaFix;
     d.quattro->BootSong=g->BootSong;
@@ -47,74 +47,74 @@ void Q_IReset(union _Driver d,game_t* g,int initial)
         d.quattro->BootSong=2;
 }
 
-int Q_IGetParamCnt(union _Driver d)
+int Q_IGetParamCnt(union QP_Driver d)
 {
     return 256;
 }
-void Q_ISetParam(union _Driver d,int id,int val)
+void Q_ISetParam(union QP_Driver d,int id,int val)
 {
     d.quattro->Register[id&0xff] = val;
 }
-int Q_IGetParam(union _Driver d,int id)
+int Q_IGetParam(union QP_Driver d,int id)
 {
     return d.quattro->Register[id&0xff];
 }
-int Q_IGetParamName(union _Driver d,int id,char* buffer,int len)
+int Q_IGetParamName(union QP_Driver d,int id,char* buffer,int len)
 {
     snprintf(buffer,len,"Register %02x",id);
     return -1;
 }
-char* Q_IGetSongMessage(union _Driver d)
+char* Q_IGetSongMessage(union QP_Driver d)
 {
     return d.quattro->SongMessage;
 }
-char* Q_IGetDriverInfo(union _Driver d)
+char* Q_IGetDriverInfo(union QP_Driver d)
 {
     return (char*)Q_McuNames[d.quattro->McuType];
 }
-int Q_IRequestSlotCnt(union _Driver d)
+int Q_IRequestSlotCnt(union QP_Driver d)
 {
     return Q_MAX_TRACKS;
 }
-int Q_ISongCnt(union _Driver d,int slot)
+int Q_ISongCnt(union QP_Driver d,int slot)
 {
     return d.quattro->SongCount;
 }
-void Q_ISongRequest(union _Driver d,int slot,int val)
+void Q_ISongRequest(union QP_Driver d,int slot,int val)
 {
     d.quattro->SongRequest[slot&0x3f] = val | Q_TRACK_STATUS_START;
 }
-void Q_ISongStop(union _Driver d,int slot)
+void Q_ISongStop(union QP_Driver d,int slot)
 {
     d.quattro->SongRequest[slot&0x3f] &= 0x7ff;
 }
-void Q_ISongFade(union _Driver d,int slot)
+void Q_ISongFade(union QP_Driver d,int slot)
 {
     d.quattro->SongRequest[slot&0x3f] |= Q_TRACK_STATUS_FADE;
 }
-int Q_ISongStatus(union _Driver d,int slot)
+int Q_ISongStatus(union QP_Driver d,int slot)
 {
     return (d.quattro->SongRequest[slot&0x3f] & 0xf800);
 }
-int Q_ISongId(union _Driver d,int slot)
+int Q_ISongId(union QP_Driver d,int slot)
 {
     return d.quattro->SongRequest[slot&0x3f] & 0x7ff;
 }
-double Q_ISongTime(union _Driver d,int slot)
+double Q_ISongTime(union QP_Driver d,int slot)
 {
     return d.quattro->SongTimer[slot&0x3f];
 }
 
-int Q_IGetLoopCnt(union _Driver d,int slot)
+int Q_IGetLoopCnt(union QP_Driver d,int slot)
 {
     return Q_LoopDetectionGetCount(d.quattro,slot);
 }
-void Q_IResetLoopCnt(union _Driver d)
+void Q_IResetLoopCnt(union QP_Driver d)
 {
     Q_LoopDetectionReset(d.quattro);
 }
 
-int Q_IDetectSilence(union _Driver d)
+int Q_IDetectSilence(union QP_Driver d)
 {
     int i, voicectr=0;
     for(i=0;i<Q_MAX_VOICES;i++)
@@ -125,23 +125,23 @@ int Q_IDetectSilence(union _Driver d)
     return 0;
 }
 
-double Q_ITickRate(union _Driver d)
+double Q_ITickRate(union QP_Driver d)
 {
     return 120; // 120 Hz
 }
-void Q_IUpdateTick(union _Driver d)
+void Q_IUpdateTick(union QP_Driver d)
 {
     Q_UpdateTick(d.quattro);
 }
-double Q_IChipRate(union _Driver d)
+double Q_IChipRate(union QP_Driver d)
 {
     return d.quattro->Chip.rate;
 }
-void Q_IUpdateChip(union _Driver d)
+void Q_IUpdateChip(union QP_Driver d)
 {
     C352_update(&d.quattro->Chip);
 }
-void Q_ISampleChip(union _Driver d,float* samples,int samplecnt)
+void Q_ISampleChip(union QP_Driver d,float* samples,int samplecnt)
 {
     int i;
     if(samplecnt > 4)
@@ -150,28 +150,28 @@ void Q_ISampleChip(union _Driver d,float* samples,int samplecnt)
         samples[i] = d.quattro->Chip.out[i] / 268435456;
 }
 
-uint32_t Q_IGetMute(union _Driver d)
+uint32_t Q_IGetMute(union QP_Driver d)
 {
     return QDrv->MuteMask;
 }
-void Q_ISetMute(union _Driver d,uint32_t data)
+void Q_ISetMute(union QP_Driver d,uint32_t data)
 {
     QDrv->MuteMask = data;
     Q_UpdateMuteMask(QDrv);
 }
-uint32_t Q_IGetSolo(union _Driver d)
+uint32_t Q_IGetSolo(union QP_Driver d)
 {
     return QDrv->SoloMask;
 }
-void Q_ISetSolo(union _Driver d,uint32_t data)
+void Q_ISetSolo(union QP_Driver d,uint32_t data)
 {
     QDrv->SoloMask = data;
     Q_UpdateMuteMask(QDrv);
 }
 
-struct _DriverInterface Q_CreateInterface()
+struct QP_DriverInterface Q_CreateInterface()
 {
-    struct _DriverInterface d = {
+    struct QP_DriverInterface d = {
         .Name = "Quattro",
 
         .Type = DRIVER_QUATTRO,

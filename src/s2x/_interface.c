@@ -5,7 +5,7 @@
 #include "../lib/vgm.h"
 #include "helper.h"
 
-int S2X_IInit(union _Driver d,game_t *g)
+int S2X_IInit(union QP_Driver d,QP_Game *g)
 {
     memset(&d.s2x->PCMChip,0,sizeof(C352));
     memset(&d.s2x->FMChip,0,sizeof(YM2151));
@@ -47,17 +47,17 @@ int S2X_IInit(union _Driver d,game_t *g)
 
     return 0;
 }
-void S2X_IDeinit(union _Driver d)
+void S2X_IDeinit(union QP_Driver d)
 {
     S2X_Deinit(d.s2x);
 }
-void S2X_IVgmOpen(union _Driver d)
+void S2X_IVgmOpen(union QP_Driver d)
 {
     vgm_datablock(0x92,0x1000000,d.s2x->PCMChip.wave,0x1000000,d.s2x->PCMChip.wave_mask,0);
     d.s2x->PCMChip.vgm_log = 1;
 
 }
-void S2X_IVgmClose(union _Driver d)
+void S2X_IVgmClose(union QP_Driver d)
 {
     d.s2x->PCMChip.vgm_log = 0;
     vgm_poke32(0xdc,d.s2x->PCMClock | Audio->state.MuteRear<<31);
@@ -65,7 +65,7 @@ void S2X_IVgmClose(union _Driver d)
 
     vgm_poke32(0x30,d.s2x->FMClock);
 }
-void S2X_IReset(union _Driver d,game_t* g,int initial)
+void S2X_IReset(union QP_Driver d,QP_Game* g,int initial)
 {
     Q_DEBUG("S2X: Reset\n");
     YM2151_reset(&d.s2x->FMChip);
@@ -79,77 +79,77 @@ void S2X_IReset(union _Driver d,game_t* g,int initial)
         S2X_Reset(d.s2x);
 }
 
-int S2X_IGetParamCnt(union _Driver d)
+int S2X_IGetParamCnt(union QP_Driver d)
 {
     return 0;
 }
-void S2X_ISetParam(union _Driver d,int id,int val)
+void S2X_ISetParam(union QP_Driver d,int id,int val)
 {
     //d.quattro->Register[id&0xff] = val;
 }
-int S2X_IGetParam(union _Driver d,int id)
+int S2X_IGetParam(union QP_Driver d,int id)
 {
     return 0;
     //return d.quattro->Register[id&0xff];
 }
-int S2X_IGetParamName(union _Driver d,int id,char* buffer,int len)
+int S2X_IGetParamName(union QP_Driver d,int id,char* buffer,int len)
 {
     snprintf(buffer,len,"Register %02x",id);
     return -1;
 }
-char* S2X_IGetSongMessage(union _Driver d)
+char* S2X_IGetSongMessage(union QP_Driver d)
 {
     return "System2x WIP Driver";
     //return d.quattro->SongMessage;
 }
-char* S2X_IGetDriverInfo(union _Driver d)
+char* S2X_IGetDriverInfo(union QP_Driver d)
 {
     return "System2x WIP Driver";
     //return (char*)Q_McuNames[d.quattro->McuType];
 }
-int S2X_IRequestSlotCnt(union _Driver d)
+int S2X_IRequestSlotCnt(union QP_Driver d)
 {
     return S2X_MAX_TRACKS; //Q_MAX_TRACKS;
 }
-int S2X_ISongCnt(union _Driver d,int slot)
+int S2X_ISongCnt(union QP_Driver d,int slot)
 {
     return 512; //d.quattro->SongCount;
 }
-void S2X_ISongRequest(union _Driver d,int slot,int val)
+void S2X_ISongRequest(union QP_Driver d,int slot,int val)
 {
     d.s2x->SongRequest[slot&0x3f] = val | S2X_TRACK_STATUS_START;
 }
-void S2X_ISongStop(union _Driver d,int slot)
+void S2X_ISongStop(union QP_Driver d,int slot)
 {
     d.s2x->SongRequest[slot&0x3f] &= 0x7ff;
 }
-void S2X_ISongFade(union _Driver d,int slot)
+void S2X_ISongFade(union QP_Driver d,int slot)
 {
     d.s2x->SongRequest[slot&0x3f] |= S2X_TRACK_STATUS_FADE;
 }
-int S2X_ISongStatus(union _Driver d,int slot)
+int S2X_ISongStatus(union QP_Driver d,int slot)
 {
     return (d.s2x->SongRequest[slot&0x3f] & 0xf800);
 }
-int S2X_ISongId(union _Driver d,int slot)
+int S2X_ISongId(union QP_Driver d,int slot)
 {
     return d.s2x->SongRequest[slot&0x3f] & 0x7ff;
 }
-double S2X_ISongTime(union _Driver d,int slot)
+double S2X_ISongTime(union QP_Driver d,int slot)
 {
     return d.s2x->SongTimer[slot&0x3f];
 }
 
-int S2X_IGetLoopCnt(union _Driver d,int slot)
+int S2X_IGetLoopCnt(union QP_Driver d,int slot)
 {
     return S2X_LoopDetectionGetCount(d.s2x,slot);
 }
-void S2X_IResetLoopCnt(union _Driver d)
+void S2X_IResetLoopCnt(union QP_Driver d)
 {
     S2X_LoopDetectionReset(d.s2x);
 }
 
-int S2X_IDetectSilence(union _Driver d)
+int S2X_IDetectSilence(union QP_Driver d)
 {
     return 0;
 #if 0
@@ -163,20 +163,20 @@ int S2X_IDetectSilence(union _Driver d)
 #endif
 }
 
-double S2X_ITickRate(union _Driver d)
+double S2X_ITickRate(union QP_Driver d)
 {
     return 120; // 120 Hz
 }
-void S2X_IUpdateTick(union _Driver d)
+void S2X_IUpdateTick(union QP_Driver d)
 {
     S2X_UpdateTick(d.s2x);
 }
-double S2X_IChipRate(union _Driver d)
+double S2X_IChipRate(union QP_Driver d)
 {
     return d.s2x->SoundRate;// d.quattro->Chip.rate;
     //return 85562;
 }
-void S2X_IUpdateChip(union _Driver d)
+void S2X_IUpdateChip(union QP_Driver d)
 {
     S2X_State *S = d.s2x;
     S->FMTicks += S->FMDelta;
@@ -190,7 +190,7 @@ void S2X_IUpdateChip(union _Driver d)
 
     C352_update(&d.s2x->PCMChip);
 }
-void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
+void S2X_ISampleChip(union QP_Driver d,float* samples,int samplecnt)
 {
     int i;
     if(samplecnt > 4)
@@ -208,26 +208,26 @@ void S2X_ISampleChip(union _Driver d,float* samples,int samplecnt)
     }
 }
 
-uint32_t S2X_IGetMute(union _Driver d)
+uint32_t S2X_IGetMute(union QP_Driver d)
 {
     return d.s2x->MuteMask;
 }
-void S2X_ISetMute(union _Driver d,uint32_t data)
+void S2X_ISetMute(union QP_Driver d,uint32_t data)
 {
     d.s2x->MuteMask = data;
     S2X_UpdateMuteMask(d.s2x);
 }
-uint32_t S2X_IGetSolo(union _Driver d)
+uint32_t S2X_IGetSolo(union QP_Driver d)
 {
     return d.s2x->SoloMask;
 }
-void S2X_ISetSolo(union _Driver d,uint32_t data)
+void S2X_ISetSolo(union QP_Driver d,uint32_t data)
 {
     d.s2x->SoloMask = data;
     S2X_UpdateMuteMask(d.s2x);
 }
 
-void S2X_IDebugAction(union _Driver d,int id)
+void S2X_IDebugAction(union QP_Driver d,int id)
 {
     int i,j;
     uint32_t startpos,currpos;
@@ -256,9 +256,9 @@ void S2X_IDebugAction(union _Driver d,int id)
     }
 }
 
-struct _DriverInterface S2X_CreateInterface()
+struct QP_DriverInterface S2X_CreateInterface()
 {
-    struct _DriverInterface d = {
+    struct QP_DriverInterface d = {
         .Name = "System 2x",
 
         .Type = DRIVER_SYSTEM2,

@@ -38,24 +38,24 @@ typedef struct {
     FILE* logfile;
     uint32_t LogSamples;
 
-} audiocb_t;
+} QP_AudioCallbackData;
 
 typedef struct {
 
     SDL_AudioSpec as;
     SDL_AudioDeviceID dev;
-    audiocb_t state;
+    QP_AudioCallbackData state;
 
     int Initialized;
     int Enabled;
 
-} audio_t;
+} QP_Audio;
 
-void QPAudio_Init(audio_t* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice);
-void QPAudio_Close(audio_t* audio);
-void QPAudio_SetPause(audio_t* audio,int pause);
-void QPAudio_TogglePause(audio_t* audio);
+void QP_AudioInit(QP_Audio* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice);
+void QP_AudioClose(QP_Audio* audio);
+void QP_AudioSetPause(QP_Audio* audio,int pause);
+void QP_AudioTogglePause(QP_Audio* audio);
 
-int  QPAudio_WavOpen(audio_t* audio, char* filename);
-void QPAudio_WavClose(audio_t* audio);
+int  QP_AudioWavOpen(QP_Audio* audio, char* filename);
+void QP_AudioWavClose(QP_Audio* audio);
 #endif // AUDIO_H_INCLUDED
