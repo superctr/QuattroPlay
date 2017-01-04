@@ -224,11 +224,10 @@ void S2X_PCMPanUpdate(S2X_State* S,S2X_PCMVoice *V)
         vol=0;
     left=right=vol&0xff00;
     if(V->Pan < 0x80)
-        right = (right>>8) * (V->Pan&0x7f);
+        right = (right>>7) * (V->Pan&0x7f);
     else if(V->Pan > 0x80)
-        left = (left>>8) * (-V->Pan&0x7f);
+        left = (left>>7) * (-V->Pan&0x7f);
 
-    //printf("Ch %02d L=%04x, R=%04x, Vl=%02x, Ev=%02x, Fv=%04x\n",V->VoiceNo,left,right,v,e,vol);
     if(PAN_INVERT)
         S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(right&0xff00)|(left>>8));
     else
