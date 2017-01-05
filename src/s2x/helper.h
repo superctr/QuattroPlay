@@ -9,6 +9,9 @@ void S2X_UpdateMuteMask(S2X_State *S);
 void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data);
 void S2X_OPMReadQueue(S2X_State *S);
 
+// loop detection callback
+int S2X_LoopDetectValid(void* drv,int trackno);
+
 #ifndef Q_DISABLE_LOOP_DETECTION
 void S2X_LoopDetectionInit(S2X_State *S);
 void S2X_LoopDetectionFree(S2X_State *S);

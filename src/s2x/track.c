@@ -54,6 +54,8 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
 
     Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->PositionBase+T->Position);
 
+    QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo);
+
     T->SubStackPos=0;
     memset(T->SubStack,0,sizeof(T->SubStack));
     T->RepeatStackPos=0;
@@ -127,31 +129,33 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         break;
     case 0x04:
         temp = arg_word(S,T->PositionBase,&T->Position);
-
         // if calling the same subroutine inside itself, do not increase the stack
         if(T->SubStackPos && T->SubStack[T->SubStackPos-1] == T->Position)
         {
             T->Position = temp;
             break;
         }
-
         T->SubStack[T->SubStackPos++] = T->Position;
         T->Position = temp;
 
         if(T->SubStackPos == S2X_MAX_SUB_STACK)
         {
             Q_DEBUG("T=%02x smashed subroutine stack!\n",TrackNo);
-            S2X_LoopDetectionCheck(S,TrackNo,1);
+            QP_LoopDetectStop(&S->LoopDetect,TrackNo);
             S2X_TrackDisable(S,TrackNo);
         }
+        QP_LoopDetectPush(&S->LoopDetect,TrackNo);
+        QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->Position+T->PositionBase);
         break;
     case 0x05:
         if(T->SubStackPos > 0)
         {
             T->Position = T->SubStack[--T->SubStackPos];
+            QP_LoopDetectPop(&S->LoopDetect,TrackNo);
+            QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->Position+T->PositionBase);
             break;
         }
-        S2X_LoopDetectionCheck(S,TrackNo,1);
+        QP_LoopDetectStop(&S->LoopDetect,TrackNo);
         S2X_TrackDisable(S,TrackNo);
         break;
     case 0x19:
@@ -163,7 +167,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         }
     case 0x09: // jump
         T->Position = arg_word(S,T->PositionBase,&T->Position);
-        S2X_LoopDetectionJumpCheck(S,TrackNo);
+        QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->PositionBase+T->Position);
         break;
     case 0x0a: // repeat
         i = arg_byte(S,T->PositionBase,&T->Position);
@@ -190,7 +194,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             if(T->RepeatStackPos == S2X_MAX_REPEAT_STACK)
             {
                 Q_DEBUG("T=%02x smashed repeat stack!\n",TrackNo);
-                S2X_LoopDetectionCheck(S,TrackNo,1);
+                QP_LoopDetectStop(&S->LoopDetect,TrackNo);
                 S2X_TrackDisable(S,TrackNo);
             }
         }
@@ -220,7 +224,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             if(T->LoopStackPos == S2X_MAX_LOOP_STACK)
             {
                 Q_DEBUG("T=%02x smashed loop stack!\n",TrackNo);
-                S2X_LoopDetectionCheck(S,TrackNo,1);
+                QP_LoopDetectStop(&S->LoopDetect,TrackNo);
                 S2X_TrackDisable(S,TrackNo);
             }
         }
@@ -371,7 +375,8 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
         {
             T->TicksLeft--;
 
-            S2X_LoopDetectionCheck(S,TrackNo,0);
+            QP_LoopDetectCheck(&S->LoopDetect,TrackNo,T->PositionBase+T->Position);
+
             Command = arg_byte(S,T->PositionBase,&T->Position);
 
             if(Command&0x80)

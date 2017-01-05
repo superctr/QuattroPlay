@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "../emu/c352.h"
 #include "../emu/ym2151.h"
+#include "../lib/loopdetect.h"
 
 #include "enum.h"
 #include "struct.h"

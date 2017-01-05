@@ -201,12 +201,8 @@ struct S2X_State {
     uint32_t FMBase;
 
     double SongTimer[Q_MAX_TRACKS];
-#ifndef Q_DISABLE_LOOP_DETECTION
-    uint32_t* LoopCounterFlags;
-    uint32_t TrackLoopId[0x800];
-    uint8_t TrackLoopCount[0x800];
-    uint16_t NextLoopId; // set 0 to disable loop detection
-#endif
+
+    QP_LoopDetect LoopDetect;
 
     uint16_t SongRequest[S2X_MAX_TRACKS+1];
     uint16_t ParentSong[S2X_MAX_TRACKS];

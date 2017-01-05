@@ -142,11 +142,13 @@ double S2X_ISongTime(union QP_Driver d,int slot)
 
 int S2X_IGetLoopCnt(union QP_Driver d,int slot)
 {
-    return S2X_LoopDetectionGetCount(d.s2x,slot);
+    //return S2X_LoopDetectionGetCount(d.s2x,slot);
+    return QP_LoopDetectGetCount(&d.s2x->LoopDetect,slot);
 }
 void S2X_IResetLoopCnt(union QP_Driver d)
 {
-    S2X_LoopDetectionReset(d.s2x);
+    //S2X_LoopDetectionReset(d.s2x);
+    QP_LoopDetectReset(&d.s2x->LoopDetect);
 }
 
 int S2X_IDetectSilence(union QP_Driver d)
@@ -243,10 +245,14 @@ void S2X_IDebugAction(union QP_Driver d,int id)
             startpos = T->PositionBase+S2X_ReadWord(d.s2x,T->PositionBase);
             startpos = T->PositionBase+S2X_ReadWord(d.s2x,startpos+(2*(j&0xff)));
             currpos = T->PositionBase+T->Position;
-            printf("Track %02x: ID=%03x, start=%06x, current pos=%06x, loops=%d (%04x/%d)\n",i,j,startpos,currpos,
-                   S2X_LoopDetectionGetCount(d.s2x,i),
-                   d.s2x->TrackLoopId[j],
-                   d.s2x->TrackLoopCount[j]);
+            printf("Track %02x: ID=%03x, start=%06x, current pos=%06x, loops=%d (%d/%04x/%d)\n",i,j,startpos,currpos,
+                   QP_LoopDetectGetCount(&d.s2x->LoopDetect,i),
+                   d.s2x->LoopDetect.Song[j].StackPos,
+                   d.s2x->LoopDetect.Song[j].LoopId[d.s2x->LoopDetect.Song[j].StackPos],
+                   d.s2x->LoopDetect.Song[j].LoopCnt);
+                   //S2X_LoopDetectionGetCount(d.s2x,i),
+                   //d.s2x->TrackLoopId[j],
+                   //d.s2x->TrackLoopCount[j]);
             for(j=0;j<S2X_MAX_TRKCHN;j++)
             {
                 if(T->Channel[j].Enabled)

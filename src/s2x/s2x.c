@@ -9,19 +9,31 @@
 
 void S2X_Init(S2X_State *S)
 {
-    S2X_LoopDetectionInit(S);
+    QP_LoopDetect ld = {
+        .TrackCnt = S2X_MAX_TRACKS,
+        .DataSize = Game->DataSize,
+        .SongCnt = 0x200,
+        .CheckValid = S2X_LoopDetectValid,
+        .Driver = S
+    };
+    S->LoopDetect = ld;
+    if(QP_LoopDetectInit(&S->LoopDetect))
+    {
+        Q_DEBUG("Loop detection initialization failed\n");
+    }
+
     //Q_GetMcuVer(S);
     S2X_Reset(S);
 }
 
 void S2X_Deinit(S2X_State *S)
 {
-    S2X_LoopDetectionFree(S);
+    QP_LoopDetectFree(&S->LoopDetect);
 }
 
 void S2X_Reset(S2X_State *S)
 {
-    S2X_LoopDetectionReset(S);
+    QP_LoopDetectReset(&S->LoopDetect);
     int i;
 
     memset(S->PCMChip.v,0,sizeof(S->PCMChip.v));
