@@ -267,7 +267,7 @@ int LoadGame(QP_Game *G)
     data_pos=0;
     for(i=0;i<data_count;i++)
     {
-        data_size = G->DataSize-data_size;
+        data_size = G->DataSize-data_pos;
         snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename[i]);
         if(read_file(filename,G->Data+data_pos,0,0,byteswap,&data_size))
         {
@@ -282,7 +282,7 @@ int LoadGame(QP_Game *G)
 #endif // DEBUG
         data_pos += data_size;
     }
-    G->DataSize = data_size;
+    G->DataSize = data_pos;
 
     for(i=0;i<patchcount;i++)
     {
