@@ -179,7 +179,7 @@ void scr_playlist_kbd2()
             pitch = ((W->Pitch.Target+W->Pitch.EnvMod)&0xff00)>>8;
 
         if(W->Flag&0x10)
-            n=kbd_transpose-2+pitch;
+            n=kbd_transpose+2+pitch;
 
         ui_keyboard(5+y,1+x,8,n);
 
