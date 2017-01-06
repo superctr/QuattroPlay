@@ -199,3 +199,16 @@ void DriverDebugAction(int id)
     if(DriverInterface->IDebugAction)
         return DriverInterface->IDebugAction(DriverInterface->Driver,id);
 }
+
+int DriverGetVoiceCount()
+{
+    if(DriverInterface->IGetVoiceCount)
+        return DriverInterface->IGetVoiceCount(DriverInterface->Driver);
+    return 0;
+}
+int DriverGetVoiceInfo(int voice,struct QP_DriverVoiceInfo *dv)
+{
+    if(DriverInterface->IGetVoiceInfo)
+        return DriverInterface->IGetVoiceInfo(DriverInterface->Driver,voice,dv);
+    return -1;
+}

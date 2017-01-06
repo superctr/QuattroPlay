@@ -14,6 +14,7 @@ enum {
 enum {
     S2X_VOICE_TYPE_NONE = 0,
     S2X_VOICE_TYPE_PCM,
+    S2X_VOICE_TYPE_SE, // pcm sound effects
     S2X_VOICE_TYPE_FM,
 };
 

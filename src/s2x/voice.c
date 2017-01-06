@@ -12,14 +12,44 @@ void S2X_VoiceSetChannel(S2X_State *S,int VoiceNo,int TrackNo,int ChannelNo)
     new_ch->Enabled=0xff;
 
     S->ActiveChannel[VoiceNo] = new_ch;
-    //S->Voice[VoiceNo].ChannelNo = ChannelNo;
-    //S->Voice[VoiceNo].TrackNo = TrackNo+1;
+
+    int type = S2X_GetVoiceType(S,VoiceNo);
+    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
+    switch(type)
+    {
+    default:
+        return;
+    case S2X_VOICE_TYPE_FM:
+        S->FM[index].ChannelNo = ChannelNo;
+        S->FM[index].TrackNo = TrackNo+1; // 0 indicates no allocation
+        break;
+    case S2X_VOICE_TYPE_PCM:
+        S->PCM[index].ChannelNo = ChannelNo;
+        S->PCM[index].TrackNo = TrackNo+1; // 0 indicates no allocation
+        break;
+    }
+
 }
 
 void S2X_VoiceClearChannel(S2X_State *S,int VoiceNo)
 {
     S->ActiveChannel[VoiceNo] = NULL;
     //S->Voice[VoiceNo].TrackNo = 0;
+    int type = S2X_GetVoiceType(S,VoiceNo);
+    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
+    switch(type)
+    {
+    default:
+        return;
+    case S2X_VOICE_TYPE_FM:
+        S->FM[index].VoiceNo = 0;
+        S->FM[index].TrackNo = 0; // 0 indicates no allocation
+        break;
+    case S2X_VOICE_TYPE_PCM:
+        S->PCM[index].VoiceNo = 0;
+        S->PCM[index].TrackNo = 0; // 0 indicates no allocation
+        break;
+    }
 }
 
 uint16_t S2X_VoiceGetPriority(S2X_State *S,int VoiceNo,int* TrackNo,int* ChannelNo)
@@ -57,7 +87,7 @@ int S2X_GetVoiceType(S2X_State *S,int VoiceNo)
     if(VoiceNo < 16)
         return S2X_VOICE_TYPE_PCM;
     if(VoiceNo < 24)
-        return 0; // PCM sound effects, no need to update
+        return S2X_VOICE_TYPE_SE; // PCM sound effects, no need to update
     if(VoiceNo < 32)
         return S2X_VOICE_TYPE_FM;
     return 0;
@@ -69,6 +99,7 @@ int S2X_GetVoiceIndex(S2X_State *S,int VoiceNo,int VoiceType)
     case S2X_VOICE_TYPE_PCM:
         return VoiceNo; //for now
     case S2X_VOICE_TYPE_FM:
+    case S2X_VOICE_TYPE_SE:
         return VoiceNo&7;
     default:
         return -1;

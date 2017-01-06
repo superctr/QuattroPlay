@@ -271,3 +271,14 @@ void ui_keyboard(int y,int x,int octaves,int note)
         x++;
     }
 }
+
+void ui_array(int y,int x,int max,uint8_t* data)
+{
+    int i;
+    for(i=0;i<max;i++)
+    {
+        screen.text[y  ][x] = 0x96+data[i];
+        screen.text[y+1][x] = 0xb6+data[i];
+        x++;
+    }
+}

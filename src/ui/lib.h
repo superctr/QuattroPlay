@@ -61,6 +61,7 @@ void ui_update();
 void ui_refresh();
 void ui_color(int y,int x,int h,int w,colorsel_t bg,colorsel_t fg);
 void ui_keyboard(int y,int x,int octaves,int note);
+void ui_array(int y,int x,int max,uint8_t* data);
 
 int  ui_init();
 void ui_deinit();

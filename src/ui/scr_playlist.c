@@ -110,80 +110,145 @@ void scr_playlist_input()
     SDL_UnlockAudioDevice(Audio->dev);
 }
 
-// quick and dirty hack for display only
-//***************************************
+#define MAX_VOICES 32
 void scr_playlist_kbd2()
 {
-    S2X_PCMVoice* V;
-
+    int i;
+    int id=0, id2=0;
     int16_t pitch;
-    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
-    int i,n;
-    int x,y,flag,bg,color;
-    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
-    for(i=0;i<16;i++)
+    int has_drums=0;
+
+    int cnt = DriverGetVoiceCount();
+    if(cnt>MAX_VOICES) cnt=MAX_VOICES;
+
+    struct QP_DriverVoiceInfo *vi = calloc(MAX_VOICES,sizeof(*vi)), *V;
+    uint8_t pcm_wave[256] = {0};
+    uint16_t pcm_voice[8] = {0};
+
+    // Get voice info
+    for(i=0;i<cnt;i++)
     {
-        V = &DriverInterface->Driver.s2x->PCM[i];
-        n=0;
+        if(!DriverGetVoiceInfo(i,&vi[id]))
+        {
+            if((vi[id].VoiceType&0x0f) == VOICE_TYPE_PERCUSSION)
+            {
+                has_drums=1;
+                if(vi[id].Status == VOICE_STATUS_PLAYING)
+                {
+                    pcm_wave[vi[id].Preset&0xff] = 1;
+                    pcm_voice[id2&7]=(vi[id].Preset&0xff)|0x8000;
+                }
+                id2++;
+            }
+            else
+                id++;
+        }
+    }
+    V = vi;
+    cnt=id;
+
+    int bg,color;
+    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
+    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
+
+    id=0;
+    int key,center,vol,pan;
+    int x,y,flag;
+    char pandir;
+    for(i=0;i<MAX_VOICES;i++)
+    {
+        key=0;
+        // Calculate position
         x = (i&16) ? 40 : 0;
         y = ((i&15)>>1)*5 + ((i&1) * 2);
+        // Shift odd rows
         flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
-        color = COLOR_WHITE; //: COLOR_N_GREY;
+
+        // Display PCM sample id matrix
+        if(has_drums && i>=16 && i<24)
+        {
+            color = COLOR_L_GREY;
+            set_color(5+y,1+x,2,32,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(5+y,33+x,2,6,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
+
+            ui_array(5+y,1+x,32,&pcm_wave[(i&7)<<5]);
+
+            key = i-16;
+            if(pcm_voice[key&7] & 0x8000)
+            {
+                set_color(5+y,36+x,1,5,bg|flag,COLOR_WHITE|CFLAG_KEYBOARD);
+                SCRN(5+y,35+x,16,"w%03d",pcm_voice[key&7]&0x7fff);
+            }
+            continue;
+        }
+
+        // Display keyboard status
+        color = (V->Status&VOICE_STATUS_ACTIVE) ? COLOR_WHITE : COLOR_N_GREY;
         set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
         set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
 
-/*
-        //if(V->TrackNo)
+        if(V->Status & VOICE_STATUS_ACTIVE)
         {
             set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
             set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
             set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
             set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
         }
-*/
 
         pitch=V->Key;
         if(kbd_flag&1)
-            pitch = ((V->Pitch.Target+V->Pitch.EnvMod)&0xff00)>>8;
+            pitch = (V->Pitch)>>8;
 
-        if(V->Flag&0x80)
-            n=kbd_transpose-2+pitch;
+        if(V->Status&VOICE_STATUS_PLAYING)
+            key=kbd_transpose+pitch;
 
-        ui_keyboard(5+y,1+x,8,n);
+        ui_keyboard(5+y,1+x,8,key);
 
-    }
-    S2X_FMVoice* W;
-    for(i=24;i<32;i++)
-    {
-        W = &DriverInterface->Driver.s2x->FM[i-24];
-        n=0;
-        x = (i&16) ? 40 : 0;
-        y = ((i&15)>>1)*5 + ((i&1) * 2);
-        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
-        color = COLOR_WHITE; // : COLOR_N_GREY;
-        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
-        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
-
-/*
-        if(V->TrackNo)
+        center=0;
+        // display pan
+        switch(V->PanType&0x0f)
         {
-            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
+        default:
+        case PAN_TYPE_NONE:
+            break;
+        case PAN_TYPE_UNSIGNED:
+            center=128;
+        case PAN_TYPE_SIGNED:
+            pandir = 'L';
+            if(V->Pan == center)
+                pandir = 'C';
+            else if((~V->PanType & PAN_TYPE_INVERT && V->Pan > center) || (V->PanType & PAN_TYPE_INVERT && V->Pan < center))
+                pandir = 'R';
+
+            pan = abs(V->Pan);
+            if(V->PanType==PAN_TYPE_SIGNED)
+            {
+                SCRN(5+y,35+x,16,"%c%s%02d",
+                    pandir,
+                    (pan>99) ? "" : "+",
+                    pan);
+            }
+            else
+            {
+                SCRN(5+y,35+x,16,"%c%03d",
+                    pandir,
+                    pan);
+            }
+            break;
         }
-*/
 
-        pitch=W->Key;
-        if(kbd_flag&1)
-            pitch = ((W->Pitch.Target+W->Pitch.EnvMod)&0xff00)>>8;
+        vol = (kbd_flag&2) ? V->VolumeMod : V->Volume;
 
-        if(W->Flag&0x10)
-            n=kbd_transpose+2+pitch;
+        SCRN(5+y,29+x,16,"t%02xc%1x",
+             V->Track,
+             V->Channel);
+        SCRN(6+y,29+x,16,"w%04d v%03d",
+             V->Preset&0x1fff,
+             (vol>255) ? 255 : vol);
 
-        ui_keyboard(5+y,1+x,8,n);
-
+        V++;
     }
+    free(vi);
 }
 
 void scr_playlist_kbd()

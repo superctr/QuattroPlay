@@ -4,6 +4,7 @@
 #include "../qp.h"
 #include "../lib/vgm.h"
 #include "helper.h"
+#include "voice.h"
 
 int S2X_IInit(union QP_Driver d,QP_Game *g)
 {
@@ -262,6 +263,181 @@ void S2X_IDebugAction(union QP_Driver d,int id)
     }
 }
 
+int S2X_GetVoiceCount(union QP_Driver d)
+{
+    return S2X_MAX_VOICES;
+}
+
+int S2X_GetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
+{
+    S2X_State* S = d.s2x;
+    S2X_PCMVoice* PCM;
+    S2X_FMVoice* FM;
+    memset(V,0,sizeof(*V));
+
+    int type = S2X_GetVoiceType(S,id);
+    int index = S2X_GetVoiceIndex(S,id,type);
+    switch(type)
+    {
+    default:
+        return -1;
+    case S2X_VOICE_TYPE_SE:
+        V->Status=0;
+        V->Preset=S->SEWave[index];
+        V->VoiceType = VOICE_TYPE_PERCUSSION|VOICE_TYPE_PCM;
+        if(S2X_C352_R(S,index+16,C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+            V->Status|=VOICE_STATUS_PLAYING;
+        break;
+    case S2X_VOICE_TYPE_FM:
+        FM = &S->FM[index];
+        V->Status=0;
+        V->Track=0;
+        if(FM->TrackNo)
+        {
+            V->Status|=VOICE_STATUS_ACTIVE;
+            V->Track = FM->TrackNo-1;
+        }
+        if(FM->Flag&0x10)
+            V->Status|=VOICE_STATUS_PLAYING;
+        V->Channel = FM->ChannelNo;
+        V->VoiceType = VOICE_TYPE_MELODY;
+        V->PanType = PAN_TYPE_UNSIGNED;
+        V->Pan = 0x80;
+        V->VolumeMod = (S->ConfigFlags & S2X_CFG_FM_VOL) ? FM->Volume : (~FM->Volume)&0xff ;
+        V->Volume = 0;
+        V->Key = FM->Key+2;
+        V->Pitch = FM->Pitch.Value+FM->Pitch.EnvMod+0x200;
+        V->Preset = FM->InsNo;
+        if(FM->Channel)
+        {
+            V->Volume = FM->Channel->Vars[S2X_CHN_VOL];
+            V->Pitch += (FM->Channel->Vars[S2X_CHN_TRS]<<8)+FM->Channel->Vars[S2X_CHN_DTN];
+            V->Key += FM->Channel->Vars[S2X_CHN_TRS];
+            switch(FM->Channel->Vars[S2X_CHN_PAN]&0xc0)
+            {
+            default:
+                V->PanType = PAN_TYPE_NONE;
+                break;
+            case 0x40:
+                V->Pan = 0x00; // Left
+                break;
+            case 0x80:
+                V->Pan = 0xff; // Right
+                break;
+            case 0xc0:
+                V->Pan = 0x80; // Center
+                break;
+            }
+        }
+        break;
+    case S2X_VOICE_TYPE_PCM:
+        PCM = &S->PCM[index];
+        // temporary until i add a key on flag
+        V->Status = 0;
+        V->Track = 0;
+        if(PCM->TrackNo)
+        {
+            V->Status|=VOICE_STATUS_ACTIVE;
+            V->Track = PCM->TrackNo-1;
+        }
+        if(PCM->Flag&0x10)
+            V->Status|=VOICE_STATUS_PLAYING;
+        V->Channel = PCM->ChannelNo;
+        V->VoiceType = VOICE_TYPE_MELODY|VOICE_TYPE_PCM;
+        V->PanType = PAN_TYPE_UNSIGNED;
+        V->VolumeMod = PCM->Volume;
+        V->Volume = 0;
+        V->Key = PCM->Key-2;
+        V->Pitch = PCM->Pitch.Value+PCM->Pitch.EnvMod-0x200;
+        V->Preset = PCM->WaveNo;
+        V->Pan = PCM->Pan;
+        if(PCM->Channel)
+        {
+            V->Volume = PCM->Channel->Vars[S2X_CHN_VOL];
+            V->Pitch += (PCM->Channel->Vars[S2X_CHN_TRS]<<8)+PCM->Channel->Vars[S2X_CHN_DTN];
+            V->Key += PCM->Channel->Vars[S2X_CHN_TRS];
+        }
+        break;
+    }
+    return 0;
+}
+#if 0
+
+void scr_playlist_kbd2()
+{
+    S2X_PCMVoice* V;
+
+    int16_t pitch;
+    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
+    int i,n;
+    int x,y,flag,bg,color;
+    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
+    for(i=0;i<16;i++)
+    {
+        V = &DriverInterface->Driver.s2x->PCM[i];
+        n=0;
+        x = (i&16) ? 40 : 0;
+        y = ((i&15)>>1)*5 + ((i&1) * 2);
+        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
+        color = COLOR_WHITE; //: COLOR_N_GREY;
+        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
+        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
+
+/*
+        //if(V->TrackNo)
+        {
+            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
+        }
+*/
+
+        pitch=V->Key;
+        if(kbd_flag&1)
+            pitch = ((V->Pitch.Target+V->Pitch.EnvMod)&0xff00)>>8;
+
+        if(V->Flag&0x80)
+            n=kbd_transpose-2+pitch;
+
+        ui_keyboard(5+y,1+x,8,n);
+
+    }
+    S2X_FMVoice* W;
+    for(i=24;i<32;i++)
+    {
+        W = &DriverInterface->Driver.s2x->FM[i-24];
+        n=0;
+        x = (i&16) ? 40 : 0;
+        y = ((i&15)>>1)*5 + ((i&1) * 2);
+        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
+        color = COLOR_WHITE; // : COLOR_N_GREY;
+        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
+        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
+
+/*
+        if(V->TrackNo)
+        {
+            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
+            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
+        }
+*/
+
+        pitch=W->Key;
+        if(kbd_flag&1)
+            pitch = ((W->Pitch.Target+W->Pitch.EnvMod)&0xff00)>>8;
+
+        if(W->Flag&0x10)
+            n=kbd_transpose+2+pitch;
+
+        ui_keyboard(5+y,1+x,8,n);
+
+    }
+}
+
+#endif // 0
 struct QP_DriverInterface S2X_CreateInterface()
 {
     struct QP_DriverInterface d = {
@@ -310,7 +486,9 @@ struct QP_DriverInterface S2X_CreateInterface()
         .IGetSolo = &S2X_IGetSolo,
         .ISetSolo = &S2X_ISetSolo,
 
-        .IDebugAction = &S2X_IDebugAction
+        .IDebugAction = &S2X_IDebugAction,
+        .IGetVoiceCount = &S2X_GetVoiceCount,
+        .IGetVoiceInfo = &S2X_GetVoiceInfo,
     };
     return d;
 }

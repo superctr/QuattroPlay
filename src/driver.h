@@ -20,11 +20,45 @@ enum {
 enum {
     DEBUG_ACTION_DISPLAY_INFO = 0
 };
-
+enum {
+    VOICE_STATUS_ACTIVE = 1,
+    VOICE_STATUS_PLAYING = 2
+};
+enum {
+    VOICE_TYPE_NONE = 0,
+    VOICE_TYPE_MELODY = 1,
+    VOICE_TYPE_PERCUSSION = 2,
+    VOICE_TYPE_PCM = 0x10
+};
+enum {
+    PAN_TYPE_NONE = 0,
+    PAN_TYPE_SIGNED,
+    PAN_TYPE_UNSIGNED,
+    PAN_TYPE_INVERT = 0x10, // negative values = right
+};
 union QP_Driver {
     void* drv;
     Q_State *quattro;
     S2X_State *s2x;
+};
+
+struct QP_DriverVoiceInfo {
+    int Status;
+
+    int Track;
+    int Channel;
+
+    int VoiceType; // Decides whether to display "Instrument", "Waveform" or PCM.
+    int Preset;
+
+    uint8_t  Key;
+    uint16_t Pitch; // key + modifiers (vibrato, glissando, etc)
+
+    uint16_t Volume; // volume (This is typically 0-255 but could be higher)
+    uint16_t VolumeMod; // volume + modifiers (channel volume, etc)
+
+    int PanType; // whether to display pan as signed or unsigned + invert flag
+    int Pan;
 };
 
 struct QP_DriverInterface {
@@ -75,6 +109,9 @@ struct QP_DriverInterface {
     void (*ISetSolo)(union QP_Driver,uint32_t data);
 
     void (*IDebugAction)(union QP_Driver,int id);
+
+    int (*IGetVoiceCount)(union QP_Driver);
+    int (*IGetVoiceInfo)(union QP_Driver,int voice,struct QP_DriverVoiceInfo *dv);
 };
 
 struct QP_DriverTable {
@@ -119,5 +156,7 @@ uint32_t DriverGetSolo();
 void DriverSetSolo(uint32_t data);
 void DriverResetMute();
 void DriverDebugAction(int id);
+int DriverGetVoiceCount();
+int DriverGetVoiceInfo(int voice,struct QP_DriverVoiceInfo *dv);
 
 #endif // DRIVER_H_INCLUDED

@@ -12,7 +12,12 @@
 
 void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
 {
+    int trk=V->TrackNo,chn=V->ChannelNo;
     memset(V,0,sizeof(S2X_PCMVoice));
+
+    V->TrackNo=trk;
+    V->ChannelNo=chn;
+
     V->Flag=0;
     V->VoiceNo=VoiceNo;
 
@@ -22,6 +27,11 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     V->Pitch.FM = 0;
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,0);
+}
+void S2X_PCMKeyOff(S2X_State* S,S2X_PCMVoice *V)
+{
+    S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
+    V->Flag &= 0x6f;
 }
 void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
 {
@@ -45,6 +55,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 if(data == 0xff)
                 {
                     //Q_DEBUG("ch %02d key off\n",V->VoiceNo);
+                    V->Flag &= ~(0x10);
                     V->Length=1;
                     break;
                 }
@@ -54,7 +65,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 {
                     //Q_DEBUG("ch %02d key on\n",V->VoiceNo);
                     V->Delay = C->Vars[S2X_CHN_DEL];
-                    V->Flag |= 0x40;
+                    V->Flag |= 0x50;
                 }
                 V->Key = C->Vars[S2X_CHN_FRQ];
                 break;
@@ -279,8 +290,7 @@ void S2X_PCMAdsrUpdate(S2X_State* S, S2X_PCMVoice *V)
             if(d<0)
             {
                 V->EnvValue=V->EnvTarget=0;
-                S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
-                V->Flag &= 0x7f;
+                S2X_PCMKeyOff(S,V);
                 return;
             }
         }
@@ -323,8 +333,7 @@ void S2X_PCMEnvelopeCommand(S2X_State* S,S2X_PCMVoice *V)
     if(!d && (t>0x80))
     {
         //Q_DEBUG("V=%02d env end (0)\n",V->VoiceNo);
-        S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
-        V->Flag &= 0x7f;
+        S2X_PCMKeyOff(S,V);
         return;
     }
     else if(!d && (t==0x80))
@@ -362,8 +371,7 @@ void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
         if(d==0xff)
         {
             //Q_DEBUG("V=%02d key off (1)\n",V->VoiceNo);
-            S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
-            V->Flag &= 0x7f;
+            S2X_PCMKeyOff(S,V);
             return;
         }
         //return S2X_PCMEnvelopeAdvance(S,V);
@@ -453,7 +461,7 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
 // 0xdada
 void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
 {
-    if(!V->Flag)
+    if(!(V->Flag&0xc0))
         return;
     V->Pitch.Target = V->Key<<8;
     //V->Pitch.Portamento = V->Channel->Vars[S2X_CHN_PTA];
@@ -479,7 +487,7 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
         S2X_C352_W(S,V->VoiceNo,C352_WAVE_BANK,V->WaveBank);
         S2X_C352_W(S,V->VoiceNo,C352_FLAGS,V->ChipFlag|C352_FLG_KEYON);
         V->Length = V->Channel->Vars[S2X_CHN_GTM];
-        V->Flag<<=1;
+        V->Flag=((V->Flag&0xbf)|0x80);
     }
     else
     {
@@ -516,6 +524,8 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     S2X_C352_W(S,VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+8));
     S2X_C352_W(S,VoiceNo,C352_WAVE_BANK,bank);
     S2X_C352_W(S,VoiceNo,C352_FLAGS,ChipFlag|C352_FLG_KEYON);
+
+    S->SEWave[VoiceNo-16] = WaveNo;
 #if 0
     Q_DEBUG("ch %02x perc %02x %06x Vol:%04x Freq=%04x Start=%04x End=%04x Bank=%04x Flag=%04x\n",VoiceNo,WaveNo,pos,
             S2X_C352_R(S,VoiceNo,C352_VOL_FRONT),

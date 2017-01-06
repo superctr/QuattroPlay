@@ -11,7 +11,12 @@
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
+    int trk=V->TrackNo,chn=V->ChannelNo;
     memset(V,0,sizeof(S2X_FMVoice));
+
+    V->TrackNo=trk;
+    V->ChannelNo=chn;
+
     V->Flag=0;
     V->VoiceNo=VoiceNo;
     V->Lfo=0;
@@ -55,7 +60,7 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
         S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
-    V->Channel->Vars[S2X_CHN_PAN]=0;
+    V->Channel->Vars[S2X_CHN_PAN]=0xc0;
 
     return S2X_FMSetVol(S,V);
 }

@@ -140,8 +140,11 @@ struct S2X_PCMVoice {
     uint8_t Legato;
 
     uint32_t BaseAddr;
+
     S2X_Track* Track;
     S2X_Channel* Channel;
+    int TrackNo;
+    int ChannelNo;
 };
 
 struct S2X_FMVoice {
@@ -176,6 +179,8 @@ struct S2X_FMVoice {
     uint32_t BaseAddr;
     S2X_Track* Track;
     S2X_Channel* Channel;
+    int TrackNo;
+    int ChannelNo;
 };
 
 struct S2X_FMWrite {
@@ -213,7 +218,8 @@ struct S2X_State {
     S2X_Channel* ActiveChannel[S2X_MAX_VOICES];
     S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
     S2X_FMVoice FM[S2X_MAX_VOICES_FM];
-    S2X_PCMVoice SE[S2X_MAX_VOICES_PCM]; // temp
+    //S2X_PCMVoice SE[S2X_MAX_VOICES_PCM]; // temp
+    uint16_t SEWave[S2X_MAX_VOICES_SE];
 
     // global FM settings
     uint8_t FMLfo;
