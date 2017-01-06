@@ -146,25 +146,19 @@ void QP_LoopDetectPop(QP_LoopDetect *ld,int trackid) // pop loopid
     S->StackPos--;
 }
 // Get amount of loops
-// Returns -1 if track is not playing.
 int  QP_LoopDetectGetCount(QP_LoopDetect *ld,int trackid)
 {
     int loopcount;
-    int lowest = -1;
+    int lowest = ld->Song[ld->Track[trackid].SongId].LoopCnt;
     int i;
     for(i=0;i<ld->TrackCnt;i++)
     {
         if((ld->Track[i].Parent-1) == trackid)
         {
             loopcount = ld->Song[ld->Track[i].SongId].LoopCnt;
-            if(loopcount >= 0)
-            {
-                if(lowest != 1)
-                    lowest = loopcount;
-                else if(loopcount < lowest)
-                    lowest = loopcount;
-            }
+            if(loopcount >= 0 && loopcount < lowest)
+                lowest = loopcount;
         }
     }
-    return (int)lowest;
+    return lowest;
 }
