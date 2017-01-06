@@ -77,6 +77,7 @@ OBJS = \
 	$(OBJ)/lib/audit.o \
 	$(OBJ)/lib/fileio.o \
 	$(OBJ)/lib/ini.o \
+	$(OBJ)/lib/loopdetect.o \
 	$(OBJ)/lib/q_detect.o \
 	$(OBJ)/lib/q_pattern.o \
 	$(OBJ)/lib/vgm.o \
