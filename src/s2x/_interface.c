@@ -280,12 +280,12 @@ void S2X_IDebugAction(union QP_Driver d,int id)
     }
 }
 
-int S2X_GetVoiceCount(union QP_Driver d)
+int S2X_IGetVoiceCount(union QP_Driver d)
 {
     return S2X_MAX_VOICES;
 }
 
-int S2X_GetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
+int S2X_IGetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
 {
     S2X_State* S = d.s2x;
     S2X_PCMVoice* PCM;
@@ -378,83 +378,7 @@ int S2X_GetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
     }
     return 0;
 }
-#if 0
 
-void scr_playlist_kbd2()
-{
-    S2X_PCMVoice* V;
-
-    int16_t pitch;
-    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
-    int i,n;
-    int x,y,flag,bg,color;
-    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
-    for(i=0;i<16;i++)
-    {
-        V = &DriverInterface->Driver.s2x->PCM[i];
-        n=0;
-        x = (i&16) ? 40 : 0;
-        y = ((i&15)>>1)*5 + ((i&1) * 2);
-        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
-        color = COLOR_WHITE; //: COLOR_N_GREY;
-        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
-        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
-
-/*
-        //if(V->TrackNo)
-        {
-            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
-        }
-*/
-
-        pitch=V->Key;
-        if(kbd_flag&1)
-            pitch = ((V->Pitch.Target+V->Pitch.EnvMod)&0xff00)>>8;
-
-        if(V->Flag&0x80)
-            n=kbd_transpose-2+pitch;
-
-        ui_keyboard(5+y,1+x,8,n);
-
-    }
-    S2X_FMVoice* W;
-    for(i=24;i<32;i++)
-    {
-        W = &DriverInterface->Driver.s2x->FM[i-24];
-        n=0;
-        x = (i&16) ? 40 : 0;
-        y = ((i&15)>>1)*5 + ((i&1) * 2);
-        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
-        color = COLOR_WHITE; // : COLOR_N_GREY;
-        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
-        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
-
-/*
-        if(V->TrackNo)
-        {
-            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
-        }
-*/
-
-        pitch=W->Key;
-        if(kbd_flag&1)
-            pitch = ((W->Pitch.Target+W->Pitch.EnvMod)&0xff00)>>8;
-
-        if(W->Flag&0x10)
-            n=kbd_transpose+2+pitch;
-
-        ui_keyboard(5+y,1+x,8,n);
-
-    }
-}
-
-#endif // 0
 struct QP_DriverInterface S2X_CreateInterface()
 {
     struct QP_DriverInterface d = {
@@ -504,8 +428,8 @@ struct QP_DriverInterface S2X_CreateInterface()
         .ISetSolo = &S2X_ISetSolo,
 
         .IDebugAction = &S2X_IDebugAction,
-        .IGetVoiceCount = &S2X_GetVoiceCount,
-        .IGetVoiceInfo = &S2X_GetVoiceInfo,
+        .IGetVoiceCount = &S2X_IGetVoiceCount,
+        .IGetVoiceInfo = &S2X_IGetVoiceInfo,
     };
     return d;
 }
