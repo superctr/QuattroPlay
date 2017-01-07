@@ -23,10 +23,12 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
 
     d.s2x->FMClock = 3579545;
     d.s2x->FMTicks = 0;
+    d.s2x->FMWriteTicks = 0;
     YM2151_init(&d.s2x->FMChip,d.s2x->FMClock);
 
     d.s2x->SoundRate = d.s2x->PCMChip.rate;
     d.s2x->FMDelta = d.s2x->FMChip.rate / d.s2x->SoundRate;
+    d.s2x->FMWriteRate = 2.5;
 
     config_t* cfg;
 
@@ -38,12 +40,17 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
         v = atoi(cfg->data);
         if(!strcmp(cfg->name,"fm_volcalc") && v)
             d.s2x->ConfigFlags |= S2X_CFG_FM_VOL;
-        if(!strcmp(cfg->name,"pcm_adsr") && v>0)
+        else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
-        if(!strcmp(cfg->name,"pcm_adsr") && v>1)
+        else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
-        if(!strcmp(cfg->name,"pcm_paninvert") && v)
+        else if(!strcmp(cfg->name,"pcm_paninvert") && v)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
+
+        else if(!strcmp(cfg->name,"fm_writerate"))
+        {
+            d.s2x->FMWriteRate = atof(cfg->data);
+        }
     }
 
     return 0;
@@ -183,10 +190,15 @@ void S2X_IUpdateChip(union QP_Driver d)
 {
     S2X_State *S = d.s2x;
     S->FMTicks += S->FMDelta;
-    while(S->FMTicks > 1.0)
+    S->FMWriteTicks += S->FMDelta;
+    while(S->FMWriteTicks > 2.5)
     {
         if((S->FMQueueRead&0x1ff) != (S->FMQueueWrite&0x1ff))
             S2X_OPMReadQueue(S);
+        S->FMWriteTicks-=2.5;
+    }
+    while(S->FMTicks > 1.0)
+    {
         YM2151_update(&d.s2x->FMChip);
         S->FMTicks-=1.0;
     }
@@ -285,7 +297,7 @@ int S2X_GetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
         V->Status=0;
         V->Preset=S->SEWave[index];
         V->VoiceType = VOICE_TYPE_PERCUSSION|VOICE_TYPE_PCM;
-        if(S2X_C352_R(S,index+16,C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+        if(S2X_C352_R(S,(index+16),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
             V->Status|=VOICE_STATUS_PLAYING;
         break;
     case S2X_VOICE_TYPE_FM:

@@ -192,6 +192,8 @@ struct S2X_State {
     double SoundRate;
     double FMDelta;
     double FMTicks;
+    double FMWriteTicks;
+    double FMWriteRate;
 
     uint32_t FMClock;
     YM2151 FMChip;
