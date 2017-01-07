@@ -30,6 +30,9 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
     d.s2x->FMDelta = d.s2x->FMChip.rate / d.s2x->SoundRate;
     d.s2x->FMWriteRate = 2.5;
 
+    d.s2x->FMBase = 0;
+    d.s2x->PCMBase = 0;
+
     config_t* cfg;
 
     d.s2x->ConfigFlags=0;
@@ -40,17 +43,19 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
         v = atoi(cfg->data);
         if(!strcmp(cfg->name,"fm_volcalc") && v)
             d.s2x->ConfigFlags |= S2X_CFG_FM_VOL;
-        else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
-            d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
+        else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
+            d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_paninvert") && v)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
 
         else if(!strcmp(cfg->name,"fm_writerate"))
-        {
             d.s2x->FMWriteRate = atof(cfg->data);
-        }
+        else if(!strcmp(cfg->name,"fm_base"))
+            d.s2x->FMBase = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"pcm_base"))
+            d.s2x->PCMBase = strtol(cfg->data,NULL,0);
     }
 
     return 0;
@@ -191,11 +196,11 @@ void S2X_IUpdateChip(union QP_Driver d)
     S2X_State *S = d.s2x;
     S->FMTicks += S->FMDelta;
     S->FMWriteTicks += S->FMDelta;
-    while(S->FMWriteTicks > 2.5)
+    while(S->FMWriteTicks > S->FMWriteRate)
     {
         if((S->FMQueueRead&0x1ff) != (S->FMQueueWrite&0x1ff))
             S2X_OPMReadQueue(S);
-        S->FMWriteTicks-=2.5;
+        S->FMWriteTicks-=S->FMWriteRate;
     }
     while(S->FMTicks > 1.0)
     {
