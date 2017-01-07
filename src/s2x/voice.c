@@ -255,9 +255,13 @@ void S2X_VoicePitchUpdate(S2X_State *S,struct S2X_Pitch *P)
 {
     S2X_VoicePitchEnvUpdate(S,P);
 
-    if(P->Value == P->Target)
-        return;
-
+    // funny bug: there may be no portamento on a delayed note due to a race
+    // condition in the original sound driver.
+    // the portamento flag is set in the UpdateReset function, but the code
+    // doesn't get there until the delay counter is 0.
+    // this function still runs but if the portamento flag is 0, the pitch
+    // will still be set instantly to the target value.
+    // Dirt Fox will not sound correct unless this bug is implemented.
     if(!P->PortaFlag)
     {
         P->Value = P->Target;
@@ -272,8 +276,11 @@ void S2X_VoicePitchUpdate(S2X_State *S,struct S2X_Pitch *P)
     else
         step++;
 
-    P->Value += (step*P->Portamento)/2;
+    uint16_t val = P->Value + ((step*P->Portamento)/2);
 
-    if(((P->Target-P->Value) ^ difference) < 0)
-        P->Value = P->Target;
+    if(((P->Target-val) ^ difference) < 0)
+        P->PortaFlag = 0;
+    else
+        P->Value = val;
+    //P->Value = P->Target;
 }
