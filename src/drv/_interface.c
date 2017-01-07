@@ -168,6 +168,59 @@ void Q_ISetSolo(union QP_Driver d,uint32_t data)
     QDrv->SoloMask = data;
     Q_UpdateMuteMask(QDrv);
 }
+int Q_IGetVoiceCount(union QP_Driver d)
+{
+    return Q_MAX_VOICES;
+}
+int Q_IGetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *I)
+{
+    Q_State* Q = d.quattro;
+    Q_Voice* V = &Q->Voice[id];
+    memset(I,0,sizeof(*I));
+
+    if(id>=Q_MAX_VOICES)
+        return -1;
+
+    // temporary until i add a key on flag
+    I->Status = 0;
+    I->Track = 0;
+    if(V->TrackNo)
+    {
+        I->Status|=VOICE_STATUS_ACTIVE;
+        I->Track = V->TrackNo-1;
+    }
+    if(V->Enabled==1)
+        I->Status|=VOICE_STATUS_PLAYING;
+    I->Channel = V->ChannelNo;
+    I->VoiceType = VOICE_TYPE_MELODY|VOICE_TYPE_PCM;
+    I->PanType = PAN_TYPE_SIGNED;
+    I->VolumeMod = V->TrackVol ? V->Volume+*V->TrackVol : V->Volume;
+    I->Volume = V->Volume;
+    if(I->VolumeMod > 255)
+        I->VolumeMod = 255;
+    if(I->Volume > 255)
+        I->Volume = 255;
+    I->Key = V->BaseNote-2;
+    I->Pitch = V->Pitch+V->PitchEnvMod+V->LfoMod-0x200;
+    I->Preset = V->WaveNo&0x1fff;
+    switch(V->PanMode)
+    {
+    case Q_PANMODE_IMM:
+    default:
+        I->Pan = (int8_t)V->Pan;
+        break;
+    case Q_PANMODE_ENV:
+    case Q_PANMODE_ENV_SET:
+        I->Pan = (V->PanEnvTarget-V->PanEnvValue)>>8;
+        break;
+    case Q_PANMODE_REG:
+    case Q_PANMODE_POSREG:
+        if(V->PanSource)
+            I->Pan = (int8_t)(*V->PanSource & 0xff);
+        break;
+    }
+    return 0;
+}
 
 struct QP_DriverInterface Q_CreateInterface()
 {
@@ -216,6 +269,9 @@ struct QP_DriverInterface Q_CreateInterface()
         .ISetMute = &Q_ISetMute,
         .IGetSolo = &Q_IGetSolo,
         .ISetSolo = &Q_ISetSolo,
+
+        .IGetVoiceCount = &Q_IGetVoiceCount,
+        .IGetVoiceInfo = &Q_IGetVoiceInfo,
     };
     return d;
 }

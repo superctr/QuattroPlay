@@ -111,7 +111,7 @@ void scr_playlist_input()
 }
 
 #define MAX_VOICES 32
-void scr_playlist_kbd2()
+void scr_playlist_kbd()
 {
     int i;
     int id=0, id2=0;
@@ -119,6 +119,8 @@ void scr_playlist_kbd2()
     int has_drums=0;
 
     int cnt = DriverGetVoiceCount();
+    if(!cnt)
+        return;
     if(cnt>MAX_VOICES) cnt=MAX_VOICES;
 
     struct QP_DriverVoiceInfo *vi = calloc(MAX_VOICES,sizeof(*vi)), *V;
@@ -250,95 +252,6 @@ void scr_playlist_kbd2()
     }
     free(vi);
 }
-
-void scr_playlist_kbd()
-{
-    // only supported for quattro atm
-    if(DriverInterface->Type == DRIVER_SYSTEM2)
-        return scr_playlist_kbd2();
-    else if(DriverInterface->Type != DRIVER_QUATTRO)
-        return;
-
-    Q_Voice* V;
-    char pandir;
-    int8_t pan;
-    int16_t vol;
-    int16_t pitch;
-    int16_t temp;
-    set_color(5,39,40,2,COLOR_BLACK,COLOR_BLACK);
-    int i,n;
-    int x,y,flag,bg,color;
-    bg = COLOR_D_BLUE|CFLAG_KEYBOARD;
-    for(i=0;i<32;i++)
-    {
-        V = &QDrv->Voice[i];
-        n=0;
-        x = (i&16) ? 40 : 0;
-        y = ((i&15)>>1)*5 + ((i&1) * 2);
-        flag = (i&1) ? CFLAG_YSHIFT_50 : 0;
-        color = V->TrackNo ? COLOR_WHITE : COLOR_N_GREY;
-        set_color(5+y,1+x,2,28,bg|flag,color|CFLAG_KEYBOARD);
-        set_color(5+y,29+x,2,10,bg|flag,COLOR_L_GREY|CFLAG_KEYBOARD);
-
-        if(V->TrackNo)
-        {
-            set_color(5+y,30+x,1,2,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(5+y,33+x,1,6,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,30+x,1,4,bg|flag,color|CFLAG_KEYBOARD);
-            set_color(6+y,36+x,1,3,bg|flag,color|CFLAG_KEYBOARD);
-        }
-
-        pitch=V->BaseNote;
-        if(kbd_flag&1)
-            pitch = ((V->Pitch+V->PitchEnvMod+V->LfoMod)&0xff00)>>8;
-
-        if(V->Enabled==1)
-            n=kbd_transpose-2+pitch;
-
-        ui_keyboard(5+y,1+x,8,n);
-
-        temp=0;
-        switch(V->PanMode)
-        {
-        case Q_PANMODE_IMM:
-        default:
-            temp = (signed)V->Pan;
-            break;
-        case Q_PANMODE_ENV:
-        case Q_PANMODE_ENV_SET:
-            temp = (V->PanEnvTarget-V->PanEnvValue)>>8;
-            break;
-        case Q_PANMODE_REG:
-        case Q_PANMODE_POSREG:
-            if(V->PanSource)
-                temp = *V->PanSource & 0xff;
-            break;
-        }
-        pan = temp;
-        if(!pan)
-            pandir='C';
-        else if(pan<0)
-            pandir='L';
-        else
-            pandir='R';
-        pan = abs(pan);
-
-        vol = V->Volume;
-        if(kbd_flag&2 && V->TrackVol)
-            vol += *V->TrackVol;
-
-        SCRN(5+y,29+x,16,"t%02xc%1x %c%s%02d",
-             V->TrackNo ? V->TrackNo-1 : 0,
-             V->ChannelNo,
-             pandir,
-             (pan>99) ? "" : "+",
-             pan);
-        SCRN(6+y,29+x,16,"w%04d v%03d",
-             V->WaveNo&0x1fff,
-             (vol>255) ? 255 : vol);
-    }
-}
-
 
 void scr_playlist_list(int ypos,int height)
 {
