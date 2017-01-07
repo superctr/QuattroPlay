@@ -7,7 +7,6 @@
 #include "voice.h"
 
 #define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
-//#define OLD_VOL_MODE (~S->ConfigFlags & S2X_CFG_FM_VOL) /* just for testing */
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
@@ -31,7 +30,6 @@ void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 
 void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
 {
-    //printf("fm v=%02x key off\n",V->VoiceNo);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0);
     V->Length=0;
     V->Flag&=~(0x10);
@@ -41,7 +39,6 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
 {
     int i;
     uint32_t pos = V->BaseAddr + S2X_ReadWord(S,V->BaseAddr+0x06)+(32*InsNo);
-    //Q_DEBUG("fm v=%02x set ins %02x at %06x\n",V->VoiceNo,InsNo,pos);
 
     S2X_FMKeyOff(S,V);
     for(i=0;i<4;i++)
@@ -54,7 +51,7 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     V->ChipFlags = S2X_ReadByte(S,pos)&0x3f;
     V->InsLfo = S2X_ReadByte(S,pos+3);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
-    for(i=1;i<28;i++)
+    for(i=2;i<28;i++)
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
     for(i=0;i<=V->Carrier;i++)
         S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
@@ -76,7 +73,6 @@ void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V)
         if(OLD_VOL_MODE)
         {
             d = ~((S2X_ReadByte(S,V->InsPtr+0x0b-i)^0x7f)*V->Volume) >> 8;
-            //Q_DEBUG("d=%02x, V->Volume=%02x, InsTL=%02x\n",d&0x7f,V->Volume,S2X_ReadByte(S,V->InsPtr+0x0b-i));
             d &= 0x7f;
         }
         else
@@ -96,7 +92,6 @@ void S2X_FMWriteVol(S2X_State *S,S2X_FMVoice *V,int Attenuation)
         d = V->TL[i]+Attenuation;
         if(d<0) d=0;
         S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,(d>127) ? 127 : d);
-        //Q_DEBUG"FM v=%02x write vol %02x on operator %d (Carrier:%d)\n",V->VoiceNo,d,3-i,V->Carrier);
     }
 }
 
@@ -126,7 +121,6 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo)
         uint8_t i = S2X_ReadByte(S,pos+4);
         S->FMLfoDepthDelta = i ? ((0x80-i)>>1) : 0;
         S->FMLfoDepthDelta *= S->FMLfoDepthDelta;
-
         //Q_DEBUG("fm v=%02x lfo set %02x = %06x\n",V->VoiceNo,LfoNo,pos);
     }
     V->Lfo=LfoNo;
@@ -180,7 +174,6 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                     temp = (~data&0xff) + (~C->Track->TrackVolume&0xff);
                     V->Volume = temp>127 ? 127 : temp;
                 }
-                //Q_DEBUG("FM v=%02x volume set to %02x (%02x + %02x)\n",V->VoiceNo,V->Volume,~data&0xff,~C->Track->TrackVolume&0xff);
                 S2X_FMSetVol(S,V);
                 break;
             case S2X_CHN_LFO:
@@ -212,8 +205,6 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
     V->Pitch.EnvNo = C->Vars[S2X_CHN_PIT];
     if(V->Pitch.EnvNo)
     {
-        if(C->Vars[S2X_CHN_ENV])
-            Q_DEBUG("FM v=%02x Volume envelope requested (%02x)\n",V->VoiceNo,C->Vars[S2X_CHN_ENV]);
         V->Pitch.VolDepth = C->Vars[S2X_CHN_ENV];
         V->Pitch.EnvDepth = C->Vars[S2X_CHN_PITDEP];
         V->Pitch.EnvSpeed = C->Vars[S2X_CHN_PITRAT];
@@ -256,6 +247,7 @@ void S2X_FMUpdateLfo(S2X_State *S,S2X_FMVoice *V)
             d = (V->LfoDepthCounter>>8)&0x7f;
             S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80|((d>S->FMLfoPms) ? S->FMLfoPms : d));
             S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x00|((d>S->FMLfoAms) ? S->FMLfoAms : d));
+            //Q_DEBUG("Pms=%02x Ams=%02x d=%02x\n",S->FMLfoPms,S->FMLfoAms,d);
             return;
         }
     }
@@ -292,8 +284,6 @@ void S2X_FMUpdate(S2X_State *S,S2X_FMVoice *V)
     }
     else if(V->Flag&0x40)
     {
-        //printf("fm v=%02x key on\n",V->VoiceNo);
-        //S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0);
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_KEYON,0x78);
         V->Length = V->Channel->Vars[S2X_CHN_GTM];
         V->Flag &= ~(0x40);

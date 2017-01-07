@@ -34,15 +34,6 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         return;
     }
 
-    /*
-    if(T->Position>0x1ffff)
-    {
-        Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
-        S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
-        return;
-    }
-    */
-
     T->Flags = S->SongRequest[TrackNo];
 
     if(!(T->Flags & S2X_TRACK_STATUS_SUB))
@@ -351,8 +342,6 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 
     S2X_Track* T = &S->Track[TrackNo];
     uint8_t Command;
-    //uint32_t TempoVar;
-    //Q_TrackCommand* CommandFunc;
 
     if(~T->Flags & S2X_TRACK_STATUS_BUSY)
         return S2X_TrackDisable(S,TrackNo);
@@ -391,13 +380,9 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 
     // Calculate tempo
     T->UpdateTime += T->Tempo*T->BaseTempo;
-
-    //printf("next update: %04x (Tempo:%d, BaseTempo:%d)\n",T->UpdateTime,T->Tempo,T->BaseTempo);
-
 }
 
 // calculate track volume incl fade out and attenuation
-// source: 0x4b2c
 void S2X_TrackCalcVolume(S2X_State* S,int TrackNo)
 {
     S2X_Track* T = &S->Track[TrackNo];
@@ -419,10 +404,8 @@ void S2X_TrackCalcVolume(S2X_State* S,int TrackNo)
 }
 
 // disables a track (split from song command 0x15)
-// source: 0x5c50
 void S2X_TrackDisable(S2X_State *S,int TrackNo)
 {
-
     S2X_Track* T = &S->Track[TrackNo];
     S2X_Channel* c;
     int i;
@@ -440,7 +423,6 @@ void S2X_TrackDisable(S2X_State *S,int TrackNo)
             c->Enabled=0;
             //c->KeyOnType=0;
 
-            //Q_VoiceClearChannel(Q,c->VoiceNo);
             S2X_VoiceClearChannel(S,c->VoiceNo);
             S2X_VoiceClear(S,c->VoiceNo);
 

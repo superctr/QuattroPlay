@@ -21,7 +21,6 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     V->Flag=0;
     V->VoiceNo=VoiceNo;
 
-    //Q_DEBUG("initialize ch %02d\n",VoiceNo);
     V->Pan = 0x80;
     V->WaveNo = 0xff;
     V->Pitch.FM = 0;
@@ -48,13 +47,9 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
             data = C->Vars[i];
             switch(i)
             {
-            case S2X_CHN_WAV:
-                //Q_DEBUG("ch %02d wav set %02x\n",V->VoiceNo,C->Vars[S2X_CHN_WAV]);
-                break;
             case S2X_CHN_FRQ: // freq set / key on
                 if(data == 0xff)
                 {
-                    //Q_DEBUG("ch %02d key off\n",V->VoiceNo);
                     V->Flag &= ~(0x10);
                     V->Length=1;
                     break;
@@ -63,7 +58,6 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                     C->Vars[S2X_CHN_LEG]--;
                 else
                 {
-                    //Q_DEBUG("ch %02d key on\n",V->VoiceNo);
                     V->Delay = C->Vars[S2X_CHN_DEL];
                     V->Flag |= 0x50;
                 }
@@ -72,7 +66,6 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
             case S2X_CHN_ENV: // envelope
                 V->EnvPtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0a)+(data*2));
                 S2X_PCMAdsrSet(S,V,data);
-                //Q_DEBUG("ch %02d env set %02x = %06x\n",V->VoiceNo,data,V->EnvPtr);
                 break;
             case S2X_CHN_VOL: // volume
                 V->Volume = (data*C->Track->TrackVolume)>>8;
@@ -83,7 +76,6 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 break;
             case S2X_CHN_PANENV:
                 V->PanSlidePtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0c)+(4*data);
-                //Q_DEBUG("V=%02d pan slide set  %06x\n",V->VoiceNo,V->PanSlidePtr);
                 V->PanSlide = S2X_ReadByte(S,V->PanSlidePtr+3);
                 break;
             case S2X_CHN_PTA:
@@ -120,8 +112,6 @@ static void S2X_PCMAdsrSetVal(S2X_State *S,uint8_t val,uint8_t *v1,uint8_t *v2)
         *v1 = S2X_AdsrTable[val^0xf7];
         *v2 = 0;
     }
-
-    //printf("val=%02x,v1=%02x,v2=%02x\n",val,*v1,v2 ? *v2 : 0);
 }
 void S2X_PCMAdsrSet(S2X_State *S,S2X_PCMVoice *V,uint8_t EnvNo)
 {
@@ -171,8 +161,6 @@ void S2X_PCMUpdateReset(S2X_State *S,S2X_PCMVoice *V)
     V->PanSlideSpeed = V->PanSlide;
     if(V->PanSlide)
     {
-        //Q_DEBUG("V=%02d pan slide read %06x\n",V->VoiceNo,V->PanSlidePtr);
-
         V->PanSlideDelay = S2X_ReadByte(S,V->PanSlidePtr);
         if(V->PanSlideDelay != 0xfe)
             V->Pan = S2X_ReadByte(S,V->PanSlidePtr+1);
@@ -298,20 +286,12 @@ void S2X_PCMAdsrUpdate(S2X_State* S, S2X_PCMVoice *V)
     default:
         break;
     }
-
     V->EnvValue=d<<8;
-
-    //if(V->VoiceNo==3)
-    //Q_DEBUG("v=%02x ep=%06x s=%02x d=%02x, a=%02x d=%02x s=%02x r=%02x\n",V->VoiceNo,V->EnvPos,V->EnvTarget,d,atk,dec,sus,rel);
-
     return S2X_PCMPanUpdate(S,V);
 }
 
 void S2X_PCMEnvelopeAdvance(S2X_State* S,S2X_PCMVoice *V)
 {
-    //if(V->VoiceNo < 8)
-    //    Q_DEBUG("V=%02d env adv %06x\n",V->VoiceNo,V->EnvPos);
-
     uint8_t d = S2X_ReadByte(S,V->EnvPos);
     uint8_t t = S2X_ReadByte(S,V->EnvPos+1);
 
@@ -332,7 +312,6 @@ void S2X_PCMEnvelopeCommand(S2X_State* S,S2X_PCMVoice *V)
 
     if(!d && (t>0x80))
     {
-        //Q_DEBUG("V=%02d env end (0)\n",V->VoiceNo);
         S2X_PCMKeyOff(S,V);
         return;
     }
@@ -361,28 +340,19 @@ void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
     {
         do {
             d=S2X_ReadByte(S,V->EnvPos);
-            //t=S2X_ReadByte(S,V->EnvPos++);
             V->EnvPos+=2;
-            //Q_DEBUG("%06x=%02x ",V->EnvPos-2,d);
-            //V->EnvPos++;
         }
         while (d);
         d = S2X_ReadByte(S,V->EnvPos-1);
         if(d==0xff)
         {
-            //Q_DEBUG("V=%02d key off (1)\n",V->VoiceNo);
             S2X_PCMKeyOff(S,V);
             return;
         }
-        //return S2X_PCMEnvelopeAdvance(S,V);
-
         return S2X_PCMEnvelopeAdvance(S,V);
-
     }
     else
     {
-        //if(V->VoiceNo==0)
-        //    printf("%04x, %04x, %04x\n",V->EnvValue,V->EnvTarget,V->EnvDelta);
         d = V->EnvValue>>8;
         //t = V->EnvTarget>>8;
         if(V->EnvValue<V->EnvTarget)
@@ -451,10 +421,6 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
     temp = freq1 + (((uint16_t)(freq2-freq1)*(pitch&0xff))>>8);
 
     reg = (temp*V->WavePitch)>>8;
-
-    //if(V->VoiceNo == 0x0d)
-    //    Q_DEBUG("%04x, %04x\n",V->Pitch.Value,V->Pitch.EnvValue);
-    //    Q_DEBUG("p=%04x,%04x,%04x,%04x,%04x (W=%04x)\n",pitch,freq1,freq2,temp,reg,V->WavePitch);
     S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
 }
 
