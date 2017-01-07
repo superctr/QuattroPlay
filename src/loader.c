@@ -319,6 +319,8 @@ int LoadGame(QP_Game *G)
     memset(G->WaveData,0,0x1000000);
     for(i=0;i<wave_count+1;i++)
     {
+        if(!strlen(wave_filename[i]))
+            continue;
 #ifdef DEBUG
         printf("Wave %d\n",i);
         printf("\tFilename: '%s'\n",wave_filename[i]);
