@@ -94,6 +94,8 @@ void Q_ISongFade(union QP_Driver d,int slot)
 }
 int Q_ISongStatus(union QP_Driver d,int slot)
 {
+    if(!(d.s2x->SongRequest[slot&0x3f]&0xf800) && (d.s2x->Track[slot&0x3f].Flags & 0xf800))
+        return SONG_STATUS_STOPPING;
     return (d.quattro->SongRequest[slot&0x3f] & 0xf800);
 }
 int Q_ISongId(union QP_Driver d,int slot)

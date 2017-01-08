@@ -142,6 +142,8 @@ void S2X_ISongFade(union QP_Driver d,int slot)
 }
 int S2X_ISongStatus(union QP_Driver d,int slot)
 {
+    if(!(d.s2x->SongRequest[slot&0x3f]&0xf800) && (d.s2x->Track[slot&0x3f].Flags & 0xf800))
+        return SONG_STATUS_STOPPING;
     return (d.s2x->SongRequest[slot&0x3f] & 0xf800);
 }
 int S2X_ISongId(union QP_Driver d,int slot)

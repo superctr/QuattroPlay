@@ -9,9 +9,10 @@ enum QP_DriverType {
     DRIVER_SYSTEM2,
     DRIVER_COUNT
 };
-// bit mask, same values as quattro....
+// bit mask, mostly same values as quattro....
 enum {
     SONG_STATUS_NOT_PLAYING = 0,
+    SONG_STATUS_STOPPING = 0x10000,
     SONG_STATUS_PLAYING = 0x8000,
     SONG_STATUS_STARTING = 0x4000,
     SONG_STATUS_FADEOUT = 0x2000,

@@ -525,7 +525,7 @@ void GameDoUpdate(QP_Game *G)
 
         // song is stopped
         //if((QDrv->SongRequest[SongReq]&0x8000) == 0)
-        if(~DriverGetSongStatus(SongReq)&SONG_STATUS_PLAYING)
+        if(!(DriverGetSongStatus(SongReq)&(SONG_STATUS_PLAYING|SONG_STATUS_STOPPING)))
             state=2;
 
         if(G->Fadeout>1)
@@ -599,6 +599,9 @@ void GameDoUpdate(QP_Game *G)
 
         for(i=0;i<DriverGetSlotCount();i++)
             DriverStopSong(i);
+
+        // driver may need to process the stop first
+        DriverUpdateTick();
 
         G->QueueSong = G->Playlist[G->PlaylistPosition].SongID;
         G->PlaylistSongID = G->Playlist[G->PlaylistPosition].SongID;
