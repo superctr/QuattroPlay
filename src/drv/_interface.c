@@ -213,7 +213,7 @@ int Q_IGetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *I)
         break;
     case Q_PANMODE_ENV:
     case Q_PANMODE_ENV_SET:
-        I->Pan = (V->PanEnvTarget-V->PanEnvValue)>>8;
+        I->Pan = (int8_t)((V->PanEnvTarget-V->PanEnvValue)>>8);
         break;
     case Q_PANMODE_REG:
     case Q_PANMODE_POSREG:
