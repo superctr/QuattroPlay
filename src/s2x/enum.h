@@ -55,6 +55,8 @@ enum {
     S2X_CFG_PCM_NEWADSR = 1<<2,
     // invert pan for PCM channels
     S2X_CFG_PCM_PAN = 1<<3,
+    // System 1 sound driver
+    S2X_CFG_SYSTEM1 = 1<<4,
 };
 
 

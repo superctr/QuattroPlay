@@ -6,6 +6,8 @@
 #include "helper.h"
 #include "voice.h"
 
+#define SYSTEM1 (d.s2x->ConfigFlags & S2X_CFG_SYSTEM1)
+
 int S2X_IInit(union QP_Driver d,QP_Game *g)
 {
     memset(&d.s2x->PCMChip,0,sizeof(C352));
@@ -33,9 +35,16 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
     d.s2x->FMBase = 0;
     d.s2x->PCMBase = 0;
 
+    d.s2x->ConfigFlags=0;
+
+    if(!strcmp(g->Type,"System1"))
+    {
+        Q_DEBUG("%s\n",g->Type);
+        d.s2x->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
+    }
+
     config_t* cfg;
 
-    d.s2x->ConfigFlags=0;
     int i,v;
     for(i=0;i<g->ConfigCount;i++)
     {
@@ -49,7 +58,6 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_paninvert") && v)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
-
         else if(!strcmp(cfg->name,"fm_writerate"))
             d.s2x->FMWriteRate = atof(cfg->data);
         else if(!strcmp(cfg->name,"fm_base"))
@@ -182,7 +190,10 @@ int S2X_IDetectSilence(union QP_Driver d)
 
 double S2X_ITickRate(union QP_Driver d)
 {
-    return 120; // 120 Hz
+    if(SYSTEM1)
+        return 60;
+    else
+        return 120; // 120 Hz
 }
 void S2X_IUpdateTick(union QP_Driver d)
 {

@@ -7,6 +7,8 @@
 #include "track.h"
 #include "voice.h"
 
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+
 void S2X_TrackInit(S2X_State* S, int TrackNo)
 {
     S->SongTimer[TrackNo] = 0;
@@ -150,6 +152,8 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         S2X_TrackDisable(S,TrackNo);
         break;
     case 0x19:
+        if(SYSTEM1)
+            goto sys1_sub;
         Q_DEBUG("T=%02x parse cmd 0x19 (flag=%04x)\n",TrackNo,T->Flags & 0x400);
         if(~T->Flags & 0x400)
         {
@@ -250,12 +254,12 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         break;
     case 0x20: // different syntax on NA-1/NA-2
     case 0x21:
-        if(TrackNo & 8) // FM
+        if(SYSTEM1 || (TrackNo & 8)) // FM
             i = 24;
         else // PCM
             i = (Command&1)<<3;
     case 0x1a:
-        if((Command&0x3f) == 0x1a)
+        if(!SYSTEM1 && (Command&0x3f) == 0x1a)
             i = 8;
 
         mask = arg_byte(S,T->PositionBase,&T->Position);
@@ -294,7 +298,9 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         temp = arg_byte(S,T->PositionBase,&T->Position);
         break;
     case 0x1d:
-        i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
+        if(!SYSTEM1)
+            i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
+sys1_sub:
     case 0x1e:
         if(i<0)
             i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;

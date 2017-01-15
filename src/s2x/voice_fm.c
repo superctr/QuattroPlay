@@ -7,6 +7,7 @@
 #include "voice.h"
 
 #define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
@@ -38,7 +39,8 @@ void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
 void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
 {
     int i;
-    uint32_t pos = V->BaseAddr + S2X_ReadWord(S,V->BaseAddr+0x06)+(32*InsNo);
+    uint32_t pos = V->BaseAddr&0xffff00;
+    pos += S2X_ReadWord(S,V->BaseAddr+0x06)+(32*InsNo);
 
     S2X_FMKeyOff(S,V);
     for(i=0;i<4;i++)
@@ -113,7 +115,8 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo)
 
         S->FMLfo = LfoNo;
         // read new preset
-        uint32_t pos = V->BaseAddr + S2X_ReadWord(S,V->BaseAddr+0x02)+(5*LfoNo);
+        uint32_t pos = V->BaseAddr&0xffff00;
+        pos += S2X_ReadWord(S,V->BaseAddr+0x02)+(5*LfoNo);
         S2X_OPMWrite(S,0,0,OPM_LFO_WAV,S2X_ReadByte(S,pos));
         S2X_OPMWrite(S,0,0,OPM_LFO_FRQ,S2X_ReadByte(S,pos+1));
         S->FMLfoPms = S2X_ReadByte(S,pos+2);
@@ -132,6 +135,8 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
     V->Track = C->Track;
     V->Channel = C;
     V->BaseAddr = V->Track->PositionBase;
+    if(SYSTEM1)
+        V->BaseAddr+=2;
     //V->BaseAddr = S->FMBase;
 
     int i=0;
