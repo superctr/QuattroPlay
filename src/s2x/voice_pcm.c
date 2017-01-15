@@ -380,8 +380,6 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
     V->WaveNo = V->Channel->Vars[S2X_CHN_WAV];
     uint32_t pos = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x02)+(10*V->WaveNo);
 
-    S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
-
     V->WaveBank = S2X_ReadByte(S,pos++);
     V->WaveFlag = S2X_ReadByte(S,pos++);
     S2X_C352_W(S,V->VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos));
@@ -448,6 +446,7 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
             V->Delay--;
             return;
         }
+        S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
         S2X_PCMWaveUpdate(S,V);
         S2X_PCMPitchUpdate(S,V);
         S2X_C352_W(S,V->VoiceNo,C352_WAVE_BANK,V->WaveBank);
