@@ -113,6 +113,7 @@ void C352_fetch_sample(C352 *c, int i)
             // rom encoding differs a bit
             if(c->mulaw_type == C352_MULAW_TYPE_C140)
             {
+                // C140 mulaw (based on MAME for now)
                 s1=s&7;
                 s2=s>>3;
                 v->sample = (s2<<s1)<<3;
@@ -123,19 +124,13 @@ void C352_fetch_sample(C352 *c, int i)
             }
             else
             {
+                // C352 mulaw
                 s2 = (s&0x7f)>>4;
                 s1=s;
 
                 v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
                 v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
             }
-
-            //v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
-            //v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
-
-            //v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
-            //v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
-
         }
 		else
         {
