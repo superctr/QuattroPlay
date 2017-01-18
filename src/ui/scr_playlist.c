@@ -29,20 +29,20 @@ void scr_playlist_input2()
         pl_mode^=1;
         break;
     case SDLK_i:
-        if(pl_mode==1)
+        if(pl_mode&1)
             kbd_transpose+=24;
     case SDLK_d:
-        if(pl_mode==1)
+        if(pl_mode&1)
             kbd_transpose-=12;
         NOTICE("Keyboard display octave set to %d",-(kbd_transpose/12));
         break;
     case SDLK_8:
-        if(pl_mode==1)
+        if(pl_mode&1)
             kbd_flag ^= 1;
         NOTICE("Pitch mod display turned %s",kbd_flag&1?"ON":"OFF");
         break;
     case SDLK_9:
-        if(pl_mode==1)
+        if(pl_mode&1)
             kbd_flag ^= 2;
         NOTICE("Volume mod display turned %s",kbd_flag&2?"ON":"OFF");
         break;
@@ -62,11 +62,16 @@ void scr_playlist_input()
 
     switch(keycode)
     {
+    case SDLK_1: // follow mode
+        pl_mode^=2;
+        NOTICE("Follow mode turned %s",pl_mode&2?"ON":"OFF");
+        break;
     case SDLK_UP:
     case SDLK_PAGEUP:
         increment=-increment;
     case SDLK_DOWN:
     case SDLK_PAGEDOWN:
+        pl_mode&=~2; // disable follow mode
         if(keycode == SDLK_PAGEUP || keycode == SDLK_PAGEDOWN)
             increment *= PLPAGE;
         select_pos  += increment;
@@ -316,6 +321,9 @@ void scr_playlist()
     case 1:
         disp_timer=1;
     case 2:
+        if(pl_mode&2)
+            select_pos = Game->PlaylistPosition;
+
         SCRN(3,1,FCOLUMNS-6,"Playing song %02d: %s",
              Game->PlaylistPosition+1,
              Game->Playlist[Game->PlaylistPosition].Title);
@@ -347,7 +355,7 @@ void scr_playlist()
 
     int ypos=5;
     int max=PLPAGE;
-    if(pl_mode==1)
+    if(pl_mode&1)
     {
         scr_playlist_kbd();
         ypos+=40;
