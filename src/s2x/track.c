@@ -111,16 +111,16 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
     {
     case 0x00:
         break;
-    case 0x01:
+    case 0x01: // track volume
         T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
         break;
-    case 0x02:
+    case 0x02: // tempo
         T->BaseTempo = arg_byte(S,T->PositionBase,&T->Position);
         break;
-    case 0x03:
+    case 0x03: // speed
         T->Tempo = arg_byte(S,T->PositionBase,&T->Position);
         break;
-    case 0x04:
+    case 0x04: // subroutine
         temp = arg_word(S,T->PositionBase,&T->Position);
         // if calling the same subroutine inside itself, do not increase the stack
         if(T->SubStackPos && T->SubStack[T->SubStackPos-1] == T->Position)
@@ -140,7 +140,7 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         QP_LoopDetectPush(&S->LoopDetect,TrackNo);
         QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->Position+T->PositionBase);
         break;
-    case 0x05:
+    case 0x05: // return
         if(T->SubStackPos > 0)
         {
             T->Position = T->SubStack[--T->SubStackPos];
@@ -151,12 +151,15 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         QP_LoopDetectStop(&S->LoopDetect,TrackNo);
         S2X_TrackDisable(S,TrackNo);
         break;
-    case 0x19:
+    case 0x19: // conditional jump
+        // conditional jump is actually not taken if the flag is set
+        // and taken if the flag is cleared. right now we do the opposite.
         if(SYSTEM1)
             goto sys1_sub;
-        Q_DEBUG("T=%02x parse cmd 0x19 (flag=%04x)\n",TrackNo,T->Flags & 0x400);
+        Q_DEBUG("T=%02x conditional jump (%staken)\n",TrackNo,(T->Flags & 0x400) ? "" : "not ");
         if(~T->Flags & 0x400)
         {
+            T->Position+=2;
             T->Flags |= 0x400;
             break;
         }
@@ -252,13 +255,13 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
         if((Command&0x3f) == 0x06)
             T->TicksLeft=0;
         break;
-    case 0x20: // different syntax on NA-1/NA-2
-    case 0x21:
+    case 0x20: // init voice (different syntax on NA-1/NA-2)
+    case 0x21: // init voice (8-15)
         if(SYSTEM1 || (TrackNo & 8)) // FM
             i = 24;
         else // PCM
             i = (Command&1)<<3;
-    case 0x1a:
+    case 0x1a: // init voice (8-15)
         if(!SYSTEM1 && (Command&0x3f) == 0x1a)
             i = 8;
 
@@ -293,15 +296,15 @@ static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
             i++;
         }
         break;
-    case 0x1c:
+    case 0x1c: // currently ignored (SE request)
         i = arg_byte(S,T->PositionBase,&T->Position);
         temp = arg_byte(S,T->PositionBase,&T->Position);
         break;
-    case 0x1d:
+    case 0x1d: // track request (track 8-15)
         if(!SYSTEM1)
             i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
-sys1_sub:
-    case 0x1e:
+    sys1_sub: // goto from command 19
+    case 0x1e: // track request (track 0-7)
         if(i<0)
             i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;
 
@@ -311,7 +314,7 @@ sys1_sub:
         S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
         S->ParentSong[i] = TrackNo;
         break;
-    case 0x1b:
+    case 0x1b: // play percussion (1F = do not wait before next row)
     case 0x1f:
         mask = arg_byte(S,T->PositionBase,&T->Position);
         i=S2X_MAX_VOICES_PCM;
