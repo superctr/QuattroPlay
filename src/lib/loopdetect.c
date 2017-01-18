@@ -116,7 +116,7 @@ void QP_LoopDetectJump(QP_LoopDetect *ld,int trackid,unsigned int position) // c
             continue;
 
         S2 = &ld->Song[ld->Track[i].SongId];
-        for(j=0;j<S2->StackPos;j++)
+        for(j=0;j<=S2->StackPos;j++)
         {
             if(*data == S2->LoopId[j])
             {
