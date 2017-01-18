@@ -333,7 +333,7 @@ int S2X_IGetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
         V->VoiceType = VOICE_TYPE_MELODY;
         V->PanType = PAN_TYPE_UNSIGNED;
         V->Pan = 0x80;
-        V->VolumeMod = (S->ConfigFlags & S2X_CFG_FM_VOL) ? FM->Volume : (~FM->Volume)&0xff ;
+        V->VolumeMod = (S->ConfigFlags & S2X_CFG_FM_VOL) ? FM->Volume : ((~FM->Volume)&0x7f)<<1 ;
         V->Volume = 0;
         V->Key = FM->Key+2;
         V->Pitch = FM->Pitch.Value+FM->Pitch.EnvMod+0x200;
