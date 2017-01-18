@@ -199,7 +199,7 @@ void scr_playlist_kbd()
 
         pitch=V->Key;
         if(kbd_flag&1)
-            pitch = (V->Pitch)>>8;
+            pitch = (V->Pitch+0x80)>>8;
 
         if(V->Status&VOICE_STATUS_PLAYING)
             key=kbd_transpose+pitch;
