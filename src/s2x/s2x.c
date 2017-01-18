@@ -12,7 +12,7 @@ void S2X_Init(S2X_State *S)
     QP_LoopDetect ld = {
         .TrackCnt = S2X_MAX_TRACKS,
         .DataSize = Game->DataSize,
-        .SongCnt = 0x200,
+        .SongCnt = 0x400,
         .CheckValid = S2X_LoopDetectValid,
         .Driver = S
     };

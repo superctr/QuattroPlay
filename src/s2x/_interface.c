@@ -262,7 +262,7 @@ void S2X_ISetSolo(union QP_Driver d,uint32_t data)
 
 void S2X_IDebugAction(union QP_Driver d,int id)
 {
-    int i,j;
+    int i,j,ldsng;
     uint32_t startpos,currpos;
     S2X_Track *T;
 
@@ -273,14 +273,15 @@ void S2X_IDebugAction(union QP_Driver d,int id)
         if(T->Flags & S2X_TRACK_STATUS_BUSY)
         {
             j=d.s2x->SongRequest[i]&0x1ff;
+            ldsng=d.s2x->LoopDetect.Track[i].SongId;
             startpos = T->PositionBase+S2X_ReadWord(d.s2x,T->PositionBase);
             startpos = T->PositionBase+S2X_ReadWord(d.s2x,startpos+(2*(j&0xff)));
             currpos = T->PositionBase+T->Position;
             printf("Track %02x: ID=%03x, start=%06x, current pos=%06x, loops=%d (%d/%04x/%d)\n",i,j,startpos,currpos,
                    QP_LoopDetectGetCount(&d.s2x->LoopDetect,i),
-                   d.s2x->LoopDetect.Song[j].StackPos,
-                   d.s2x->LoopDetect.Song[j].LoopId[d.s2x->LoopDetect.Song[j].StackPos],
-                   d.s2x->LoopDetect.Song[j].LoopCnt);
+                   d.s2x->LoopDetect.Song[ldsng].StackPos,
+                   d.s2x->LoopDetect.Song[ldsng].LoopId[d.s2x->LoopDetect.Song[ldsng].StackPos],
+                   d.s2x->LoopDetect.Song[ldsng].LoopCnt);
                    //S2X_LoopDetectionGetCount(d.s2x,i),
                    //d.s2x->TrackLoopId[j],
                    //d.s2x->TrackLoopCount[j]);

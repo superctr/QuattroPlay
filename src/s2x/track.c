@@ -47,7 +47,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
 
     Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->PositionBase+T->Position);
 
-    QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo);
+    QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo+((TrackNo&8)<<6));
 
     T->SubStackPos=0;
     memset(T->SubStack,0,sizeof(T->SubStack));
