@@ -21,7 +21,6 @@
     char QP_WavePath[128];
     char QP_DataPath[128];
 
-    Q_State *QDrv;
     QP_Audio *Audio;
     QP_Game  *Game;
     QP_Audit *Audit;

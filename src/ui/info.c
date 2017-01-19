@@ -20,17 +20,18 @@ void ui_info_track(int id,int ypos)
     int i, j, x, y;
     uint8_t note, oct;
 
-    Q_Track * T = &QDrv->Track[id];
+    Q_State *Q = DriverInterface->Driver;
+    Q_Track *T = &Q->Track[id];
 
     set_color(ypos,44,6,35,COLOR_D_BLUE,COLOR_L_GREY);
     // todo: print subs...
 
-    if(QDrv->ParentSong[id] == id)
+    if(Q->ParentSong[id] == id)
     {
         j=0;
-        for(i=0;i<QDrv->TrackCount;i++)
+        for(i=0;i<Q->TrackCount;i++)
         {
-            if(i != id && QDrv->ParentSong[i] == id)
+            if(i != id && Q->ParentSong[i] == id)
             {
                 if(j==0)
                     x = SCRN(ypos,44,20,"Subs: ");
@@ -39,9 +40,9 @@ void ui_info_track(int id,int ypos)
             }
         }
     }
-    else if(QDrv->ParentSong[id] != Q_MAX_TRACKS)
+    else if(Q->ParentSong[id] != Q_MAX_TRACKS)
     {
-        SCRN(ypos,44,40,"Sub of %02x",QDrv->ParentSong[id]);
+        SCRN(ypos,44,40,"Sub of %02x",Q->ParentSong[id]);
     }
     ypos++;
 
@@ -248,7 +249,7 @@ void ui_info_track(int id,int ypos)
 
             c1 = ((i/16)%2)==0 ? COLOR_BLACK : COLOR_D_BLUE;
             c2 = (i%2)==0 ? COLOR_WHITE : COLOR_L_GREY;
-            SCRN(y,x,3,"%02x",Q_ReadTrackInfo(QDrv,id,i));
+            SCRN(y,x,3,"%02x",Q_ReadTrackInfo(Q,id,i));
             set_color(y,x,1,2,c1,c2);
         }
         ypos+=2;
@@ -263,7 +264,7 @@ void ui_info_track(int id,int ypos)
 
                 c1 = ((i/16)%2)==0 ? COLOR_BLACK : COLOR_D_BLUE;
                 c2 = (i%2)==0 ? COLOR_WHITE : COLOR_L_GREY;
-                SCRN(y,x,3,"%02x",Q_ReadChannelInfo(QDrv,id,j,i));
+                SCRN(y,x,3,"%02x",Q_ReadChannelInfo(Q,id,j,i));
                 set_color(y,x,1,2,c1,c2);
             }
         }
@@ -271,19 +272,19 @@ void ui_info_track(int id,int ypos)
 
 #ifdef DEBUG
 #ifndef Q_DISABLE_LOOP_DETECTION
-        y = QDrv->SongRequest[id]&0x7ff;
-        SCRN(ypos,44,40,"Sub loop id: %08x count: %3d",QDrv->TrackLoopId[y],QDrv->TrackLoopCount[y]);
+        y = Q->SongRequest[id]&0x7ff;
+        SCRN(ypos,44,40,"Sub loop id: %08x count: %3d",Q->TrackLoopId[y],Q->TrackLoopCount[y]);
 #endif // Q_DISABLE_LOOP_DETECTION
 #endif // DEBUG
         break;
     }
 }
 
-const char* EnvelopeState_KOn[Q_ENV_STATE_MAX] =
+static const char* EnvelopeState_KOn[Q_ENV_STATE_MAX] =
 {
     "Disabled","Attack","Decay","Sustain"
 };
-const char* EnvelopeState_KOff[Q_ENV_STATE_MAX] =
+static const char* EnvelopeState_KOff[Q_ENV_STATE_MAX] =
 {
     "Off","Attack","Release","Sustain"
 };
@@ -292,23 +293,24 @@ void ui_info_voice(int id,int ypos)
 {
     int tempypos;
 
-    Q_Voice* V = &QDrv->Voice[id];
+    Q_State *Q = DriverInterface->Driver;
+    Q_Voice* V = &Q->Voice[id];
 
     set_color(ypos,44,28,40,COLOR_D_BLUE,COLOR_L_GREY);
 
     SCRN(ypos++,44,40,"Chip registers:");
     SCRN(ypos++,44,40,"%6s:  %04x%6s:%04x%6s:%04x",
-             "Flag",    QDrv->Chip.v[id].flags,
-             "VolF",    QDrv->Chip.v[id].vol_f,
-             "VolR",    QDrv->Chip.v[id].vol_r);
+             "Flag",    Q->Chip.v[id].flags,
+             "VolF",    Q->Chip.v[id].vol_f,
+             "VolR",    Q->Chip.v[id].vol_r);
     SCRN(ypos++,44,40,"%6s:%06x%6s:%04x (%5.0f Hz)",
-             "Pos",     QDrv->Chip.v[id].pos & 0xffffff,
-             "Freq",    QDrv->Chip.v[id].freq,
-             ((double)QDrv->Chip.v[id].freq/0x10000)*QDrv->Chip.rate);
+             "Pos",     Q->Chip.v[id].pos & 0xffffff,
+             "Freq",    Q->Chip.v[id].freq,
+             ((double)Q->Chip.v[id].freq/0x10000)*Q->Chip.rate);
     SCRN(ypos++,44,40,"%6s:%02x%04x%6s:%04x%6s:%04x",
-             "Start",   QDrv->Chip.v[id].wave_bank&0xff,QDrv->Chip.v[id].wave_start,
-             "End",     QDrv->Chip.v[id].wave_end,
-             "Loop",    QDrv->Chip.v[id].wave_loop);
+             "Start",   Q->Chip.v[id].wave_bank&0xff,Q->Chip.v[id].wave_start,
+             "End",     Q->Chip.v[id].wave_end,
+             "Loop",    Q->Chip.v[id].wave_loop);
     ypos++;
 
     if(V->GateTimeLeft)
@@ -361,7 +363,7 @@ void ui_info_voice(int id,int ypos)
     if(V->PitchReg)
     {
         SCRN(ypos++,45,40,"%-10s  %02x (%02x)",
-                 "Pitch Reg.",V->PitchReg,QDrv->Register[V->PitchReg]);
+                 "Pitch Reg.",V->PitchReg,Q->Register[V->PitchReg]);
         ypos+=1;
     }
     else
@@ -399,7 +401,7 @@ void ui_info_voice(int id,int ypos)
         SCRN(ypos++,44,40,"Frequency");
 
         SCRN(ypos++,45,40,"%-16s%04x + %04x = %04x",
-                 "Wave Rate",V->WaveTranspose,QDrv->BasePitch,(uint16_t)(V->WaveTranspose+QDrv->BasePitch));
+                 "Wave Rate",V->WaveTranspose,Q->BasePitch,(uint16_t)(V->WaveTranspose+Q->BasePitch));
         SCRN(ypos++,45,40,"%-28s= %04x",
                  "Pitch Target",V->PitchTarget);
         SCRN(ypos++,45,40,"%-23s%4d = %04x",
@@ -409,7 +411,7 @@ void ui_info_voice(int id,int ypos)
         SCRN(ypos++,45,40,"%-25s%02x = %04x",
                  "LFO Preset",V->LfoNo,V->LfoMod);
         SCRN(ypos++,45,40,"%-28s= %04x",
-                 "Final Pitch",(uint16_t)(QDrv->BasePitch+V->WaveTranspose+V->Pitch+V->PitchEnvMod+V->LfoMod));
+                 "Final Pitch",(uint16_t)(Q->BasePitch+V->WaveTranspose+V->Pitch+V->PitchEnvMod+V->LfoMod));
         SCRN(ypos++,45,40,"%-28s= %04x",
                  "Frequency Register",V->FreqReg);
         break;
@@ -418,7 +420,7 @@ void ui_info_voice(int id,int ypos)
 
         SCRN(ypos++,45,40,"%-8s%02x  %-4s%06x",
                  "No",V->LfoNo,
-                 "Pos",QDrv->TableOffset[Q_TOFFSET_LFOTABLE]+(8*(V->LfoNo-1)));
+                 "Pos",Q->TableOffset[Q_TOFFSET_LFOTABLE]+(8*(V->LfoNo-1)));
         SCRN(ypos++,45,40,"%-8s%02x  %-8s%02x, %-6s%04x",
                  "Delay",V->LfoDelay,
                  "Wave",V->LfoWaveform,

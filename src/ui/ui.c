@@ -215,9 +215,10 @@ int ui_main(screen_mode_t sm)
     #ifdef DEBUG
     printf("Base gain is %.3f\n",Game->BaseGain);
     printf("Game gain is %.3f\n",Game->Gain);
-
-    if(QDrv)
-        printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
+    if(DriverInterface)
+        printf("Chip rate is %.0f Hz\n",DriverGetChipRate());
+    //if(QDrv)
+    //    printf("Chip Rate is %d Hz\n",QDrv->Chip.rate);
     #endif
 
     SDL_SetWindowTitle(window,windowtitle);

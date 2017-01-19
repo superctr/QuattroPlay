@@ -8,28 +8,30 @@
 #include "../drv/helper.h"
 #include "q_pattern.h"
 
-uint8_t pattern_arg_byte(uint32_t* TrackPos)
+static Q_State* Q;
+
+static uint8_t pattern_arg_byte(uint32_t* TrackPos)
 {
-    uint8_t r = QDrv->McuData[*TrackPos];
+    uint8_t r = Q->McuData[*TrackPos];
     *TrackPos += 1;
     return r;
 }
 // parse word operands
-uint16_t pattern_arg_word(uint32_t* TrackPos)
+static uint16_t pattern_arg_word(uint32_t* TrackPos)
 {
-    uint16_t r = (QDrv->McuData[*TrackPos+1]<<8) | (QDrv->McuData[*TrackPos]<<0);
+    uint16_t r = (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0);
     *TrackPos += 2;
     return r;
 }
 // parse track position operands
-uint32_t pattern_arg_pos(uint32_t* TrackPos)
+static uint32_t pattern_arg_pos(uint32_t* TrackPos)
 {
-    uint32_t r = ((QDrv->McuData[*TrackPos+2]<<16) | (QDrv->McuData[*TrackPos+1]<<8) | (QDrv->McuData[*TrackPos]<<0)) - QDrv->McuPosBase;
+    uint32_t r = ((Q->McuData[*TrackPos+2]<<16) | (Q->McuData[*TrackPos+1]<<8) | (Q->McuData[*TrackPos]<<0)) - Q->McuPosBase;
     *TrackPos += 3;
     return r;
 }
 // parse operands for conditional jumps / set register commands
-uint16_t pattern_arg_operand(uint32_t* TrackPos,uint8_t mode,uint16_t *regs)
+static uint16_t pattern_arg_operand(uint32_t* TrackPos,uint8_t mode,uint16_t *regs)
 {
     uint16_t val;
     if(mode&0x80)
@@ -52,6 +54,8 @@ uint16_t pattern_arg_operand(uint32_t* TrackPos,uint8_t mode,uint16_t *regs)
 
 void ui_pattern_disp(int TrackNo)
 {
+    Q = DriverInterface->Driver;
+
     static uint16_t regs[256];
     int i, left, skip;
     uint32_t pos, jump;
@@ -64,12 +68,12 @@ void ui_pattern_disp(int TrackNo)
     int maxcommands = 50000;
 
     trackpattern_length = 0;
-    Q_Track* T = &QDrv->Track[TrackNo];
+    Q_Track* T = &Q->Track[TrackNo];
     if(~T->Flags & Q_TRACK_STATUS_BUSY)
         return;
 
     // copy paramters
-    memcpy(regs,QDrv->Register,sizeof(QDrv->Register));
+    memcpy(regs,Q->Register,sizeof(Q->Register));
     memcpy(substack,T->SubStack,sizeof(T->SubStack));
     memcpy(repstack,T->RepeatStack,sizeof(T->RepeatStack));
     memcpy(loopstack,T->LoopStack,sizeof(T->LoopStack));
@@ -81,8 +85,8 @@ void ui_pattern_disp(int TrackNo)
     for(i=0;i<Q_MAX_TRKCHN;i++)
         transpose[i] = T->Channel[i].Transpose;
 
-    setflags = QDrv->SetRegFlags;
-    lfsr = QDrv->LFSR1;
+    setflags = Q->SetRegFlags;
+    lfsr = Q->LFSR1;
     left = T->RestCount;
     pos = T->Position;
 

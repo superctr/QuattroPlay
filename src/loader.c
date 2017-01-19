@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include "SDL2/SDL.h"
 #include "qp.h"
+#include "legacy.h"
 // #include "ui.h"
 #include "lib/vgm.h"
 #include "lib/ini.h"
@@ -380,6 +381,8 @@ int UnloadGame(QP_Game *G)
     //free(Q_Chip);
     QDrv = NULL;
     DriverDestroy(DriverInterface);
+    free(DriverInterface);
+    DriverInterface=0;
     return 0;
 }
 

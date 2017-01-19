@@ -80,8 +80,12 @@ void scr_playlist_input()
     case SDLK_RETURN:
         // force skip the boot song if RETURN is pressed twice
         // while boot song still playing
-        if(DriverInterface->Type == DRIVER_QUATTRO && QDrv->BootSong && Game->PlaylistControl==2)
-            QDrv->Track[0].SkipTrack=1;
+        if(Game->PlaylistControl==2 && DriverInterface->Type == DRIVER_QUATTRO)
+        {
+            Q_State *Q = DriverInterface->Driver;
+            if(Q->BootSong)
+                Q->Track[0].SkipTrack=1;
+        }
         select_pos_check();
         Game->PlaylistPosition=select_pos;
     case SDLK_r:

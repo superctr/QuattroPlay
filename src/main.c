@@ -19,14 +19,6 @@ int main(int argc, char *argv[])
     int val;
     SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_TIMER);
 
-//    static char inipath[128];
-//    static char wavepath[128];
-//    static char datapath[128];
-//    static char gamename[128];
-
-    //QDrv = (Q_State*)malloc(sizeof(Q_State));
-    //memset(QDrv,0,sizeof(Q_State));
-
     Audio = (QP_Audio*)malloc(sizeof(QP_Audio));
     memset(Audio,0,sizeof(QP_Audio));
 
@@ -36,7 +28,9 @@ int main(int argc, char *argv[])
     Audit = (QP_Audit*)malloc(sizeof(QP_Audit));
     memset(Audit,0,sizeof(QP_Audit));
 
-    if(/*!QDrv ||*/ !Audio || !Game)
+    DriverInterface=0;
+
+    if(!Audio || !Game)
         return -1;
 
     Game->AutoPlay = -1;
@@ -165,7 +159,8 @@ int main(int argc, char *argv[])
 
     ui_deinit();
     SDL_Quit();
-    free(QDrv);
+
+    free(Audit);
     free(Audio);
     free(Game);
 

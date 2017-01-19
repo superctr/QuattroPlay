@@ -12,6 +12,8 @@
 #include "ui.h"
 #include "scr_main.h"
 
+#include "../legacy.h" /* QDrv */
+
     inputstate_t inpstate;
 
     static int displaymode;
