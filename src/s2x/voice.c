@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "s2x.h"
 #include "helper.h"
 #include "voice.h"
