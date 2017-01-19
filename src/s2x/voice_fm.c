@@ -185,6 +185,8 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                 S2X_FMSetLfo(S,V,data);
                 break;
             case S2X_CHN_PAN:
+                if(S->ConfigFlags & S2X_CFG_FM_PAN)
+                    data = ((data&0x40)<<1)|((data&0x80)>>1);
                 S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|data);
                 break;
             case S2X_CHN_PTA:

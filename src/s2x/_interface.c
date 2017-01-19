@@ -58,6 +58,8 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_paninvert") && v)
             d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
+        else if(!strcmp(cfg->name,"fm_paninvert") && v)
+            d.s2x->ConfigFlags |= S2X_CFG_FM_PAN;
         else if(!strcmp(cfg->name,"fm_writerate"))
             d.s2x->FMWriteRate = atof(cfg->data);
         else if(!strcmp(cfg->name,"fm_base"))

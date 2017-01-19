@@ -57,6 +57,8 @@ enum {
     S2X_CFG_PCM_PAN = 1<<3,
     // System 1 sound driver
     S2X_CFG_SYSTEM1 = 1<<4,
+    // invert pan for FM channels
+    S2X_CFG_FM_PAN = 1<<5,
 };
 
 
