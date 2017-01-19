@@ -1,7 +1,11 @@
-#include "stdlib.h"
-#include "string.h"
+#include <stdlib.h>
+#include <string.h>
+
 #include "qp.h"
 #include "lib/vgm.h"
+
+#include "drv/quattro.h"
+#include "s2x/s2x.h"
 
 const struct QP_DriverTable DriverTable[DRIVER_COUNT] = {
     {0,"none"},

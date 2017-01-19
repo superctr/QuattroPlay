@@ -4,15 +4,17 @@
     to be used as a fallback when no appropritate driver specific screen is available
 */
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdint.h"
-#include "string.h"
-#include "math.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
 
 #include "../qp.h"
 #include "ui.h"
+
 #include "scr_main.h"
+
 #define PLPAGE (FROWS-7)
 
 // order in the enum will affect display

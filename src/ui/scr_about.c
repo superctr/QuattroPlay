@@ -1,6 +1,6 @@
-#include "string.h"
-#include "../qp.h"
+#include <string.h>
 
+#include "../qp.h"
 #include "ui.h"
 
 void scr_about()

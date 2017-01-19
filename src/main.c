@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "string.h"
-#include "lib/vgm.h"
-#include "qp.h"
-//#include "SDL2/SDL.h"
-//#include "SDL2/SDL_audio.h"
-#include "lib/audit.h"
-#include "ui/ui.h"
-#include "lib/ini.h"
-//#include "loader.h"
-//#include "drv/quattro.h"
+#include <string.h>
 
+#include "SDL2/SDL.h"
+
+#include "qp.h"
+
+#include "lib/vgm.h"
+#include "lib/audit.h"
+#include "lib/ini.h"
+
+#include "ui/ui.h"
 
 int main(int argc, char *argv[])
 {

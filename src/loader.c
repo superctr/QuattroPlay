@@ -8,10 +8,12 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "SDL2/SDL.h"
+
 #include "qp.h"
 #include "legacy.h"
-// #include "ui.h"
+
 #include "lib/vgm.h"
 #include "lib/ini.h"
 #include "lib/fileio.h"
@@ -423,7 +425,7 @@ int InitGame(QP_Game *Game)
 
     DriverReset(1);
 
-    QP_AudioInit(Audio,NULL,DriverGetChipRate(),Game->AudioBuffer,audiodev);
+    QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,audiodev);
 
     //if(Game->AutoPlay >= 0)
     //    QDrv->BootSong=2;

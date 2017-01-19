@@ -1,12 +1,10 @@
 /*
     Audio functions
 */
-
-#include "stdint.h"
-#include "stdio.h"
+#include <stdint.h>
+#include <stdio.h>
 
 #include "SDL2/SDL.h"
-#include "SDL2/SDL_audio.h"
 
 #include "qp.h"
 #include "audio.h"
@@ -52,19 +50,11 @@ void QP_AudioCallback(void* data,Uint8* astream,int len)
             S->ChipUpdate += ChipDelta;
             while(S->ChipUpdate > 1)
             {
-                //C352_update(&S->QDrv->Chip);
                 DriverUpdateChip();
                 S->ChipUpdate-=1;
             }
 
             DriverSampleChip(ChipOut,S->MuteRear ? 2 : 4);
-            //ChipOut[0] = S->QDrv->Chip.out[0] / 268435456;
-            //ChipOut[1] = S->QDrv->Chip.out[1] / 268435456;
-            //ChipOut[2] = S->MuteRear ? 0 : S->QDrv->Chip.out[2] / 268435456;
-            //ChipOut[3] = S->MuteRear ? 0 : S->QDrv->Chip.out[3] / 268435456;
-
-            //printf("%08x %08x %08x %08x\n",ChipOut[0],ChipOut[1],ChipOut[2],ChipOut[3]);
-
         }
         if(~updatemode & QPAUDIO_MUTE)
         {
@@ -106,10 +96,9 @@ void QP_AudioCallback(void* data,Uint8* astream,int len)
 
 }
 
-void QP_AudioInit(QP_Audio* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice)
+void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevice)
 {
     audio->Enabled = 0;
-    //audio->state.QDrv = driver;
     //audio->state.SampleRate = SampleRate;
     audio->state.ChipUpdate = 0;
     audio->state.DriverUpdate=0;

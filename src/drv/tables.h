@@ -4,7 +4,7 @@
 #ifndef TABLES_H_INCLUDED
 #define TABLES_H_INCLUDED
 
-#include "stdint.h"
+#include <stdint.h>
 
 uint16_t Q_EnvelopeRateTable[0xa0];
 uint16_t Q_PitchTable[0x6c];

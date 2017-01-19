@@ -1,9 +1,6 @@
 /*
     Quattro - Data tables
 */
-
-#include "stdint.h"
-#include "stddef.h"
 #include "quattro.h"
 #include "tables.h"
 

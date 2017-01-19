@@ -207,7 +207,7 @@ struct S2X_State {
     uint32_t PCMBase;
     uint32_t FMBase;
 
-    double SongTimer[Q_MAX_TRACKS];
+    double SongTimer[S2X_MAX_TRACKS];
 
     QP_LoopDetect LoopDetect;
 

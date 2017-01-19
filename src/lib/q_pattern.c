@@ -1,10 +1,11 @@
 /*
     Track command parser for UI pattern display.
 */
-
-#include "string.h"
+#include <string.h>
 
 #include "../qp.h"
+
+#include "../drv/quattro.h"
 #include "../drv/helper.h"
 #include "q_pattern.h"
 

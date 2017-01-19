@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "../qp.h"
+#include "s2x.h"
 #include "helper.h"
 #include "tables.h"
 #include "track.h"

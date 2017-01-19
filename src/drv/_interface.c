@@ -1,6 +1,9 @@
-#include "string.h"
+#include <string.h>
+
 #include "../qp.h"
 #include "../lib/vgm.h"
+
+#include "quattro.h"
 #include "helper.h"
 
 int Q_IInit(void* d,QP_Game *g)

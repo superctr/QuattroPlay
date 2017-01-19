@@ -3,11 +3,11 @@
  contain all required values...
 */
 
-#include "stdio.h"
-#include "sys/types.h"
-#include "dirent.h"
-#include "stdlib.h"
-#include "string.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "../qp.h"
 #include "ini.h"

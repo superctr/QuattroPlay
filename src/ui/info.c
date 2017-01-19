@@ -4,11 +4,11 @@
     Sorry for the unreadability of this code, it's very much a quick and dirty job...
 */
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdint.h"
-#include "string.h"
-#include "math.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
 
 #include "../qp.h"
 #include "ui.h"

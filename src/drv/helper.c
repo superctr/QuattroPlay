@@ -1,10 +1,10 @@
 /*
     Quattro - Helper functions, not found in the original sound driver...
 */
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdint.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "quattro.h"
 #include "tables.h"

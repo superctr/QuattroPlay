@@ -16,12 +16,6 @@
 #include "struct.h"
 #include "version.h"
 
-#ifdef DEBUG
-#define Q_DEBUG(...) printf(__VA_ARGS__)
-#else
-#define Q_DEBUG(...)
-#endif
-
 #define Q_C352_R(_q,_v,_r) C352_read(&_q->Chip,(_v<<3)|_r)
 #define Q_C352_W(_q,_v,_r,_d) C352_write(&_q->Chip,(_v<<3)|_r,_d)
 

@@ -1,6 +1,8 @@
 #ifndef DRIVER_H_INCLUDED
 #define DRIVER_H_INCLUDED
+
 #include <stdint.h>
+
 #include "loader.h"
 
 enum QP_DriverType {
@@ -36,11 +38,6 @@ enum {
     PAN_TYPE_SIGNED,
     PAN_TYPE_UNSIGNED,
     PAN_TYPE_INVERT = 0x10, // negative values = right
-};
-union QP_Driver {
-    void* drv;
-    Q_State *quattro;
-    S2X_State *s2x;
 };
 
 struct QP_DriverVoiceInfo {

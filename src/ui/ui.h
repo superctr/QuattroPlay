@@ -1,6 +1,10 @@
 #ifndef UI_H_INCLUDED
 #define UI_H_INCLUDED
 
+#include <stdint.h>
+
+#include "SDL2/SDL.h"
+
 // Setting to 60 will break debugging ...
 #define UI_FPS 30
 // Amount of frames to sample for FPS counting
@@ -12,6 +16,9 @@
 //#define FSIZE_Y 8
 #define FCOLUMNS 80
 #define FROWS 50
+
+#include "lib.h"
+
     int FSIZE_X;
     int FSIZE_Y;
 
@@ -31,14 +38,6 @@ enum {
     R_SCR_SELECT = 1<<3,
     R_SCR_MAIN2 = 1<<4,
 };
-
-
-
-#include "stdint.h"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_render.h"
-#include "../qp.h"
-#include "lib.h"
 
     int gameloaded;
 

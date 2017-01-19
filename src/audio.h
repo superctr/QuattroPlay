@@ -1,11 +1,9 @@
 #ifndef AUDIO_H_INCLUDED
 #define AUDIO_H_INCLUDED
 
-#include "stdio.h"
+#include <stdio.h>
 
-#include "SDL2/SDL.h"
 #include "SDL2/SDL_audio.h"
-#include "drv/quattro.h"
 
 enum {
     QPAUDIO_DRV_PLAY = 1,
@@ -14,7 +12,7 @@ enum {
 };
 typedef struct {
 
-    Q_State *QDrv;
+    //Q_State *QDrv;
 
     // temporary home for this variable until i find a better place.
     int AutoPlaySong;
@@ -51,7 +49,7 @@ typedef struct {
 
 } QP_Audio;
 
-void QP_AudioInit(QP_Audio* audio,Q_State* driver,int SampleRate,int SampleCount,char *AudioDevice);
+void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevice);
 void QP_AudioClose(QP_Audio* audio);
 void QP_AudioSetPause(QP_Audio* audio,int pause);
 void QP_AudioTogglePause(QP_Audio* audio);

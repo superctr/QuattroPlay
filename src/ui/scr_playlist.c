@@ -1,8 +1,10 @@
-#include "string.h"
-#include "math.h"
-#include "stdlib.h"
-#include "../qp.h"
+#include <string.h>
+#include <math.h>
+#include <stdlib.h>
 
+#include "../legacy.h" /* for Q_State */
+
+#include "../qp.h"
 #include "ui.h"
 
 #define PLPAGE (FROWS-7)

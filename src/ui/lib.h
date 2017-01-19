@@ -1,12 +1,6 @@
 #ifndef LIB_H_INCLUDED
 #define LIB_H_INCLUDED
 
-#include "stdint.h"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_render.h"
-#include "stdio.h"
-#include "ui.h"
-
 #define SCR(_y_,_x_,str,...) sprintf(&screen.text[_y_][_x_],str , ##__VA_ARGS__)
 #define SCRN(_y_,_x_,count,str,...) snprintf(&screen.text[_y_][_x_],count,str , ##__VA_ARGS__)
 #define NOTICE(str,...) {snprintf(ui_notice,80,str, ##__VA_ARGS__);ui_notice_timer=UI_NOTICE_TIME;}

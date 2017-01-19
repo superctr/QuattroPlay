@@ -1,4 +1,7 @@
-#include "string.h"
+#include <string.h>
+
+#include "SDL2/SDL.h"
+
 #include "../qp.h"
 
 #include "ui.h"

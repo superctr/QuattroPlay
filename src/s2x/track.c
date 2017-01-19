@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "../qp.h"
+#include "s2x.h"
 #include "helper.h"
 #include "track.h"
 #include "voice.h"
@@ -67,7 +67,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->BaseTempo=1;
 
     int i;
-    for(i=0;i<Q_MAX_TRKCHN;i++)
+    for(i=0;i<S2X_MAX_TRKCHN;i++)
     {
         T->Channel[i].Enabled = 0;
     }

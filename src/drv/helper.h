@@ -4,6 +4,8 @@
 #ifndef HELPER_H_INCLUDED
 #define HELPER_H_INCLUDED
 
+#include "../macro.h"
+
 uint32_t Q_ReadPos(Q_State *Q,uint32_t d);
 uint8_t Q_ReadByte(Q_State *Q,uint32_t d);
 uint16_t Q_ReadWord(Q_State *Q,uint32_t d);

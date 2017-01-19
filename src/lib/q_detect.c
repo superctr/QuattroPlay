@@ -7,7 +7,6 @@
   describe the differences and capabilities of the sound drivers, since
   disassembling every single one is just going to take too much time.
 */
-
 #define CAP_1_2 0
 #define CAP_1_7 0
 #define CAP_1_A 0

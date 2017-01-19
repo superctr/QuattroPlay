@@ -1,3 +1,5 @@
+#include "../macro.h"
+
 #include "ui.h"
 #include "math.h"
 
@@ -187,7 +189,7 @@ int ui_init()
     #ifdef DEBUG
     SDL_RendererInfo info;
     SDL_GetRendererInfo(rend,&info);
-    printf("Using renderer: %s\n",info.name);
+    Q_DEBUG("Using renderer: %s\n",info.name);
     #endif
 
     SDL_SetRenderDrawColor(rend,0,0,0,255);

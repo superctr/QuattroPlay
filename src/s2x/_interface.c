@@ -3,6 +3,8 @@
 
 #include "../qp.h"
 #include "../lib/vgm.h"
+
+#include "s2x.h"
 #include "helper.h"
 #include "voice.h"
 

@@ -1,9 +1,11 @@
-#ifndef S2X_H_INCLUDED
-#define S2X_H_INCLUDED
 /*
     System 2/21 sound driver
 */
+#ifndef S2X_H_INCLUDED
+#define S2X_H_INCLUDED
+
 #include <stdint.h>
+
 #include "../emu/c352.h"
 #include "../emu/ym2151.h"
 #include "../lib/loopdetect.h"

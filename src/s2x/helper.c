@@ -2,8 +2,10 @@
 #include <string.h>
 
 #include "../qp.h"
-#include "helper.h"
 #include "../lib/vgm.h"
+
+#include "s2x.h"
+#include "helper.h"
 
 uint8_t S2X_ReadByte(S2X_State *S,uint32_t d)
 {

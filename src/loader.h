@@ -1,7 +1,7 @@
 #ifndef LOADER_H_INCLUDED
 #define LOADER_H_INCLUDED
-#include "stdint.h"
-#include "drv/quattro.h"
+
+#include <stdint.h>
 
 typedef struct {
     int cnt;
