@@ -66,53 +66,54 @@ struct QP_DriverInterface {
     char* Name;
 
     enum QP_DriverType Type;
-    union QP_Driver Driver;
+    //union QP_Driver Driver;
+    void* Driver;
 
     // IInit is allowed to fail, this aborts the program
-    int (*IInit)(union QP_Driver,QP_Game *game);
+    int (*IInit)(void*,QP_Game *game);
 
-    void (*IDeinit)(union QP_Driver);
-    void (*IVgmOpen)(union QP_Driver);
-    void (*IVgmClose)(union QP_Driver);
-    void (*IReset)(union QP_Driver,QP_Game *game,int initial);
+    void (*IDeinit)(void*);
+    void (*IVgmOpen)(void*);
+    void (*IVgmClose)(void*);
+    void (*IReset)(void*,QP_Game *game,int initial);
 
-    int (*IGetParamCnt)(union QP_Driver);
-    void (*ISetParam)(union QP_Driver,int id,int val);
-    int (*IGetParam)(union QP_Driver,int id);
+    int (*IGetParamCnt)(void*);
+    void (*ISetParam)(void*,int id,int val);
+    int (*IGetParam)(void*,int id);
 
-    int (*IGetParamName)(union QP_Driver,int id,char* buffer,int len);
-    char* (*IGetSongMessage)(union QP_Driver);
-    char* (*IGetDriverInfo)(union QP_Driver);
+    int (*IGetParamName)(void*,int id,char* buffer,int len);
+    char* (*IGetSongMessage)(void*);
+    char* (*IGetDriverInfo)(void*);
 
-    int (*IRequestSlotCnt)(union QP_Driver);
-    int (*ISongCnt)(union QP_Driver,int slot);
-    void (*ISongRequest)(union QP_Driver,int slot,int val);
-    void (*ISongStop)(union QP_Driver,int slot);
-    void (*ISongFade)(union QP_Driver,int slot);
-    int (*ISongStatus)(union QP_Driver,int slot);
-    int (*ISongId)(union QP_Driver,int slot);
-    double (*ISongTime)(union QP_Driver,int slot);
+    int (*IRequestSlotCnt)(void*);
+    int (*ISongCnt)(void*,int slot);
+    void (*ISongRequest)(void*,int slot,int val);
+    void (*ISongStop)(void*,int slot);
+    void (*ISongFade)(void*,int slot);
+    int (*ISongStatus)(void*,int slot);
+    int (*ISongId)(void*,int slot);
+    double (*ISongTime)(void*,int slot);
 
-    int (*IGetLoopCnt)(union QP_Driver,int slot);
-    void (*IResetLoopCnt)(union QP_Driver);
+    int (*IGetLoopCnt)(void*,int slot);
+    void (*IResetLoopCnt)(void*);
 
-    int (*IDetectSilence)(union QP_Driver);
+    int (*IDetectSilence)(void*);
 
-    double (*ITickRate)(union QP_Driver);
-    void (*IUpdateTick)(union QP_Driver);
-    double (*IChipRate)(union QP_Driver);
-    void (*IUpdateChip)(union QP_Driver);
-    void (*ISampleChip)(union QP_Driver,float* samples,int samplecnt);
+    double (*ITickRate)(void*);
+    void (*IUpdateTick)(void*);
+    double (*IChipRate)(void*);
+    void (*IUpdateChip)(void*);
+    void (*ISampleChip)(void*,float* samples,int samplecnt);
 
-    uint32_t (*IGetMute)(union QP_Driver);
-    void (*ISetMute)(union QP_Driver,uint32_t data);
-    uint32_t (*IGetSolo)(union QP_Driver);
-    void (*ISetSolo)(union QP_Driver,uint32_t data);
+    uint32_t (*IGetMute)(void*);
+    void (*ISetMute)(void*,uint32_t data);
+    uint32_t (*IGetSolo)(void*);
+    void (*ISetSolo)(void*,uint32_t data);
 
-    void (*IDebugAction)(union QP_Driver,int id);
+    void (*IDebugAction)(void*,int id);
 
-    int (*IGetVoiceCount)(union QP_Driver);
-    int (*IGetVoiceInfo)(union QP_Driver,int voice,struct QP_DriverVoiceInfo *dv);
+    int (*IGetVoiceCount)(void*);
+    int (*IGetVoiceInfo)(void*,int voice,struct QP_DriverVoiceInfo *dv);
 };
 
 struct QP_DriverTable {

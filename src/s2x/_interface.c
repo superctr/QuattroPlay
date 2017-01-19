@@ -6,41 +6,42 @@
 #include "helper.h"
 #include "voice.h"
 
-#define SYSTEM1 (d.s2x->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 
-int S2X_IInit(union QP_Driver d,QP_Game *g)
+int S2X_IInit(void* d,QP_Game *g)
 {
-    memset(&d.s2x->PCMChip,0,sizeof(C352));
-    memset(&d.s2x->FMChip,0,sizeof(YM2151));
+    S2X_State* S = d;
+    memset(&S->PCMChip,0,sizeof(C352));
+    memset(&S->FMChip,0,sizeof(YM2151));
 
     //d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
-    d.s2x->PCMClock = 24576000; // temporary
-    C352_init(&d.s2x->PCMChip,d.s2x->PCMClock);
-    d.s2x->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
-    d.s2x->PCMChip.vgm_log = 0;
+    S->PCMClock = 24576000; // temporary
+    C352_init(&S->PCMChip,S->PCMClock);
+    S->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
+    S->PCMChip.vgm_log = 0;
 
-    d.s2x->PCMChip.wave = g->WaveData;
-    d.s2x->PCMChip.wave_mask = g->WaveMask;
-    d.s2x->Data = g->Data;
+    S->PCMChip.wave = g->WaveData;
+    S->PCMChip.wave_mask = g->WaveMask;
+    S->Data = g->Data;
 
-    d.s2x->FMClock = 3579545;
-    d.s2x->FMTicks = 0;
-    d.s2x->FMWriteTicks = 0;
-    YM2151_init(&d.s2x->FMChip,d.s2x->FMClock);
+    S->FMClock = 3579545;
+    S->FMTicks = 0;
+    S->FMWriteTicks = 0;
+    YM2151_init(&S->FMChip,S->FMClock);
 
-    d.s2x->SoundRate = d.s2x->PCMChip.rate;
-    d.s2x->FMDelta = d.s2x->FMChip.rate / d.s2x->SoundRate;
-    d.s2x->FMWriteRate = 2.5;
+    S->SoundRate = S->PCMChip.rate;
+    S->FMDelta = S->FMChip.rate / S->SoundRate;
+    S->FMWriteRate = 2.5;
 
-    d.s2x->FMBase = 0;
-    d.s2x->PCMBase = 0;
+    S->FMBase = 0;
+    S->PCMBase = 0;
 
-    d.s2x->ConfigFlags=0;
+    S->ConfigFlags=0;
 
     if(!strcmp(g->Type,"System1"))
     {
         Q_DEBUG("%s\n",g->Type);
-        d.s2x->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
+        S->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
     }
 
     config_t* cfg;
@@ -51,132 +52,145 @@ int S2X_IInit(union QP_Driver d,QP_Game *g)
         cfg = &g->Config[i];
         v = atoi(cfg->data);
         if(!strcmp(cfg->name,"fm_volcalc") && v)
-            d.s2x->ConfigFlags |= S2X_CFG_FM_VOL;
+            S->ConfigFlags |= S2X_CFG_FM_VOL;
         else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
-            d.s2x->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
+            S->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
         else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
-            d.s2x->ConfigFlags |= S2X_CFG_PCM_ADSR;
+            S->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_paninvert") && v)
-            d.s2x->ConfigFlags |= S2X_CFG_PCM_PAN;
+            S->ConfigFlags |= S2X_CFG_PCM_PAN;
         else if(!strcmp(cfg->name,"fm_paninvert") && v)
-            d.s2x->ConfigFlags |= S2X_CFG_FM_PAN;
+            S->ConfigFlags |= S2X_CFG_FM_PAN;
         else if(!strcmp(cfg->name,"fm_writerate"))
-            d.s2x->FMWriteRate = atof(cfg->data);
+            S->FMWriteRate = atof(cfg->data);
         else if(!strcmp(cfg->name,"fm_base"))
-            d.s2x->FMBase = strtol(cfg->data,NULL,0);
+            S->FMBase = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"pcm_base"))
-            d.s2x->PCMBase = strtol(cfg->data,NULL,0);
+            S->PCMBase = strtol(cfg->data,NULL,0);
     }
 
     return 0;
 }
-void S2X_IDeinit(union QP_Driver d)
+void S2X_IDeinit(void* d)
 {
-    S2X_Deinit(d.s2x);
+    S2X_State* S = d;
+    S2X_Deinit(S);
 }
-void S2X_IVgmOpen(union QP_Driver d)
+void S2X_IVgmOpen(void* d)
 {
-    vgm_datablock(0x92,0x1000000,d.s2x->PCMChip.wave,0x1000000,d.s2x->PCMChip.wave_mask,0);
-    d.s2x->PCMChip.vgm_log = 1;
-
+    S2X_State* S = d;
+    vgm_datablock(0x92,0x1000000,S->PCMChip.wave,0x1000000,S->PCMChip.wave_mask,0);
+    S->PCMChip.vgm_log = 1;
 }
-void S2X_IVgmClose(union QP_Driver d)
+void S2X_IVgmClose(void* d)
 {
-    d.s2x->PCMChip.vgm_log = 0;
-    vgm_poke32(0xdc,d.s2x->PCMClock | Audio->state.MuteRear<<31);
+    S2X_State* S = d;
+    S->PCMChip.vgm_log = 0;
+    vgm_poke32(0xdc,S->PCMClock | Audio->state.MuteRear<<31);
     vgm_poke8(0xd6,288/4);
 
-    vgm_poke32(0x30,d.s2x->FMClock);
+    vgm_poke32(0x30,S->FMClock);
 }
-void S2X_IReset(union QP_Driver d,QP_Game* g,int initial)
+void S2X_IReset(void* d,QP_Game* g,int initial)
 {
+    S2X_State* S = d;
     Q_DEBUG("S2X: Reset\n");
-    YM2151_reset(&d.s2x->FMChip);
+    YM2151_reset(&S->FMChip);
 
-    d.s2x->FMQueueRead=0;
-    d.s2x->FMQueueWrite=0;
+    S->FMQueueRead=0;
+    S->FMQueueWrite=0;
 
     if(initial)
-        S2X_Init(d.s2x);
+        S2X_Init(S);
     else
-        S2X_Reset(d.s2x);
+        S2X_Reset(S);
 }
 
-int S2X_IGetParamCnt(union QP_Driver d)
+// ============================================================================
+
+int S2X_IGetParamCnt(void* d)
 {
     return 0;
 }
-void S2X_ISetParam(union QP_Driver d,int id,int val)
+void S2X_ISetParam(void* d,int id,int val)
 {
     //d.quattro->Register[id&0xff] = val;
 }
-int S2X_IGetParam(union QP_Driver d,int id)
+int S2X_IGetParam(void* d,int id)
 {
     return 0;
     //return d.quattro->Register[id&0xff];
 }
-int S2X_IGetParamName(union QP_Driver d,int id,char* buffer,int len)
+int S2X_IGetParamName(void* d,int id,char* buffer,int len)
 {
     snprintf(buffer,len,"Register %02x",id);
     return -1;
 }
-char* S2X_IGetSongMessage(union QP_Driver d)
+char* S2X_IGetSongMessage(void* d)
 {
     return "System2x WIP Driver";
     //return d.quattro->SongMessage;
 }
-char* S2X_IGetDriverInfo(union QP_Driver d)
+char* S2X_IGetDriverInfo(void* d)
 {
     return "System2x WIP Driver";
     //return (char*)Q_McuNames[d.quattro->McuType];
 }
-int S2X_IRequestSlotCnt(union QP_Driver d)
+int S2X_IRequestSlotCnt(void* d)
 {
     return S2X_MAX_TRACKS; //Q_MAX_TRACKS;
 }
-int S2X_ISongCnt(union QP_Driver d,int slot)
+int S2X_ISongCnt(void* d,int slot)
 {
     return 512; //d.quattro->SongCount;
 }
-void S2X_ISongRequest(union QP_Driver d,int slot,int val)
+void S2X_ISongRequest(void* d,int slot,int val)
 {
-    d.s2x->SongRequest[slot&0x3f] = val | S2X_TRACK_STATUS_START;
+    S2X_State* S = d;
+    S->SongRequest[slot&0x3f] = val | S2X_TRACK_STATUS_START;
 }
-void S2X_ISongStop(union QP_Driver d,int slot)
+void S2X_ISongStop(void* d,int slot)
 {
-    d.s2x->SongRequest[slot&0x3f] &= 0x7ff;
+    S2X_State* S = d;
+    S->SongRequest[slot&0x3f] &= 0x7ff;
 }
-void S2X_ISongFade(union QP_Driver d,int slot)
+void S2X_ISongFade(void* d,int slot)
 {
-    d.s2x->SongRequest[slot&0x3f] |= S2X_TRACK_STATUS_FADE;
+    S2X_State* S = d;
+    S->SongRequest[slot&0x3f] |= S2X_TRACK_STATUS_FADE;
 }
-int S2X_ISongStatus(union QP_Driver d,int slot)
+int S2X_ISongStatus(void* d,int slot)
 {
-    if(!(d.s2x->SongRequest[slot&0x3f]&0xf800) && (d.s2x->Track[slot&0x3f].Flags & 0xf800))
+    S2X_State* S = d;
+    if(!(S->SongRequest[slot&0x3f]&0xf800) && (S->Track[slot&0x3f].Flags & 0xf800))
         return SONG_STATUS_STOPPING;
-    return (d.s2x->SongRequest[slot&0x3f] & 0xf800);
+    return (S->SongRequest[slot&0x3f] & 0xf800);
 }
-int S2X_ISongId(union QP_Driver d,int slot)
+int S2X_ISongId(void* d,int slot)
 {
-    return d.s2x->SongRequest[slot&0x3f] & 0x7ff;
+    S2X_State* S = d;
+    return S->SongRequest[slot&0x3f] & 0x7ff;
 }
-double S2X_ISongTime(union QP_Driver d,int slot)
+double S2X_ISongTime(void* d,int slot)
 {
-    return d.s2x->SongTimer[slot&0x3f];
+    S2X_State* S = d;
+    return S->SongTimer[slot&0x3f];
 }
 
-int S2X_IGetLoopCnt(union QP_Driver d,int slot)
+int S2X_IGetLoopCnt(void* d,int slot)
 {
-    //return S2X_LoopDetectionGetCount(d.s2x,slot);
-    return QP_LoopDetectGetCount(&d.s2x->LoopDetect,slot);
+    S2X_State* S = d;
+    //return S2X_LoopDetectionGetCount(S,slot);
+    return QP_LoopDetectGetCount(&S->LoopDetect,slot);
 }
-void S2X_IResetLoopCnt(union QP_Driver d)
+void S2X_IResetLoopCnt(void* d)
 {
-    //S2X_LoopDetectionReset(d.s2x);
-    QP_LoopDetectReset(&d.s2x->LoopDetect);
+    S2X_State* S = d;
+    //S2X_LoopDetectionReset(S);
+    QP_LoopDetectReset(&S->LoopDetect);
 }
 
-int S2X_IDetectSilence(union QP_Driver d)
+int S2X_IDetectSilence(void* d)
 {
     return 0;
 #if 0
@@ -190,25 +204,27 @@ int S2X_IDetectSilence(union QP_Driver d)
 #endif
 }
 
-double S2X_ITickRate(union QP_Driver d)
+double S2X_ITickRate(void* d)
 {
+    S2X_State *S = d;
     if(SYSTEM1)
         return 60;
     else
         return 120; // 120 Hz
 }
-void S2X_IUpdateTick(union QP_Driver d)
+void S2X_IUpdateTick(void* d)
 {
-    S2X_UpdateTick(d.s2x);
+    S2X_UpdateTick(d);
 }
-double S2X_IChipRate(union QP_Driver d)
+double S2X_IChipRate(void* d)
 {
-    return d.s2x->SoundRate;// d.quattro->Chip.rate;
+    S2X_State* S = d;
+    return S->SoundRate;// d.quattro->Chip.rate;
     //return 85562;
 }
-void S2X_IUpdateChip(union QP_Driver d)
+void S2X_IUpdateChip(void* d)
 {
-    S2X_State *S = d.s2x;
+    S2X_State *S = d;
     S->FMTicks += S->FMDelta;
     S->FMWriteTicks += S->FMDelta;
     while(S->FMWriteTicks > S->FMWriteRate)
@@ -219,51 +235,57 @@ void S2X_IUpdateChip(union QP_Driver d)
     }
     while(S->FMTicks > 1.0)
     {
-        YM2151_update(&d.s2x->FMChip);
+        YM2151_update(&S->FMChip);
         S->FMTicks-=1.0;
     }
 
-    C352_update(&d.s2x->PCMChip);
+    C352_update(&S->PCMChip);
 }
-void S2X_ISampleChip(union QP_Driver d,float* samples,int samplecnt)
+void S2X_ISampleChip(void* d,float* samples,int samplecnt)
 {
+    S2X_State* S = d;
     int i;
     if(samplecnt > 4)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
-        samples[i] = d.s2x->PCMChip.out[i] / (1<<28);
+        samples[i] = S->PCMChip.out[i] / (1<<28);
     if(samplecnt > 2)
         samplecnt=2;
     for(i=0;i<samplecnt;i++)
     {
-        double last = d.s2x->FMChip.out[i+2];
-        double next = d.s2x->FMChip.out[i];
-        samples[i] += (last+(d.s2x->FMTicks*(next-last)))/6;
-        //samples[i] += (last+(d.s2x->FMTicks*(next-last)))/12; // for finallap
+        double last = S->FMChip.out[i+2];
+        double next = S->FMChip.out[i];
+        samples[i] += (last+(S->FMTicks*(next-last)))/6;
+        //samples[i] += (last+(S->FMTicks*(next-last)))/12; // for finallap
     }
 }
 
-uint32_t S2X_IGetMute(union QP_Driver d)
+uint32_t S2X_IGetMute(void* d)
 {
-    return d.s2x->MuteMask;
+    S2X_State* S = d;
+    return S->MuteMask;
 }
-void S2X_ISetMute(union QP_Driver d,uint32_t data)
+void S2X_ISetMute(void* d,uint32_t data)
 {
-    d.s2x->MuteMask = data;
-    S2X_UpdateMuteMask(d.s2x);
+    S2X_State* S = d;
+    S->MuteMask = data;
+    S2X_UpdateMuteMask(S);
 }
-uint32_t S2X_IGetSolo(union QP_Driver d)
+uint32_t S2X_IGetSolo(void* d)
 {
-    return d.s2x->SoloMask;
+    S2X_State* S = d;
+    return S->SoloMask;
 }
-void S2X_ISetSolo(union QP_Driver d,uint32_t data)
+void S2X_ISetSolo(void* d,uint32_t data)
 {
-    d.s2x->SoloMask = data;
-    S2X_UpdateMuteMask(d.s2x);
+    S2X_State* S = d;
+    S->SoloMask = data;
+    S2X_UpdateMuteMask(S);
 }
 
-void S2X_IDebugAction(union QP_Driver d,int id)
+void S2X_IDebugAction(void* d,int id)
 {
+    S2X_State* S = d;
     int i,j,ldsng;
     uint32_t startpos,currpos;
     S2X_Track *T;
@@ -271,22 +293,22 @@ void S2X_IDebugAction(union QP_Driver d,int id)
     printf("Currently playing tracks:\n");
     for(i=0;i<S2X_MAX_TRACKS;i++)
     {
-        T = &d.s2x->Track[i];
+        T = &S->Track[i];
         if(T->Flags & S2X_TRACK_STATUS_BUSY)
         {
-            j=d.s2x->SongRequest[i]&0x1ff;
-            ldsng=d.s2x->LoopDetect.Track[i].SongId;
-            startpos = T->PositionBase+S2X_ReadWord(d.s2x,T->PositionBase);
-            startpos = T->PositionBase+S2X_ReadWord(d.s2x,startpos+(2*(j&0xff)));
+            j=S->SongRequest[i]&0x1ff;
+            ldsng=S->LoopDetect.Track[i].SongId;
+            startpos = T->PositionBase+S2X_ReadWord(S,T->PositionBase);
+            startpos = T->PositionBase+S2X_ReadWord(S,startpos+(2*(j&0xff)));
             currpos = T->PositionBase+T->Position;
             printf("Track %02x: ID=%03x, start=%06x, current pos=%06x, loops=%d (%d/%04x/%d)\n",i,j,startpos,currpos,
-                   QP_LoopDetectGetCount(&d.s2x->LoopDetect,i),
-                   d.s2x->LoopDetect.Song[ldsng].StackPos,
-                   d.s2x->LoopDetect.Song[ldsng].LoopId[d.s2x->LoopDetect.Song[ldsng].StackPos],
-                   d.s2x->LoopDetect.Song[ldsng].LoopCnt);
-                   //S2X_LoopDetectionGetCount(d.s2x,i),
-                   //d.s2x->TrackLoopId[j],
-                   //d.s2x->TrackLoopCount[j]);
+                   QP_LoopDetectGetCount(&S->LoopDetect,i),
+                   S->LoopDetect.Song[ldsng].StackPos,
+                   S->LoopDetect.Song[ldsng].LoopId[S->LoopDetect.Song[ldsng].StackPos],
+                   S->LoopDetect.Song[ldsng].LoopCnt);
+                   //S2X_LoopDetectionGetCount(S,i),
+                   //S->TrackLoopId[j],
+                   //S->TrackLoopCount[j]);
             for(j=0;j<S2X_MAX_TRKCHN;j++)
             {
                 if(T->Channel[j].Enabled)
@@ -296,14 +318,14 @@ void S2X_IDebugAction(union QP_Driver d,int id)
     }
 }
 
-int S2X_IGetVoiceCount(union QP_Driver d)
+int S2X_IGetVoiceCount(void* d)
 {
     return S2X_MAX_VOICES;
 }
 
-int S2X_IGetVoiceInfo(union QP_Driver d,int id,struct QP_DriverVoiceInfo *V)
+int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
 {
-    S2X_State* S = d.s2x;
+    S2X_State* S = d;
     S2X_PCMVoice* PCM;
     S2X_FMVoice* FM;
     memset(V,0,sizeof(*V));

@@ -16,19 +16,19 @@ int DriverCreate(struct QP_DriverInterface *di,enum QP_DriverType dt)
     case DRIVER_QUATTRO:
         *di = Q_CreateInterface();
 
-        di->Driver.quattro = (Q_State*)malloc(sizeof(Q_State));
-        if(!di->Driver.quattro)
+        di->Driver = malloc(sizeof(Q_State));
+        if(!di->Driver)
             return -1;
-        memset(di->Driver.quattro,0,sizeof(Q_State));
+        memset(di->Driver,0,sizeof(Q_State));
         break;
     case DRIVER_SYSTEM2:
         *di = S2X_CreateInterface();
 
-        di->Driver.s2x = (S2X_State*)malloc(sizeof(S2X_State));
-        if(!di->Driver.s2x)
+        di->Driver = malloc(sizeof(S2X_State));
+        if(!di->Driver)
             return -1;
 
-        memset(di->Driver.s2x,0,sizeof(S2X_State));
+        memset(di->Driver,0,sizeof(S2X_State));
         break;
     default:
         return -1;
@@ -40,8 +40,8 @@ void DriverDestroy(struct QP_DriverInterface *di)
 {
     if(!di)
         return;
-    if(di->Driver.drv)
-        free(di->Driver.drv);
+    if(di->Driver)
+        free(di->Driver);
 }
 
 // Driver initialization

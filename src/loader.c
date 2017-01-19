@@ -361,7 +361,7 @@ int LoadGame(QP_Game *G)
                 break;
             QDrv = NULL;
             if(i == DRIVER_QUATTRO)
-                QDrv = DriverInterface->Driver.quattro;
+                QDrv = DriverInterface->Driver;
             return 0;
         }
     }
