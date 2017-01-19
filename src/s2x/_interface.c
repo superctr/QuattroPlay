@@ -229,7 +229,7 @@ void S2X_ISampleChip(union QP_Driver d,float* samples,int samplecnt)
     if(samplecnt > 4)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
-        samples[i] = d.s2x->PCMChip.out[i] / 268435456;
+        samples[i] = d.s2x->PCMChip.out[i] / (1<<28);
     if(samplecnt > 2)
         samplecnt=2;
     for(i=0;i<samplecnt;i++)

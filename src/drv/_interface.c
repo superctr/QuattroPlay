@@ -149,7 +149,7 @@ void Q_ISampleChip(union QP_Driver d,float* samples,int samplecnt)
     if(samplecnt > 4)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
-        samples[i] = d.quattro->Chip.out[i] / 268435456;
+        samples[i] = d.quattro->Chip.out[i] / (1<<28);
 }
 
 uint32_t Q_IGetMute(union QP_Driver d)
