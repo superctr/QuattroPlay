@@ -69,6 +69,7 @@ OBJS = \
 	$(OBJ)/s2x/s2x.o \
 	$(OBJ)/s2x/tables.o \
 	$(OBJ)/s2x/track.o \
+	$(OBJ)/s2x/track_cmd.o \
 	$(OBJ)/s2x/voice.o \
 	$(OBJ)/s2x/voice_fm.o \
 	$(OBJ)/s2x/voice_pcm.o \
