@@ -86,271 +86,17 @@ void S2X_TrackStop(S2X_State* S,int TrackNo)
 
 }
 
-static uint8_t arg_byte(S2X_State *S,int b,uint16_t* d)
-{
-    uint8_t r = S2X_ReadByte(S,b+*d);
-    *d += 1;
-    return r;
-}
-static uint16_t arg_word(S2X_State *S,int b,uint16_t* d)
-{
-    uint16_t r = S2X_ReadWord(S,b+*d);
-    *d += 2;
-    return r;
-}
-
-static void S2X_TrackReadCommand(S2X_State *S,int TrackNo,uint8_t Command)
-{
-    S2X_Track *T = &S->Track[TrackNo];
-    //S2X_Channel *C;
-    int i=-1, pos, temp;
-    uint8_t mask;
-
-    //Q_DEBUG("T=%02x parse cmd %02x at %06x\n",TrackNo,Command,T->PositionBase+T->Position-1);
-    switch(Command&0x3f)
-    {
-    case 0x00:
-        break;
-    case 0x01: // track volume
-        T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
-        break;
-    case 0x02: // tempo
-        T->BaseTempo = arg_byte(S,T->PositionBase,&T->Position);
-        break;
-    case 0x03: // speed
-        T->Tempo = arg_byte(S,T->PositionBase,&T->Position);
-        break;
-    case 0x04: // subroutine
-        temp = arg_word(S,T->PositionBase,&T->Position);
-        // if calling the same subroutine inside itself, do not increase the stack
-        if(T->SubStackPos && T->SubStack[T->SubStackPos-1] == T->Position)
-        {
-            T->Position = temp;
-            break;
-        }
-        T->SubStack[T->SubStackPos++] = T->Position;
-        T->Position = temp;
-
-        if(T->SubStackPos == S2X_MAX_SUB_STACK)
-        {
-            Q_DEBUG("T=%02x smashed subroutine stack!\n",TrackNo);
-            QP_LoopDetectStop(&S->LoopDetect,TrackNo);
-            S2X_TrackDisable(S,TrackNo);
-        }
-        QP_LoopDetectPush(&S->LoopDetect,TrackNo);
-        QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->Position+T->PositionBase);
-        break;
-    case 0x05: // return
-        if(T->SubStackPos > 0)
-        {
-            T->Position = T->SubStack[--T->SubStackPos];
-            QP_LoopDetectPop(&S->LoopDetect,TrackNo);
-            QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->Position+T->PositionBase);
-            break;
-        }
-        QP_LoopDetectStop(&S->LoopDetect,TrackNo);
-        S2X_TrackDisable(S,TrackNo);
-        break;
-    case 0x19: // conditional jump
-        // conditional jump is actually not taken if the flag is set
-        // and taken if the flag is cleared. right now we do the opposite.
-        if(SYSTEM1)
-            goto sys1_sub;
-        Q_DEBUG("T=%02x conditional jump (%staken)\n",TrackNo,(T->Flags & 0x400) ? "" : "not ");
-        if(~T->Flags & 0x400)
-        {
-            T->Position+=2;
-            T->Flags |= 0x400;
-            break;
-        }
-    case 0x09: // jump
-        T->Position = arg_word(S,T->PositionBase,&T->Position);
-        QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->PositionBase+T->Position);
-        break;
-    case 0x0a: // repeat
-        i = arg_byte(S,T->PositionBase,&T->Position);
-        temp = arg_word(S,T->PositionBase,&T->Position);
-        pos = T->RepeatStackPos;
-
-        if(pos > 0 && T->RepeatStack[pos-1] == T->Position)
-        {
-            // loop address stored in stack
-            pos--;
-            if(--T->RepeatCount[pos] > 0)
-                T->Position = temp;
-            else
-                T->RepeatStackPos=pos;
-        }
-        else
-        {
-            // new loop
-            T->RepeatStack[pos] = T->Position;
-            T->RepeatCount[pos] = i;
-            T->RepeatStackPos++;
-            T->Position = temp;
-
-            if(T->RepeatStackPos == S2X_MAX_REPEAT_STACK)
-            {
-                Q_DEBUG("T=%02x smashed repeat stack!\n",TrackNo);
-                QP_LoopDetectStop(&S->LoopDetect,TrackNo);
-                S2X_TrackDisable(S,TrackNo);
-            }
-        }
-        break;
-    case 0x0b: // loop
-        i = arg_byte(S,T->PositionBase,&T->Position);
-        temp = arg_word(S,T->PositionBase,&T->Position);
-        pos = T->LoopStackPos;
-
-        if(pos > 0 && T->LoopStack[pos-1] == T->Position)
-        {
-            // loop address stored in stack
-            pos--;
-            if(--T->LoopCount[pos] == 0)
-            {
-                T->LoopStackPos=pos;
-                T->Position = temp;
-            }
-        }
-        else
-        {
-            // new loop
-            T->LoopStack[pos] = T->Position;
-            T->LoopCount[pos] = i;
-            T->LoopStackPos++;
-
-            if(T->LoopStackPos == S2X_MAX_LOOP_STACK)
-            {
-                Q_DEBUG("T=%02x smashed loop stack!\n",TrackNo);
-                QP_LoopDetectStop(&S->LoopDetect,TrackNo);
-                S2X_TrackDisable(S,TrackNo);
-            }
-        }
-        break;
-    case 0x06: case 0x07: case 0x08:
-    case 0x0c: case 0x0d: case 0x0e:
-    case 0x0f: case 0x10: case 0x11:
-    case 0x12: case 0x13: case 0x14:
-    case 0x15: case 0x16: case 0x17:
-    case 0x18: case 0x22:
-        mask = arg_byte(S,T->PositionBase,&T->Position);
-        i=0;
-        if(Command&0x40)
-            temp = arg_byte(S,T->PositionBase,&T->Position);
-        while(mask)
-        {
-            if(mask&0x80)
-            {
-                if(~Command&0x40)
-                    temp = arg_byte(S,T->PositionBase,&T->Position);
-                T->Channel[i].Vars[(Command&0x3f)-S2X_CHN_OFFSET] = temp;
-                T->Channel[i].UpdateMask |= 1<<((Command&0x3f)-S2X_CHN_OFFSET);
-                // voice set var function here
-                S2X_VoiceCommand(S,&T->Channel[i],Command,temp);
-            }
-            mask<<=1;
-            i++;
-        }
-        // key-on
-        if((Command&0x3f) == 0x06)
-            T->TicksLeft=0;
-        break;
-    case 0x20: // init voice (different syntax on NA-1/NA-2)
-    case 0x21: // init voice (8-15)
-        if(SYSTEM1 || (TrackNo & 8)) // FM
-            i = 24;
-        else // PCM
-            i = (Command&1)<<3;
-    case 0x1a: // init voice (8-15)
-        if(!SYSTEM1 && (Command&0x3f) == 0x1a)
-            i = 8;
-
-        mask = arg_byte(S,T->PositionBase,&T->Position);
-
-        mask &= ~T->InitFlag;
-        T->InitFlag |= mask;
-        while(mask)
-        {
-            if(mask&0x80)
-            {
-                //printf("voice %d to be allocated\n",i);
-                S2X_ChannelClear(S,TrackNo,i&7);
-                T->Channel[i&7].VoiceNo = i;
-                //T->Channel[ChannelNo].Voice = &Q->Voice[VoiceNo];
-
-                temp=100;
-
-                S2X_VoiceSetPriority(S,i,TrackNo,i&7,temp);
-
-                // check for other tracks
-                pos = S2X_VoiceGetPriority(S,i,NULL,NULL);
-                // no higher priority tracks on the voice? if so, allocate
-                if(pos == temp)
-                {
-                    S2X_VoiceSetChannel(S,i,TrackNo,i&7);
-                    S2X_VoiceClear(S,i);
-                }
-
-            }
-            mask<<=1;
-            i++;
-        }
-        break;
-    case 0x1c: // currently ignored (SE request)
-        i = arg_byte(S,T->PositionBase,&T->Position);
-        temp = arg_byte(S,T->PositionBase,&T->Position);
-        break;
-    case 0x1d: // track request (track 8-15)
-        if(!SYSTEM1)
-            i = (arg_byte(S,T->PositionBase,&T->Position) & 0x07)+8;
-    sys1_sub: // goto from command 19
-    case 0x1e: // track request (track 0-7)
-        if(i<0)
-            i = arg_byte(S,T->PositionBase,&T->Position) & 0x07;
-
-        temp = arg_byte(S,T->PositionBase,&T->Position);
-        temp += S->SongRequest[TrackNo]&0x100;
-
-        S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
-        S->ParentSong[i] = TrackNo;
-        break;
-    case 0x1b: // play percussion (1F = do not wait before next row)
-    case 0x1f:
-        mask = arg_byte(S,T->PositionBase,&T->Position);
-        i=S2X_MAX_VOICES_PCM;
-        if(Command&0x40)
-            temp = arg_byte(S,T->PositionBase,&T->Position);
-        while(mask)
-        {
-            if(mask&0x80)
-            {
-                if(~Command&0x40)
-                    temp = arg_byte(S,T->PositionBase,&T->Position);
-                // play sample on channel i
-                S2X_PlayPercussion(S,i,T->PositionBase,temp,(T->Fadeout)>>8);
-            }
-            mask<<=1;
-            i++;
-        }
-        // key-on
-        if((Command&0x3f) == 0x1b)
-            T->TicksLeft=0;
-        break;
-    default:
-        Q_DEBUG("unrecognized command %02x at %06x\n",Command,T->PositionBase+T->Position);
-        S2X_TrackDisable(S,TrackNo);
-        break;
-    }
-}
-
 // Call 0x0a - updates a track
 // source: 0x4fc4
 void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 {
+    // TODO: add a track type variable...
+    struct S2X_TrackCommandEntry* CmdTab = SYSTEM1 ? S2X_S1TrackCommandTable : S2X_S2TrackCommandTable;
+
     S->SongTimer[TrackNo] += 1.0/120.0;
 
     S2X_Track* T = &S->Track[TrackNo];
-    uint8_t Command;
+    uint8_t Command,CmdIndex;
 
     if(~T->Flags & S2X_TRACK_STATUS_BUSY)
         return S2X_TrackDisable(S,TrackNo);
@@ -375,7 +121,8 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 
             QP_LoopDetectCheck(&S->LoopDetect,TrackNo,T->PositionBase+T->Position);
 
-            Command = arg_byte(S,T->PositionBase,&T->Position);
+            Command = S2X_ReadByte(S,T->PositionBase+T->Position);
+            T->Position++;
 
             if(Command&0x80)
             {
@@ -383,7 +130,18 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
                 T->RestCount = Command&0x7f;
             }
             else
-                S2X_TrackReadCommand(S,TrackNo,Command);
+            {
+                CmdIndex=Command&0x3f;
+                if(CmdIndex < S2X_MAX_TRKCMD)
+                {
+                    CmdTab[CmdIndex].cmd(S,TrackNo,T,Command);
+                }
+                else
+                {
+                    Q_DEBUG("unrecognized command %02x at %06x\n",Command,T->PositionBase+T->Position-1);
+                    S2X_TrackDisable(S,TrackNo);
+                }
+            }
         }
     }
 

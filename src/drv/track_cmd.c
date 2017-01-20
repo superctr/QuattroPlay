@@ -8,8 +8,8 @@
 #include "voice.h"
 #include "helper.h"
 #include "tables.h"
-#define TRACKCOMMAND(__name) void __name(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command)
-#define WRITECALLBACK(__name) void __name(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,int ChannelNo,int RegNo,uint16_t data)
+#define TRACKCOMMAND(__name) static void __name(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,uint8_t Command)
+#define WRITECALLBACK(__name) static void __name(Q_State* Q,int TrackNo,Q_Track* T,uint32_t* TrackPos,int ChannelNo,int RegNo,uint16_t data)
 
 #define LOGCMD Q_DEBUG("Trk %02x Pos %06x, Cmd: %02x (%s)\n",TrackNo,*TrackPos,Command,__func__)
 
@@ -790,6 +790,8 @@ TRACKCOMMAND(tc_Dummy)
 #ifdef DEBUG
     uint8_t val = arg_byte(Q,TrackPos);
     Q_DEBUG("Dummy function %02x, arg %02x\n",Command,val);
+#else
+    *TrackPos += 1;
 #endif
 
 }
@@ -810,6 +812,8 @@ TRACKCOMMAND(tc_Memory)
     uint8_t reg = arg_byte(Q,TrackPos);
     uint32_t pos = arg_pos(Q,TrackPos)+Q->McuPosBase;
     Q_DEBUG("Register %02x, %s %s memory address %06x\n",reg,mode&1 ? "word" : "byte",mode&2 ? "read from" : "write to",pos);
+#else
+    *TrackPos += 5;
 #endif
 }
 // ============================================================================
