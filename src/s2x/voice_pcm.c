@@ -407,8 +407,8 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
 
     if(SYSTEMNA)
     {
-        //loop-=1; // not sure...
-        //end-=1; // not sure...
+        loop-=1;
+        end-=1;
         V->WaveBank = S->WaveBank[V->VoiceNo/4] + (start>>15);
         start = ((start&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
         end = ((end&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank] + 1;
