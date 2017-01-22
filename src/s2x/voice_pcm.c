@@ -440,7 +440,7 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
         if(V->WaveFlag & 0x40)
             V->ChipFlag |= C352_FLG_PHASEFL|C352_FLG_PHASEFR;
         if(V->WaveFlag & 0x08)
-            V->ChipFlag |= C352_FLG_PHASEFL;
+            V->ChipFlag ^= C352_FLG_PHASEFL;
     }
     else
     {
@@ -559,7 +559,7 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
         if(flag & 0x40)
             ChipFlag |= C352_FLG_PHASEFL|C352_FLG_PHASEFR;
         if(flag & 0x08)
-            ChipFlag |= C352_FLG_PHASEFL;
+            ChipFlag ^= C352_FLG_PHASEFL;
     }
     else
     {
