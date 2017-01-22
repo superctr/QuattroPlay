@@ -9,6 +9,8 @@
 #include "track.h"
 #include "voice.h"
 
+#define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+
 void S2X_Init(S2X_State *S)
 {
     QP_LoopDetect ld = {
@@ -42,6 +44,7 @@ void S2X_Reset(S2X_State *S)
     memset(S->PCM,0,sizeof(S->PCM));
     memset(S->FM,0,sizeof(S->FM));
     memset(S->SEWave,0,sizeof(S->SEWave));
+    memset(S->SEVoice,0,sizeof(S->SEVoice));
 
     for(i=0;i<S2X_MAX_VOICES;i++)
     {
@@ -71,20 +74,26 @@ void S2X_Reset(S2X_State *S)
 
     S->FrameCnt=0;
 
-    if(!S->FMBase)
+    if(!SYSTEMNA)
     {
-        S->FMBase = 0x4000;
-        // some early games have PCM and FM swapped
-        if(S2X_ReadWord(S,0x10000) == 0x0008)
-            S->FMBase=0x10000;
+        if(!S->FMBase)
+        {
+            S->FMBase = 0x4000;
+            // some early games have PCM and FM swapped
+            if(S2X_ReadWord(S,0x10000) == 0x0008)
+                S->FMBase=0x10000;
+        }
+        if(!S->PCMBase)
+        {
+            S->PCMBase = 0x10000;
+            // some early games have PCM and FM swapped
+            if(S2X_ReadWord(S,0x10000) == 0x0008)
+                S->PCMBase=0x4000;
+        }
     }
-    if(!S->PCMBase)
-    {
-        S->PCMBase = 0x10000;
-        // some early games have PCM and FM swapped
-        if(S2X_ReadWord(S,0x10000) == 0x0008)
-            S->PCMBase=0x4000;
-    }
+
+    Q_DEBUG("fm  base = %06x\npcm base = %06x\n",S->FMBase,S->PCMBase);
+
     S->FMLfo=0xff;
 
     S->MuteMask=0;

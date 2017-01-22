@@ -5,10 +5,13 @@
 #include "tables.h"
 #include "track.h"
 #include "voice.h"
+#include "../drv/tables.h" /* quattro pitch table (used for NA-1/NA-2) */
 
 #define ADSR_ENV (S->ConfigFlags & (S2X_CFG_PCM_ADSR|S2X_CFG_PCM_NEWADSR))
 #define NEW_ADSR (S->ConfigFlags & S2X_CFG_PCM_NEWADSR)
 #define PAN_INVERT (S->ConfigFlags & S2X_CFG_PCM_PAN)
+
+#define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
 {
@@ -373,25 +376,69 @@ void S2X_PCMEnvelopeUpdate(S2X_State* S,S2X_PCMVoice *V)
     return S2X_PCMPanUpdate(S,V);
 }
 
+// NA-1/NA-2 sample offsets are in words, while C352 sample offsets are in bytes
+// so we use the link mode to ensure that it loops back to the correct bank
+void S2X_PCMLinkUpdate(S2X_State *S,S2X_PCMVoice *V)
+{
+    if(!V->LinkMode)
+        return;
+    if(V->LinkMode == 1)
+    {
+        S2X_C352_W(S,V->VoiceNo,C352_WAVE_START,V->WaveBank);
+        V->LinkMode++;
+        return;
+    }
+    // TODO: may need another link mode in case we find samples > 65535 bytes...
+}
+
 void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
 {
-    if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo)
+    if(V->Channel->Vars[S2X_CHN_WAV] == V->WaveNo && !V->LinkMode)
         return;
     V->WaveNo = V->Channel->Vars[S2X_CHN_WAV];
     uint32_t pos = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x02)+(10*V->WaveNo);
 
     V->WaveBank = S2X_ReadByte(S,pos++);
     V->WaveFlag = S2X_ReadByte(S,pos++);
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos));
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+2));
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_LOOP,S2X_ReadWord(S,pos+4)+1);
+
+    uint32_t start = S2X_ReadWord(S,pos);
+    uint32_t end = S2X_ReadWord(S,pos+2);
+    uint32_t loop = S2X_ReadWord(S,pos+4)+1;
+
+    if(SYSTEMNA)
+    {
+        //loop-=1; // not sure...
+        //end-=1; // not sure...
+        V->WaveBank = S->WaveBank[V->VoiceNo/4] + (start>>15);
+        start = ((start&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
+        end = ((end&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank] + 1;
+        loop = ((loop&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
+        V->WaveBank = start>>16;
+    }
+
+    S2X_C352_W(S,V->VoiceNo,C352_WAVE_START,start);
+    S2X_C352_W(S,V->VoiceNo,C352_WAVE_END,end);
+    S2X_C352_W(S,V->VoiceNo,C352_WAVE_LOOP,loop);
+
     V->WavePitch = S2X_ReadWord(S,pos+6);
 
+    V->LinkMode = 0;
     V->ChipFlag=0;
     if(V->WaveFlag & 0x10)
         V->ChipFlag |= C352_FLG_LOOP;
     if(V->WaveFlag & 0x08)
         V->ChipFlag |= C352_FLG_MULAW;
+    if(SYSTEMNA)
+    {
+        if(V->ChipFlag & C352_FLG_LOOP && (end^loop)&0x10000)
+        {
+            V->LinkMode=1;
+            V->ChipFlag |= C352_FLG_LINK;
+        }
+        if(V->WaveFlag & 0x01)
+            V->ChipFlag |= C352_FLG_MULAW;
+    }
+
 #if 0
     Q_DEBUG("ch %02x wave %02x (Pos: %06x, B:%02x F:%02x S:%04x E:%04X L:%04x P:%04x)\n",
             V->VoiceNo,
@@ -399,9 +446,9 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
             pos,
             V->WaveBank,
             V->WaveFlag,
-            S2X_ReadWord(S,pos),
-            S2X_ReadWord(S,pos+2),
-            S2X_ReadWord(S,pos+4),
+            start, //S2X_ReadWord(S,pos),
+            end, //S2X_ReadWord(S,pos+2),
+            loop, //S2X_ReadWord(S,pos+4),
             V->WavePitch);
 #endif
 }
@@ -412,14 +459,29 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
     uint16_t pitch = V->Pitch.Value + V->Pitch.EnvMod;
     pitch += (V->Channel->Vars[S2X_CHN_TRS]<<8)|V->Channel->Vars[S2X_CHN_DTN];
 
-    pitch &= 0x7fff;
+    if(!SYSTEMNA)
+    {
+        pitch &= 0x7fff;
+        freq1 = S2X_PitchTable[pitch>>8];
+        freq2 = S2X_PitchTable[(pitch>>8)+1];
+        temp = freq1 + (((uint16_t)(freq2-freq1)*(pitch&0xff))>>8);
 
-    freq1 = S2X_PitchTable[pitch>>8];
-    freq2 = S2X_PitchTable[(pitch>>8)+1];
-    temp = freq1 + (((uint16_t)(freq2-freq1)*(pitch&0xff))>>8);
+        reg = (temp*V->WavePitch)>>8;
+        S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
+    }
+    else
+    {
+        // we use the pitch table from quattro for now...
+        pitch = (pitch+V->WavePitch+0x900)&0x7fff;
 
-    reg = (temp*V->WavePitch)>>8;
-    S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
+        if(pitch>0x6b00)
+            pitch=0x6b00;
+        freq1 = Q_PitchTable[pitch>>8];
+        freq2 = Q_PitchTable[(pitch>>8)+1];
+        freq1 += ((uint16_t)(freq2-freq1)*(pitch&0xff))>>8;
+
+        S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,freq1);
+    }
 }
 
 // 0xdada
@@ -430,6 +492,7 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
     V->Pitch.Target = V->Key<<8;
     //V->Pitch.Portamento = V->Channel->Vars[S2X_CHN_PTA];
 
+    S2X_PCMLinkUpdate(S,V);
     S2X_PCMUpdateReset(S,V);
     if(ADSR_ENV)
         S2X_PCMAdsrUpdate(S,V);
@@ -479,18 +542,40 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     //    ChipFlag |= C352_FLG_LOOP;
     if(flag & 0x08)
         ChipFlag |= C352_FLG_MULAW;
+    if(SYSTEMNA && flag & 0x01)
+        ChipFlag |= C352_FLG_MULAW;
 
     if(PAN_INVERT)
         S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(right<<8)|(left&0xff));
     else
         S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(left<<8)|(right&0xff));
-    S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4)>>1);
-    S2X_C352_W(S,VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos+6));
-    S2X_C352_W(S,VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+8));
+    //S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4)>>1);
+
+    uint32_t start = S2X_ReadWord(S,pos+6);
+    uint32_t end = S2X_ReadWord(S,pos+8);
+    if(SYSTEMNA)
+    {
+        bank = S->WaveBank[VoiceNo/4] + (start>>15);
+        start = ((start&0x7fff)<<1) + S->WaveBase[S->BankSelect][bank];
+        end = ((end&0x7fff)<<1) + S->WaveBase[S->BankSelect][bank];
+        bank = start>>16;
+
+        S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4));
+    }
+    else
+    {
+        S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4)>>1);
+    }
+    S2X_C352_W(S,VoiceNo,C352_WAVE_START,start);
+    S2X_C352_W(S,VoiceNo,C352_WAVE_END,end);
+    //S2X_C352_W(S,VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos+6));
+    //S2X_C352_W(S,VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+8));
     S2X_C352_W(S,VoiceNo,C352_WAVE_BANK,bank);
+
     S2X_C352_W(S,VoiceNo,C352_FLAGS,ChipFlag|C352_FLG_KEYON);
 
-    S->SEWave[VoiceNo-16] = WaveNo;
+    S->SEWave[VoiceNo&7] = WaveNo;
+    S->SEVoice[VoiceNo&7] = VoiceNo+1;
 #if 0
     Q_DEBUG("ch %02x perc %02x %06x Vol:%04x Freq=%04x Start=%04x End=%04x Bank=%04x Flag=%04x\n",VoiceNo,WaveNo,pos,
             S2X_C352_R(S,VoiceNo,C352_VOL_FRONT),

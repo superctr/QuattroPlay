@@ -7,7 +7,7 @@
 #include "voice.h"
 
 #define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
-#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {

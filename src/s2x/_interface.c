@@ -6,24 +6,39 @@
 
 #include "s2x.h"
 #include "helper.h"
+#include "tables.h"
 #include "voice.h"
 
-#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
+#define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 int S2X_IInit(void* d,QP_Game *g)
 {
     S2X_State* S = d;
+
+    S2X_ReadConfig(S,g);
+
     memset(&S->PCMChip,0,sizeof(C352));
     memset(&S->FMChip,0,sizeof(YM2151));
 
     //d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
     S->PCMClock = 24576000; // temporary
     C352_init(&S->PCMChip,S->PCMClock);
-    S->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
+
     S->PCMChip.vgm_log = 0;
 
-    S->PCMChip.wave = g->WaveData;
-    S->PCMChip.wave_mask = g->WaveMask;
+    if(SYSTEMNA)
+    {
+        S->PCMChip.rate = 87002; // 50113000/576
+        S->PCMChip.wave = g->Data;
+        S->PCMChip.wave_mask = 0x7fffff; // TODO: have a proper address mask...
+    }
+    else
+    {
+        S->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
+        S->PCMChip.wave = g->WaveData;
+        S->PCMChip.wave_mask = g->WaveMask;
+    }
     S->Data = g->Data;
 
     S->FMClock = 3579545;
@@ -34,42 +49,6 @@ int S2X_IInit(void* d,QP_Game *g)
     S->SoundRate = S->PCMChip.rate;
     S->FMDelta = S->FMChip.rate / S->SoundRate;
     S->FMWriteRate = 2.5;
-
-    S->FMBase = 0;
-    S->PCMBase = 0;
-
-    S->ConfigFlags=0;
-
-    if(!strcmp(g->Type,"System1"))
-    {
-        Q_DEBUG("%s\n",g->Type);
-        S->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
-    }
-
-    config_t* cfg;
-
-    int i,v;
-    for(i=0;i<g->ConfigCount;i++)
-    {
-        cfg = &g->Config[i];
-        v = atoi(cfg->data);
-        if(!strcmp(cfg->name,"fm_volcalc") && v)
-            S->ConfigFlags |= S2X_CFG_FM_VOL;
-        else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
-            S->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
-        else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
-            S->ConfigFlags |= S2X_CFG_PCM_ADSR;
-        else if(!strcmp(cfg->name,"pcm_paninvert") && v)
-            S->ConfigFlags |= S2X_CFG_PCM_PAN;
-        else if(!strcmp(cfg->name,"fm_paninvert") && v)
-            S->ConfigFlags |= S2X_CFG_FM_PAN;
-        else if(!strcmp(cfg->name,"fm_writerate"))
-            S->FMWriteRate = atof(cfg->data);
-        else if(!strcmp(cfg->name,"fm_base"))
-            S->FMBase = strtol(cfg->data,NULL,0);
-        else if(!strcmp(cfg->name,"pcm_base"))
-            S->PCMBase = strtol(cfg->data,NULL,0);
-    }
 
     return 0;
 }
@@ -135,7 +114,8 @@ char* S2X_IGetSongMessage(void* d)
 }
 char* S2X_IGetDriverInfo(void* d)
 {
-    return "System2x WIP Driver";
+    S2X_State*S = d;
+    return S2X_DriverTypes[S->DriverType];
     //return (char*)Q_McuNames[d.quattro->McuType];
 }
 int S2X_IRequestSlotCnt(void* d)
@@ -342,7 +322,7 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
         V->Status=0;
         V->Preset=S->SEWave[index];
         V->VoiceType = VOICE_TYPE_PERCUSSION|VOICE_TYPE_PCM;
-        if(S2X_C352_R(S,(index+16),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+        if(S->SEVoice[index] && S2X_C352_R(S,(S->SEVoice[index]-1),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
             V->Status|=VOICE_STATUS_PLAYING;
         break;
     case S2X_VOICE_TYPE_FM:

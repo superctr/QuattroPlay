@@ -13,6 +13,8 @@
 #define S2X_MAX_VOICES_FM 8
 #define S2X_MAX_VOICES S2X_MAX_VOICES_PCM+S2X_MAX_VOICES_SE+S2X_MAX_VOICES_FM
 
+#define S2X_MAX_BANK 15
+
 typedef struct S2X_Channel S2X_Channel;
 typedef struct S2X_Track S2X_Track;
 typedef struct S2X_PCMVoice S2X_PCMVoice;
@@ -99,6 +101,7 @@ struct S2X_PCMVoice {
 
     uint8_t Flag;
     uint16_t ChipFlag;
+    uint8_t LinkMode;
 
     uint8_t Delay;
     uint8_t Length;
@@ -189,41 +192,41 @@ struct S2X_FMWrite {
 };
 
 struct S2X_State {
+
+    // Audio configuration
     double SoundRate;
     double FMDelta;
     double FMTicks;
     double FMWriteTicks;
     double FMWriteRate;
 
+    uint32_t SoloMask;
+    uint32_t MuteMask;
+
+    // Sound chips
     uint32_t FMClock;
     YM2151 FMChip;
-    // no C140
     uint32_t PCMClock;
-    C352 PCMChip;
+    C352 PCMChip; // instead of C140
 
+    // ROM data
     uint8_t *Data;
 
-//  uint32_t WaveBank;
+    // misc
+    char *BankName[S2X_MAX_BANK];
+
+    // Sound driver configuration
+    int DriverType;
+    uint32_t ConfigFlags;
     uint32_t PCMBase;
     uint32_t FMBase;
+    uint32_t WaveBase[S2X_MAX_BANK][8];
 
-    double SongTimer[S2X_MAX_TRACKS];
-
-    QP_LoopDetect LoopDetect;
-
-    uint16_t SongRequest[S2X_MAX_TRACKS+1];
-    uint16_t ParentSong[S2X_MAX_TRACKS];
-    S2X_Track Track[S2X_MAX_TRACKS];
-
+    // sound driver globals
     uint16_t FrameCnt;
+    int BankSelect;
+    uint8_t WaveBank[4];
 
-    S2X_Channel* ActiveChannel[S2X_MAX_VOICES];
-    S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
-    S2X_FMVoice FM[S2X_MAX_VOICES_FM];
-    //S2X_PCMVoice SE[S2X_MAX_VOICES_PCM]; // temp
-    uint16_t SEWave[S2X_MAX_VOICES_SE];
-
-    // global FM settings
     uint8_t FMLfo;
     uint8_t FMLfoPms;
     uint8_t FMLfoAms;
@@ -233,14 +236,22 @@ struct S2X_State {
     uint16_t FMQueueRead;
     S2X_FMWrite FMQueue[512];
 
+    // track vars
+    uint16_t SongRequest[S2X_MAX_TRACKS+1];
+    uint16_t ParentSong[S2X_MAX_TRACKS];
+    S2X_Track Track[S2X_MAX_TRACKS];
+    double SongTimer[S2X_MAX_TRACKS];
+    QP_LoopDetect LoopDetect;
+
+    // voice vars
+    S2X_Channel* ActiveChannel[S2X_MAX_VOICES];
+    S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
+    S2X_FMVoice FM[S2X_MAX_VOICES_FM];
+    uint16_t SEWave[S2X_MAX_VOICES_SE];
+    int8_t SEVoice[S2X_MAX_VOICES_SE];
+
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];
-
-    uint32_t SoloMask;
-    uint32_t MuteMask;
-
-    // various config flags
-    uint32_t ConfigFlags;
 };
 
 

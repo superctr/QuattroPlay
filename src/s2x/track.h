@@ -29,8 +29,9 @@ struct S2X_TrackCommandEntry{
 // -8 : loop
 // -9 : return (or end of data)
 
-struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD];
-struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD];
-struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD];
+struct S2X_TrackCommandEntry* S2X_TrackCommandTable[S2X_TYPE_MAX];
+//struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD];
+//struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD];
+//struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD];
 
 #endif // S2X_TRACK_H_INCLUDED

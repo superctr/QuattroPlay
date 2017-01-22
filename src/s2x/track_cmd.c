@@ -6,11 +6,12 @@
 #include "helper.h"
 #include "track.h"
 #include "voice.h"
+#include "tables.h"
 
 #define TRACKCOMMAND(__name) static void __name(S2X_State* S,int TrackNo,S2X_Track* T,uint8_t Command)
 #define LOGCMD Q_DEBUG("Trk %02x Pos %06x, Cmd: %02x (%s)\n",TrackNo,T->Position,Command,__func__)
 
-#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
 
 static uint8_t arg_byte(S2X_State *S,int b,uint16_t* d)
 {
@@ -168,7 +169,8 @@ TRACKCOMMAND(tc_WriteChannel)
     int i=0, temp=0;
     if(Command&0x40)
         temp = arg_byte(S,T->PositionBase,&T->Position);
-
+    if((Command&0x3f)==0x21) // NA-1/2 bios has duplicate 'set voice number' commands
+        Command=0x20 | (Command&0x40);
     while(mask)
     {
         if(mask&0x80)
@@ -230,6 +232,41 @@ TRACKCOMMAND(tc_InitChannel)
     }
 }
 
+TRACKCOMMAND(tc_InitChannelNA)
+{
+    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0, temp=0, pri=0, voiceno;
+    if(Command&0x40)
+        temp = arg_byte(S,T->PositionBase,&T->Position);
+
+    while(mask)
+    {
+        if(mask&0x80)
+        {
+            S2X_ChannelClear(S,TrackNo,i&7);
+            T->Channel[i&7].VoiceNo = voiceno = (T->Channel[i].Vars[S2X_CHN_VNO])&0x0f;
+
+            if(~Command&0x40)
+                temp = arg_byte(S,T->PositionBase,&T->Position);
+
+            Q_DEBUG("chn = %02x, vno = %02x, priority = %02x\n",i,voiceno,temp);
+
+            S2X_VoiceSetPriority(S,voiceno,TrackNo,i&7,temp);
+
+            // check for other tracks
+            pri = S2X_VoiceGetPriority(S,voiceno,NULL,NULL);
+            // no higher priority tracks on the voice? if so, allocate
+            if(pri == temp)
+            {
+                S2X_VoiceSetChannel(S,voiceno,TrackNo,i&7);
+                S2X_VoiceClear(S,voiceno);
+            }
+        }
+        mask<<=1;
+        i++;
+    }
+}
+
 TRACKCOMMAND(tc_RequestSE)
 {
     LOGCMD;
@@ -278,6 +315,43 @@ TRACKCOMMAND(tc_Percussion)
         T->TicksLeft=0;
 }
 
+TRACKCOMMAND(tc_PercussionNA)
+{
+    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0, temp=0;
+    if(Command&0x40)
+        temp = arg_byte(S,T->PositionBase,&T->Position);
+    while(mask)
+    {
+        if(mask&0x80)
+        {
+            if(~Command&0x40)
+                temp = arg_byte(S,T->PositionBase,&T->Position);
+            // play sample on channel i
+            if(T->Channel[i].Enabled)
+            {
+                S->PCM[T->Channel[i].VoiceNo].Flag=0;
+                S2X_PlayPercussion(S,T->Channel[i].VoiceNo,T->PositionBase,temp,(T->Fadeout)>>8);
+            }
+        }
+        mask<<=1;
+        i++;
+    }
+    // key-on
+    if((Command&0x3f) == 0x1b)
+        T->TicksLeft=0;
+}
+
+
+TRACKCOMMAND(tc_SetBank)
+{
+    uint8_t id = arg_byte(S,T->PositionBase,&T->Position);
+    uint8_t val = arg_byte(S,T->PositionBase,&T->Position);
+
+    id = S2X_NABankTable[id];
+    S->WaveBank[id] = val<<1;
+}
+
 // command table (system2)
 struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 {
@@ -320,6 +394,48 @@ struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 24 */ {1,tc_Nop},
 };
 
+// command table (NA-1/NA-2)
+struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD] =
+{
+/* 00 */ {1,tc_Nop},
+/* 01 */ {2,tc_TrackVol},
+/* 02 */ {2,tc_Tempo},
+/* 03 */ {2,tc_Speed},
+/* 04 */ {-5,tc_JumpSub},
+/* 05 */ {-9,tc_Return},
+/* 06 */ {-2,tc_WriteChannel}, // key on
+/* 07 */ {-1,tc_WriteChannel}, // wave
+/* 08 */ {-1,tc_WriteChannel}, // volume
+/* 09 */ {-6,tc_Jump},
+/* 0a */ {-7,tc_Repeat},
+/* 0b */ {-8,tc_Loop},
+/* 0c */ {-3,tc_WriteChannel}, // transpose
+/* 0d */ {-1,tc_WriteChannel}, // detune
+/* 0e */ {-1,tc_WriteChannel}, // pitch env no
+/* 0f */ {-1,tc_WriteChannel}, // pitch env speed
+/* 10 */ {-1,tc_WriteChannel}, // legato
+/* 11 */ {-1,tc_WriteChannel}, // gate time
+/* 12 */ {-1,tc_WriteChannel}, // pitch env depth
+/* 13 */ {-1,tc_WriteChannel}, // volume env
+/* 14 */ {-1,tc_WriteChannel}, // delay
+/* 15 */ {-1,tc_WriteChannel}, // lfo
+/* 16 */ {-1,tc_WriteChannel}, // pan
+/* 17 */ {-1,tc_WriteChannel}, // pan envelope
+/* 18 */ {-1,tc_WriteChannel}, // link mode
+/* 19 */ {-4,tc_CJump},
+/* 1a */ {1,tc_Nop},
+/* 1b */ {-2,tc_PercussionNA},
+/* 1c */ {3,tc_RequestSE},
+/* 1d */ {3,tc_RequestTrack}, // FM
+/* 1e */ {3,tc_RequestTrack}, // PCM
+/* 1f */ {-2,tc_PercussionNA},
+/* 20 */ {-1,tc_WriteChannel}, // set voice number
+/* 21 */ {-1,tc_WriteChannel}, // ^
+/* 22 */ {-1,tc_WriteChannel}, // portamento
+/* 23 */ {3,tc_SetBank},
+/* 24 */ {-1,tc_InitChannelNA}, // set priority & initialize channel
+};
+
 // command table (system1)
 struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 {
@@ -360,4 +476,11 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 22 */ {1,tc_Nop}, // not used
 /* 23 */ {1,tc_Nop},
 /* 24 */ {1,tc_Nop},
+};
+
+struct S2X_TrackCommandEntry* S2X_TrackCommandTable[S2X_TYPE_MAX] =
+{
+    S2X_S2TrackCommandTable,
+    S2X_S1TrackCommandTable,
+    S2X_NATrackCommandTable // NA
 };

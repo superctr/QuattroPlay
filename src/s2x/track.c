@@ -7,7 +7,8 @@
 #include "track.h"
 #include "voice.h"
 
-#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
+#define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 void S2X_TrackInit(S2X_State* S, int TrackNo)
 {
@@ -21,14 +22,19 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     uint16_t SongNo = S->SongRequest[TrackNo]&0x1ff;
 
     //T->Position = S2X_GetSongPos(S,SongNo);
-    T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
-    T->PositionBase += (SongNo & 0x100) ? 0x20000 : 0;
+
+    T->PositionBase = S->PCMBase;
+    if(!SYSTEMNA)
+        T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
+
+    if(SongNo & 0x100)
+        T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
 
     T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
     Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
-    uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position);
+    uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
     if(header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
     {
         Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
@@ -91,7 +97,7 @@ void S2X_TrackStop(S2X_State* S,int TrackNo)
 void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 {
     // TODO: add a track type variable...
-    struct S2X_TrackCommandEntry* CmdTab = SYSTEM1 ? S2X_S1TrackCommandTable : S2X_S2TrackCommandTable;
+    struct S2X_TrackCommandEntry* CmdTab = S2X_TrackCommandTable[S->DriverType];
 
     S->SongTimer[TrackNo] += 1.0/120.0;
 
@@ -221,6 +227,7 @@ void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo)
 {
     S2X_Channel *C = &S->Track[TrackNo].Channel[ChannelNo];
     uint8_t VoiceNo = C->VoiceNo;
+    uint8_t VoiceNo2 = C->Vars[S2X_CHN_VNO];
 
     memset(C,0,sizeof(S2X_Channel));
     C->VoiceNo = VoiceNo;
@@ -228,4 +235,5 @@ void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo)
     C->Vars[S2X_CHN_LFO] = 0xff; // disables LFO
     C->Vars[S2X_CHN_PAN] = 0x80;
     C->Vars[S2X_CHN_WAV] = 0xff;
+    C->Vars[S2X_CHN_VNO] = VoiceNo2;
 }

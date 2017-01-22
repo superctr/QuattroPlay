@@ -37,9 +37,17 @@ enum {
     S2X_CHN_PANENV = 0x17 - S2X_CHN_OFFSET,
     S2X_CHN_C18    = 0x18 - S2X_CHN_OFFSET,
     S2X_CHN_SMP    = 0x19 - S2X_CHN_OFFSET,
+    S2X_CHN_VNO    = 0x20 - S2X_CHN_OFFSET,
     S2X_CHN_PTA    = 0x22 - S2X_CHN_OFFSET,
     //...
     S2X_CHN_MAX    = 0x23 - S2X_CHN_OFFSET,
+};
+
+enum {
+    S2X_TYPE_SYSTEM2 = 0,
+    S2X_TYPE_SYSTEM1,
+    S2X_TYPE_NA,
+    S2X_TYPE_MAX,
 };
 
 enum {
@@ -51,7 +59,7 @@ enum {
     // 0=use table envelope (default) (example: Dragon Saber)
     // 1=use ADSR envelope (example: Assault)
     S2X_CFG_PCM_ADSR = 1<<1,
-    // 'new' ADSR envelope type
+    // 'new' ADSR envelope type (used in Metal Hawk and later games)
     S2X_CFG_PCM_NEWADSR = 1<<2,
     // invert pan for PCM channels
     S2X_CFG_PCM_PAN = 1<<3,

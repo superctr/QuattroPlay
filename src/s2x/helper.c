@@ -7,6 +7,8 @@
 #include "s2x.h"
 #include "helper.h"
 
+#define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+
 uint8_t S2X_ReadByte(S2X_State *S,uint32_t d)
 {
     return S->Data[d];
@@ -14,6 +16,8 @@ uint8_t S2X_ReadByte(S2X_State *S,uint32_t d)
 
 uint16_t S2X_ReadWord(S2X_State *S,uint32_t d)
 {
+    if(SYSTEMNA) // little endian
+        return ((S->Data[d+1]<<8) | (S->Data[d]<<0));
     return ((S->Data[d]<<8) | (S->Data[d+1]<<0));
 }
 
@@ -80,3 +84,66 @@ int S2X_LoopDetectValid(void* drv,int trackno)
     return 0;
 }
 
+void S2X_ReadConfig(S2X_State *S,QP_Game *G)
+{
+    S->DriverType=S2X_TYPE_SYSTEM2;
+    S->ConfigFlags=0;
+    S->FMBase = 0;
+    S->PCMBase = 0;
+
+    Q_DEBUG("driver type = %s\n",G->Type);
+
+    if(!strcmp(G->Type,"System1"))
+    {
+        S->DriverType=S2X_TYPE_SYSTEM1;
+        S->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
+    }
+    else if(!strcmp(G->Type,"NA"))
+    {
+        S->DriverType=S2X_TYPE_NA;
+    }
+
+    QP_GameConfig *cfg;
+
+    int bankid=0;
+    int src=0,dst=0,len=0;
+
+    int i,v;
+    for(i=0;i<G->ConfigCount;i++)
+    {
+        cfg = &G->Config[i];
+        v = atoi(cfg->data);
+        if(!strcmp(cfg->name,"fm_volcalc") && v)
+            S->ConfigFlags |= S2X_CFG_FM_VOL;
+        else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
+            S->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
+        else if(!strcmp(cfg->name,"pcm_adsr") && v>0)
+            S->ConfigFlags |= S2X_CFG_PCM_ADSR;
+        else if(!strcmp(cfg->name,"pcm_paninvert") && v)
+            S->ConfigFlags |= S2X_CFG_PCM_PAN;
+        else if(!strcmp(cfg->name,"fm_paninvert") && v)
+            S->ConfigFlags |= S2X_CFG_FM_PAN;
+        else if(!strcmp(cfg->name,"fm_writerate"))
+            S->FMWriteRate = atof(cfg->data);
+        else if(!strcmp(cfg->name,"fm_base"))
+            S->FMBase = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"pcm_base"))
+            S->PCMBase = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"bank")) // can be omitted if only a single bank is used
+            bankid = strtol(cfg->data,NULL,0) % S2X_MAX_BANK;
+        else if(!strcmp(cfg->name,"src")) // source address
+            src = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"dst")) // destination bank number
+            dst = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"len")) // to make parsing easier we write the bank parameters here
+        {
+            len = strtol(cfg->data,NULL,0);
+            Q_DEBUG("bank %02x src=%06x dst=%02x len=%02x\n",bankid,src,dst,len);
+            for(v=dst;v<len;v++)
+            {
+               S->WaveBase[bankid][v] = src;
+               src+=0x10000;
+            }
+        }
+    }
+}

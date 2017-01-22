@@ -1,6 +1,13 @@
 #include <stdint.h>
 
 #include "s2x.h"
+#include "tables.h"
+
+char* S2X_DriverTypes[S2X_TYPE_MAX] = {
+    "System 2",
+    "System 1",
+    "NA-1/2"
+};
 
 // FM keycode table
 uint8_t S2X_FMKeyCodes[0x80] = {
@@ -58,4 +65,8 @@ uint8_t S2X_AdsrTable[16] = {
     0x01,0x11,0x15,0x55,0x57,0x77,0x7f,0xff,
     // envelope rate coarse
     0xff,0x80,0x55,0x40,0x30,0x28,0x24,0x20
+};
+
+uint8_t S2X_NABankTable[7] = {
+    0,1,2,3,2,3,0
 };
