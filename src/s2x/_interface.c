@@ -105,8 +105,10 @@ void S2X_ISetParam(void* d,int id,int val)
     {
     case 0:
         S->CJump = val>0;
+        break;
     case 1:
         S->BankSelect = val%S2X_MAX_BANK;
+        break;
     default:
         return;
     }
