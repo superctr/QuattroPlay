@@ -50,6 +50,8 @@ int S2X_IInit(void* d,QP_Game *g)
     S->FMDelta = S->FMChip.rate / S->SoundRate;
     S->FMWriteRate = 2.5;
 
+    g->MuteRear = 1;
+
     return 0;
 }
 void S2X_IDeinit(void* d)
@@ -91,20 +93,51 @@ void S2X_IReset(void* d,QP_Game* g,int initial)
 
 int S2X_IGetParamCnt(void* d)
 {
-    return 0;
+    S2X_State* S = d;
+    if(SYSTEMNA)
+        return 2;
+    return 1;
 }
 void S2X_ISetParam(void* d,int id,int val)
 {
-    //d.quattro->Register[id&0xff] = val;
+    S2X_State* S = d;
+    switch(id)
+    {
+    case 0:
+        S->CJump = val>0;
+    case 1:
+        S->BankSelect = val%S2X_MAX_BANK;
+    default:
+        return;
+    }
 }
 int S2X_IGetParam(void* d,int id)
 {
-    return 0;
+    S2X_State* S = d;
+    switch(id)
+    {
+    case 0:
+        return S->CJump;
+    case 1:
+        return S->BankSelect;
+    default:
+        return 0;
+    }
     //return d.quattro->Register[id&0xff];
 }
 int S2X_IGetParamName(void* d,int id,char* buffer,int len)
 {
-    snprintf(buffer,len,"Register %02x",id);
+    switch(id)
+    {
+    case 0:
+        strncpy(buffer,"Jump Condition",len);
+        break;
+    case 1:
+        strncpy(buffer,"Bank Select",len);
+        break;
+    default:
+        return 0;
+    }
     return -1;
 }
 char* S2X_IGetSongMessage(void* d)

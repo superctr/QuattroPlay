@@ -89,7 +89,11 @@ TRACKCOMMAND(tc_Jump)
 
 TRACKCOMMAND(tc_CJump)
 {
+    if(S->CJump)
+        T->Flags |= 0x400;
+
     Q_DEBUG("T=%02x conditional jump (%staken)\n",TrackNo,(T->Flags & 0x400) ? "" : "not ");
+
     if(~T->Flags & 0x400)
     {
         T->Position+=2;

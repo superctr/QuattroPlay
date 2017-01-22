@@ -437,6 +437,10 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
         }
         if(V->WaveFlag & 0x01)
             V->ChipFlag |= C352_FLG_MULAW;
+        if(V->WaveFlag & 0x04)
+            V->ChipFlag |= C352_FLG_NOISE;
+        if(V->WaveFlag & 0x40)
+            V->ChipFlag |= C352_FLG_PHASEFL|C352_FLG_PHASEFR;
     }
 
 #if 0

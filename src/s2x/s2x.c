@@ -92,10 +92,9 @@ void S2X_Reset(S2X_State *S)
         }
     }
 
-    Q_DEBUG("fm  base = %06x\npcm base = %06x\n",S->FMBase,S->PCMBase);
-
     S->FMLfo=0xff;
 
+    S->CJump=0;
     S->MuteMask=0;
     S->SoloMask=0;
 }

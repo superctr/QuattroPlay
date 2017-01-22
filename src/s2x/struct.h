@@ -225,6 +225,7 @@ struct S2X_State {
     // sound driver globals
     uint16_t FrameCnt;
     int BankSelect;
+    int CJump;
     uint8_t WaveBank[4];
 
     uint8_t FMLfo;

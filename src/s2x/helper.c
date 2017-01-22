@@ -107,6 +107,7 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
 
     int bankid=0;
     int src=0,dst=0,len=0;
+    uint64_t dat;
 
     int i,v;
     for(i=0;i<G->ConfigCount;i++)
@@ -138,6 +139,19 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         else if(!strcmp(cfg->name,"len")) // to make parsing easier we write the bank parameters here
         {
             len = strtol(cfg->data,NULL,0);
+            Q_DEBUG("bank %02x src=%06x dst=%02x len=%02x\n",bankid,src,dst,len);
+            for(v=dst;v<len;v++)
+            {
+               S->WaveBase[bankid][v] = src;
+               src+=0x10000;
+            }
+        }
+        else if(!strcmp(cfg->name,"blk")) // combined
+        {
+            dat = strtol(cfg->data,NULL,0);
+            dst = (dat>>32)&0xff;
+            len = (dat>>24)&0xff;
+            src = (dat&0xffffff);
             Q_DEBUG("bank %02x src=%06x dst=%02x len=%02x\n",bankid,src,dst,len);
             for(v=dst;v<len;v++)
             {
