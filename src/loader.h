@@ -7,24 +7,24 @@ typedef struct {
     int cnt;
     uint16_t reg[32];
     uint16_t data[32];
-} action_t;
+} QP_GameAction;
 
 typedef struct {
     int wait_type;
     int wait_count;
     int action_id;
-} playlist_script_t;
+} QP_PlaylistScript;
 
 typedef struct {
     int SongID;
     char Title[256];
-    playlist_script_t script[16];
-} playlist_entry_t;
+    QP_PlaylistScript script[16];
+} QP_PlaylistEntry;
 
 typedef struct {
     char name[16];
     char data[48];
-} config_t;
+} QP_GameConfig;
 
 typedef struct {
 
@@ -58,12 +58,12 @@ typedef struct {
     int MuteRear;
     int ChipFreq; // sound chip frequency, best to not touch this.
 
-    action_t Action[256];
-    config_t Config[32];
+    QP_GameAction Action[256];
+    QP_GameConfig Config[32];
     int ConfigCount;
 
     int SongCount;
-    playlist_entry_t Playlist[256];
+    QP_PlaylistEntry Playlist[256];
 
     int PlaylistControl; // 0=user control, 1=playlist control
     int PlaylistPosition;

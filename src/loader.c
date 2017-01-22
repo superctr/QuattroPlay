@@ -18,6 +18,24 @@
 #include "lib/ini.h"
 #include "lib/fileio.h"
 
+static int rom_deinterleave(QP_Game *G)
+{
+    uint8_t* temp = malloc(G->DataSize*sizeof(*temp));
+    uint8_t* p = temp;
+    if(!temp)
+        return -1;
+    int i;
+    int max = G->DataSize/2;
+    for(i=0;i<max;i++)
+    {
+        *p++ = G->Data[i];
+        *p++ = G->Data[max+i];
+    }
+    memcpy(G->Data,temp,G->DataSize*sizeof(*temp));
+    free(temp);
+    return 0;
+}
+
 // Loads game ini, then the sound data and wave roms...
 int LoadGame(QP_Game *G)
 {
@@ -32,6 +50,7 @@ int LoadGame(QP_Game *G)
     static char wave1[16];
 
     int byteswap = 0;
+    int interleave=0;
 
     int data_count = 0;
     int data_pos = 0;
@@ -115,6 +134,8 @@ int LoadGame(QP_Game *G)
                     strcpy(G->Type,initest.value);
                 else if(!strcmp(initest.key,"byteswap"))
                     byteswap = atoi(initest.value) & 1;
+                else if(!strcmp(initest.key,"interleave"))
+                    interleave = atoi(initest.value) & 1;
                 else if(!strcmp(initest.key,"gain"))
                     G->Gain = atof(initest.value);
                 else if(!strcmp(initest.key,"muterear"))
@@ -253,7 +274,7 @@ int LoadGame(QP_Game *G)
         strcpy(path,G->Name);
 
     G->WaveMask=0;
-    G->DataSize = 0x80000;
+    G->DataSize = 0x800000;
     G->Data = (uint8_t*)malloc(G->DataSize);
     data_pos = G->DataSize;
 
@@ -286,6 +307,12 @@ int LoadGame(QP_Game *G)
         data_pos += data_size;
     }
     G->DataSize = data_pos;
+
+    if(interleave)
+    {
+        if(rom_deinterleave(G))
+            strcat(msgstring,"rom_deinterleave failed");
+    }
 
     for(i=0;i<patchcount;i++)
     {
@@ -509,7 +536,7 @@ void GameDoUpdate(QP_Game *G)
 
     if(G->PlaylistControl == 1)
     {
-        playlist_script_t* S = &G->Playlist[G->PlaylistPosition].script[G->PlaylistScript];
+        QP_PlaylistScript *S = &G->Playlist[G->PlaylistPosition].script[G->PlaylistScript];
 
         int state = 0;
         int SongReq = G->PlaylistSongID & 0x800 ? 8 : 0;
