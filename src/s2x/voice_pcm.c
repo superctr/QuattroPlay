@@ -411,8 +411,8 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
         end-=1;
         V->WaveBank = S->WaveBank[V->VoiceNo/4] + (start>>15);
         start = ((start&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
-        end = ((end&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank] + 1;
-        loop = ((loop&0x7fff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
+        end = ((end&0xffff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank] + 1;
+        loop = ((loop&0xffff)<<1) + S->WaveBase[S->BankSelect][V->WaveBank];
         V->WaveBank = start>>16;
     }
 
@@ -444,7 +444,7 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
     }
 
 #if 0
-    Q_DEBUG("ch %02x wave %02x (Pos: %06x, B:%02x F:%02x S:%04x E:%04X L:%04x P:%04x)\n",
+    Q_DEBUG("ch %02x wave %02x (Pos: %06x, B:%02x F:%02x S:%04x E:%04X L:%04x P:%04x, lm=%d)\n",
             V->VoiceNo,
             V->WaveNo,
             pos,
@@ -453,7 +453,8 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
             start, //S2X_ReadWord(S,pos),
             end, //S2X_ReadWord(S,pos+2),
             loop, //S2X_ReadWord(S,pos+4),
-            V->WavePitch);
+            V->WavePitch,
+            V->LinkMode);
 #endif
 }
 void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)

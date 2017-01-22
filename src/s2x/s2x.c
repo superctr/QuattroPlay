@@ -91,6 +91,13 @@ void S2X_Reset(S2X_State *S)
                 S->PCMBase=0x4000;
         }
     }
+    else
+    {
+        S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);
+        S->SongCount[1] = S2X_ReadByte(S,S->PCMBase+0x10011);
+        Q_DEBUG("base = %06x\nmax(1) = %02x\nmax(2) = %02x\n",S->PCMBase,S->SongCount[0],S->SongCount[1]);
+
+    }
 
     S->FMLfo=0xff;
 

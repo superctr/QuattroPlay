@@ -227,6 +227,7 @@ struct S2X_State {
     int BankSelect;
     int CJump;
     uint8_t WaveBank[4];
+    uint8_t SongCount[2];
 
     uint8_t FMLfo;
     uint8_t FMLfoPms;

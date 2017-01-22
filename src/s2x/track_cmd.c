@@ -253,7 +253,7 @@ TRACKCOMMAND(tc_InitChannelNA)
             if(~Command&0x40)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
 
-            Q_DEBUG("chn = %02x, vno = %02x, priority = %02x\n",i,voiceno,temp);
+            //Q_DEBUG("chn = %02x, vno = %02x, priority = %02x\n",i,voiceno,temp);
 
             S2X_VoiceSetPriority(S,voiceno,TrackNo,i&7,temp);
 
@@ -322,7 +322,7 @@ TRACKCOMMAND(tc_Percussion)
 TRACKCOMMAND(tc_PercussionNA)
 {
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
-    int i=0, temp=0;
+    int i=0, temp=0, voice=0;
     if(Command&0x40)
         temp = arg_byte(S,T->PositionBase,&T->Position);
     while(mask)
@@ -332,10 +332,14 @@ TRACKCOMMAND(tc_PercussionNA)
             if(~Command&0x40)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             // play sample on channel i
-            if(T->Channel[i].Enabled)
+            if(T->Channel[i].Enabled || T->Channel[i].VoiceNo==0xff)
             {
-                S->PCM[T->Channel[i].VoiceNo].Flag=0;
-                S2X_PlayPercussion(S,T->Channel[i].VoiceNo,T->PositionBase,temp,(T->Fadeout)>>8);
+                if(T->Channel[i].VoiceNo==0xff)
+                    voice = 8+i;
+                else
+                    voice = T->Channel[i].VoiceNo;
+                S->PCM[voice].Flag=0;
+                S2X_PlayPercussion(S,voice,T->PositionBase,temp,(T->Fadeout)>>8);
             }
         }
         mask<<=1;
@@ -429,7 +433,7 @@ struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD] =
 /* 19 */ {-4,tc_CJump},
 /* 1a */ {1,tc_Nop},
 /* 1b */ {-2,tc_PercussionNA},
-/* 1c */ {3,tc_RequestSE},
+/* 1c */ {3,tc_RequestSE}, // could be a communication byte as well
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // PCM
 /* 1f */ {-2,tc_PercussionNA},

@@ -132,6 +132,8 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
             S->PCMBase = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"bank")) // can be omitted if only a single bank is used
             bankid = strtol(cfg->data,NULL,0) % S2X_MAX_BANK;
+        else if(!strcmp(cfg->name,"name")) // bank name
+            S->BankName[bankid] = cfg->data;
         else if(!strcmp(cfg->name,"src")) // source address
             src = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"dst")) // destination bank number
@@ -140,7 +142,7 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         {
             len = strtol(cfg->data,NULL,0);
             Q_DEBUG("bank %02x src=%06x dst=%02x len=%02x\n",bankid,src,dst,len);
-            for(v=dst;v<len;v++)
+            for(v=dst;v<dst+len;v++)
             {
                S->WaveBase[bankid][v] = src;
                src+=0x10000;
@@ -148,12 +150,12 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         }
         else if(!strcmp(cfg->name,"blk")) // combined
         {
-            dat = strtol(cfg->data,NULL,0);
+            dat = strtoll(cfg->data,NULL,0);
             dst = (dat>>32)&0xff;
             len = (dat>>24)&0xff;
             src = (dat&0xffffff);
             Q_DEBUG("bank %02x src=%06x dst=%02x len=%02x\n",bankid,src,dst,len);
-            for(v=dst;v<len;v++)
+            for(v=dst;v<dst+len;v++)
             {
                S->WaveBase[bankid][v] = src;
                src+=0x10000;

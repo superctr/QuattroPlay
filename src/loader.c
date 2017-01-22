@@ -215,10 +215,15 @@ int LoadGame(QP_Game *G)
                     G->Playlist[G->SongCount-1].script[action_id].wait_type=2;
                     G->Playlist[G->SongCount-1].script[action_id].wait_count=strtol(initest.value,NULL,0);
                 }
+                else if(!strcmp(initest.key,"bank"))
+                {
+                    G->Playlist[G->SongCount-1].Bank = strtol(initest.value,NULL,0);
+                }
                 else if(sscanf(initest.key,"%x",&action_reg)==1)
                 {
                     action_id=0;
                     G->Playlist[G->SongCount].SongID = action_reg;
+                    G->Playlist[G->SongCount].Bank = -1;
                     strncpy(G->Playlist[G->SongCount].Title,initest.value,254);
                     G->Playlist[G->SongCount].script[action_id].wait_type=0;
                     G->Playlist[G->SongCount].script[action_id].wait_count=2;
@@ -641,6 +646,8 @@ void GameDoUpdate(QP_Game *G)
         G->PlaylistScript = 0;
         G->PlaylistLoop = 0;
         G->ActionTimer = 0;
+        if(G->Playlist[G->PlaylistPosition].Bank >= 0)
+            GameDoAction(G,G->Playlist[G->PlaylistPosition].Bank);
     }
 
     if(G->QueueSong >= 0)

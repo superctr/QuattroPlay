@@ -142,6 +142,9 @@ int S2X_IGetParamName(void* d,int id,char* buffer,int len)
 }
 char* S2X_IGetSongMessage(void* d)
 {
+    S2X_State*S = d;
+    if(S->BankName[S->BankSelect])
+        return S->BankName[S->BankSelect];
     return "System2x WIP Driver";
     //return d.quattro->SongMessage;
 }

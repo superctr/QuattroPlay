@@ -33,15 +33,22 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
     Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
-    // the sound driver does a check to make sure first byte is either 0x20 or 0x21
+    int invalid=0;
+
     uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
-    if(header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
+    // NA-1/NA-2 has a song count
+    if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
+        invalid=1;
+    // the sound driver does a check to make sure first byte is either 0x20 or 0x21
+    else if(header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
+        invalid=1;
+
+    if(invalid)
     {
         Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
         return;
     }
-
     T->Flags = S->SongRequest[TrackNo];
 
     if(!(T->Flags & S2X_TRACK_STATUS_SUB))
@@ -75,6 +82,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     int i;
     for(i=0;i<S2X_MAX_TRKCHN;i++)
     {
+        T->Channel[i].VoiceNo = 0xff; // some games do not allocate voices for percussion tracks.
         T->Channel[i].Enabled = 0;
     }
 }

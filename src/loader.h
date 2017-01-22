@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define GAME_CONFIG_MAX 256
+
 typedef struct {
     int cnt;
     uint16_t reg[32];
@@ -17,6 +19,7 @@ typedef struct {
 
 typedef struct {
     int SongID;
+    int Bank;
     char Title[256];
     QP_PlaylistScript script[16];
 } QP_PlaylistEntry;
@@ -59,7 +62,7 @@ typedef struct {
     int ChipFreq; // sound chip frequency, best to not touch this.
 
     QP_GameAction Action[256];
-    QP_GameConfig Config[32];
+    QP_GameConfig Config[GAME_CONFIG_MAX];
     int ConfigCount;
 
     int SongCount;
