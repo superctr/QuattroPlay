@@ -329,7 +329,9 @@ void S2X_IDebugAction(void* d,int id)
                    //S->TrackLoopCount[j]);
             for(j=0;j<S2X_MAX_TRKCHN;j++)
             {
-                if(T->Channel[j].Enabled)
+                if(T->Channel[j].Enabled && SYSTEMNA)
+                    printf("| Channel %d => Voice %02x (Bank=%02x)\n",j,T->Channel[j].VoiceNo,S->WaveBank[T->Channel[j].VoiceNo/4]);
+                else if(T->Channel[j].Enabled)
                     printf("| Channel %d => Voice %02x\n",j,T->Channel[j].VoiceNo);
             }
         }

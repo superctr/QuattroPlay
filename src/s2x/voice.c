@@ -217,7 +217,10 @@ void S2X_VoicePitchEnvUpdate(S2X_State *S,struct S2X_Pitch *P)
     else if(target>0xf0)
     {
         // end
-        P->EnvValue=data<<8;
+        if(S->DriverType==S2X_TYPE_NA)
+            P->EnvValue=(data<<8)|(P->EnvValue&0xff);
+        else
+            P->EnvValue=data<<8;
         S2X_VoicePitchEnvSetMod(S,P);
         P->EnvNo=0;
         return;

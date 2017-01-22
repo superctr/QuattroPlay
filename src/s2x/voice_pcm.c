@@ -426,8 +426,6 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
     V->ChipFlag=0;
     if(V->WaveFlag & 0x10)
         V->ChipFlag |= C352_FLG_LOOP;
-    if(V->WaveFlag & 0x08)
-        V->ChipFlag |= C352_FLG_MULAW;
     if(SYSTEMNA)
     {
         if(V->ChipFlag & C352_FLG_LOOP && (end^loop)&0x10000)
@@ -441,6 +439,13 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
             V->ChipFlag |= C352_FLG_NOISE;
         if(V->WaveFlag & 0x40)
             V->ChipFlag |= C352_FLG_PHASEFL|C352_FLG_PHASEFR;
+        if(V->WaveFlag & 0x08)
+            V->ChipFlag |= C352_FLG_PHASEFL;
+    }
+    else
+    {
+        if(V->WaveFlag & 0x08)
+            V->ChipFlag |= C352_FLG_MULAW;
     }
 
 #if 0
@@ -545,10 +550,22 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     ChipFlag=0;
     //if(flag & 0x10)
     //    ChipFlag |= C352_FLG_LOOP;
-    if(flag & 0x08)
-        ChipFlag |= C352_FLG_MULAW;
-    if(SYSTEMNA && flag & 0x01)
-        ChipFlag |= C352_FLG_MULAW;
+    if(SYSTEMNA)
+    {
+        if(flag & 0x01)
+            ChipFlag |= C352_FLG_MULAW;
+        if(flag & 0x04)
+            ChipFlag |= C352_FLG_NOISE;
+        if(flag & 0x40)
+            ChipFlag |= C352_FLG_PHASEFL|C352_FLG_PHASEFR;
+        if(flag & 0x08)
+            ChipFlag |= C352_FLG_PHASEFL;
+    }
+    else
+    {
+        if(flag & 0x08)
+            ChipFlag |= C352_FLG_MULAW;
+    }
 
     if(PAN_INVERT)
         S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(right<<8)|(left&0xff));

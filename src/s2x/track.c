@@ -40,7 +40,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
         invalid=1;
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
-    else if(header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
+    else if(!SYSTEMNA && header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
         invalid=1;
 
     if(invalid)
