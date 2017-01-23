@@ -253,6 +253,18 @@ int Q_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *I)
     }
     return 0;
 }
+uint16_t Q_IGetVoiceStatus(void* d,int id)
+{
+    Q_State* Q = d;
+    if(id>=Q_MAX_VOICES)
+        return 0;
+    uint16_t v=0;
+    if(Q->Voice[id].TrackNo)
+        v = 0x8000|(Q->Voice[id].TrackNo-1)<<8|(Q->Voice[id].ChannelNo);
+    if(Q->Voice[id].Enabled)
+        v |= 0x80;
+    return v;
+}
 
 struct QP_DriverInterface Q_CreateInterface()
 {
@@ -304,6 +316,7 @@ struct QP_DriverInterface Q_CreateInterface()
 
         .IGetVoiceCount = &Q_IGetVoiceCount,
         .IGetVoiceInfo = &Q_IGetVoiceInfo,
+        .IGetVoiceStatus = &Q_IGetVoiceStatus
     };
     return d;
 }

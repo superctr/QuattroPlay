@@ -83,6 +83,7 @@ OBJS = \
 	$(OBJ)/lib/q_pattern.o \
 	$(OBJ)/lib/vgm.o \
 	$(OBJ)/ui/info.o \
+	$(OBJ)/ui/info_quattro.o \
 	$(OBJ)/ui/lib.o \
 	$(OBJ)/ui/scr_about.o \
 	$(OBJ)/ui/scr_main.o \

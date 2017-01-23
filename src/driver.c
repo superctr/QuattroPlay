@@ -216,3 +216,9 @@ int DriverGetVoiceInfo(int voice,struct QP_DriverVoiceInfo *dv)
         return DriverInterface->IGetVoiceInfo(DriverInterface->Driver,voice,dv);
     return -1;
 }
+uint16_t DriverGetVoiceStatus(int voice)
+{
+    if(DriverInterface->IGetVoiceStatus)
+        return DriverInterface->IGetVoiceStatus(DriverInterface->Driver,voice);
+    return 0;
+}

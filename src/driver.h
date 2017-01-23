@@ -111,6 +111,7 @@ struct QP_DriverInterface {
 
     int (*IGetVoiceCount)(void*);
     int (*IGetVoiceInfo)(void*,int voice,struct QP_DriverVoiceInfo *dv);
+    uint16_t (*IGetVoiceStatus)(void*,int voice); // returns less info than the above
 };
 
 struct QP_DriverTable {
@@ -157,5 +158,5 @@ void DriverResetMute();
 void DriverDebugAction(int id);
 int DriverGetVoiceCount();
 int DriverGetVoiceInfo(int voice,struct QP_DriverVoiceInfo *dv);
-
+uint16_t DriverGetVoiceStatus(int voice);
 #endif // DRIVER_H_INCLUDED

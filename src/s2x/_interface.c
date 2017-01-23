@@ -438,7 +438,40 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
     }
     return 0;
 }
-
+uint16_t S2X_IGetVoiceStatus(void* d,int id)
+{
+    S2X_State* S = d;
+    if(id>=S2X_MAX_VOICES)
+        return 0;
+    int type = S2X_GetVoiceType(S,id);
+    int index = S2X_GetVoiceIndex(S,id,type);
+    uint16_t v=0;
+    switch(type)
+    {
+    case S2X_VOICE_TYPE_FM:
+        if(S->FM[index].TrackNo)
+            v = 0x8000|(S->FM[index].TrackNo-1)<<8|(S->FM[index].ChannelNo);
+        if(S->FM[index].Flag&0x10) // flag 0x80 is almost always set for FM tracks
+            v |= 0x80;
+        break;
+    case S2X_VOICE_TYPE_PCM:
+        if(S->PCM[index].TrackNo)
+            v = 0x8000|(S->PCM[index].TrackNo-1)<<8|(S->PCM[index].ChannelNo);
+        if(S->PCM[index].Flag&0x80)
+            v |= 0x80;
+        // for NA-1/NA-2
+        if(S->SEVoice[index&7] == index+1 && S2X_C352_R(S,index,C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+            v = 0xf000 | S->SEWave[index&7];
+        break;
+    case S2X_VOICE_TYPE_SE:
+        if(S->SEVoice[index] && S2X_C352_R(S,(16+index),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+            v = 0xf000 | S->SEWave[index];
+        break;
+    default:
+        return 0;
+    }
+    return v;
+}
 struct QP_DriverInterface S2X_CreateInterface()
 {
     struct QP_DriverInterface d = {
@@ -490,6 +523,7 @@ struct QP_DriverInterface S2X_CreateInterface()
         .IDebugAction = &S2X_IDebugAction,
         .IGetVoiceCount = &S2X_IGetVoiceCount,
         .IGetVoiceInfo = &S2X_IGetVoiceInfo,
+        .IGetVoiceStatus = &S2X_IGetVoiceStatus,
     };
     return d;
 }

@@ -14,6 +14,8 @@
 
 #include "../legacy.h" /* QDrv */
 
+#define DRV_QUATTRO (DriverInterface->Type == DRIVER_QUATTRO)
+
     inputstate_t inpstate;
 
     static int displaymode;
@@ -28,37 +30,49 @@ static void drawreg(int val,int y,int x)
 {
     static int blink;
 
-    uint16_t v, a;
+    int unmapped=0;
+    uint16_t v=0, a=val-0x120;
 
     colorsel_t c = COLOR_N_GREY;
     colorsel_t bg= COLOR_D_BLUE;
 
     if(val < 0x20)
     {
-        v = QDrv->SongRequest[val];
+        if(DriverGetSlotCount()-1 < val)
+            unmapped=1;
+        else
+            v = DriverGetSongId(val)|DriverGetSongStatus(val);
     }
     else if(val < 0x120)
     {
-        v = QDrv->Register[val-0x20];
+        a = val-0x20;
+        if(DriverGetParameterCount()-1 < a)
+            unmapped=1;
+        else
+            v = DriverGetParameter(a);
     }
-    else if(val < 0x140)
+    else if(val < 0x140 && DriverGetVoiceCount()-1 >= a)
     {
-        a = val-0x120;
-        v=0;
-        if(QDrv->Voice[a].TrackNo)
-            v = 0x8000|(QDrv->Voice[a].TrackNo-1)<<8|(QDrv->Voice[a].ChannelNo);
-        if(QDrv->Voice[a].Enabled)
-            v |= 0x80;
+        uint32_t solomask = DriverGetSolo();
+        uint32_t mutemask = DriverGetMute();
 
-        if(QDrv->SoloMask)
+        a = val-0x120;
+        //v=0;
+        //if(QDrv->Voice[a].TrackNo)
+        //    v = 0x8000|(QDrv->Voice[a].TrackNo-1)<<8|(QDrv->Voice[a].ChannelNo);
+        //if(QDrv->Voice[a].Enabled)
+        //    v |= 0x80;
+        v = DriverGetVoiceStatus(a);
+
+        if(solomask)
         {
             bg = COLOR_D_GREY;
-            if(QDrv->SoloMask & 1<<a)
+            if(solomask & 1<<a)
                 bg = COLOR_D_BLUE;
         }
-        if(QDrv->MuteMask && !(QDrv->SoloMask & 1<<a))
+        if(mutemask && !(solomask & 1<<a))
         {
-            if(QDrv->MuteMask & 1<<a)
+            if(mutemask & 1<<a)
                 bg = COLOR_BLACK;
         }
 
@@ -66,6 +80,12 @@ static void drawreg(int val,int y,int x)
     else
     {
         v = 0;
+    }
+
+    if(unmapped)
+    {
+        c = COLOR_D_GREY;
+        bg= COLOR_BLACK;
     }
 
     if(val == curr_val)
@@ -116,13 +136,24 @@ static void ui_entry_setvalue(int flag, int type, int offset, int value)
     {
     case ENTRY_SONGREQ:
         Game->PlaylistControl = 0;
-        if(flag)
-            temp = Q_TRACK_STATUS_START;
-        Q_LoopDetectionReset(QDrv);
-        QDrv->SongRequest[offset&0x1f] = value | temp;
+        DriverResetLoopCount();
+        if(DRV_QUATTRO)
+        {
+            if(flag)
+                temp = Q_TRACK_STATUS_START;
+            QDrv->SongRequest[offset&0x1f] = value | temp;
+        }
+        else
+        {
+            if(flag)
+                DriverRequestSong(offset,value);
+            else
+                DriverStopSong(offset);
+        }
         break;
     case ENTRY_REGISTER:
-        QDrv->Register[offset&0xff] = value;
+        DriverSetParameter(offset,value);
+        // QDrv->Register[offset&0xff] = value;
         break;
     default:
         break;
@@ -131,28 +162,39 @@ static void ui_entry_setvalue(int flag, int type, int offset, int value)
 
 static void ui_convert_currval()
 {
+    curr_val_type=ENTRY_UNSUPPORTED;
+    curr_val_offset=0;
+    curr_val_edit=0;
     if(curr_val < 0x20)
     {
-        curr_val_type = ENTRY_SONGREQ;
         curr_val_offset = curr_val;
-        curr_val_edit = QDrv->SongRequest[curr_val_offset] & 0x7ff;
+        if(DriverGetSlotCount() < curr_val_offset)
+            return;
+        curr_val_type = ENTRY_SONGREQ;
+        //curr_val_edit = QDrv->SongRequest[curr_val_offset] & 0x7ff;
+        curr_val_edit = DriverGetSongId(curr_val_offset);
     }
     else if(curr_val < 0x120)
     {
-        curr_val_type = ENTRY_REGISTER;
         curr_val_offset = curr_val-0x20;
-        curr_val_edit = QDrv->Register[curr_val_offset];
+        if(DriverGetParameterCount() < curr_val_offset)
+            return;
+        curr_val_type = ENTRY_REGISTER;
+        //curr_val_edit = QDrv->Register[curr_val_offset];
+        curr_val_edit = DriverGetParameter(curr_val_offset);
     }
     else if(curr_val < 0x140)
     {
-        curr_val_type = ENTRY_VOICE;
         curr_val_offset = curr_val-0x120;
+        if(DriverGetVoiceCount() < curr_val_offset)
+            return;
+        curr_val_type = ENTRY_VOICE;
     }
 }
 
 static void ui_bounds_check()
 {
-    int song_max = QDrv->SongCount-1;
+    int song_max = DriverGetSongCount(curr_val_offset)-1;
 
     if(curr_val_edit < 0)
         curr_val_edit=0;
@@ -175,34 +217,16 @@ static void scr_main_input()
     switch(keycode)
     {
     case SDLK_0:
-        GameDoAction(Game,0);
-        break;
     case SDLK_1:
-        GameDoAction(Game,1);
-        break;
     case SDLK_2:
-        GameDoAction(Game,2);
-        break;
     case SDLK_3:
-        GameDoAction(Game,3);
-        break;
     case SDLK_4:
-        GameDoAction(Game,4);
-        break;
     case SDLK_5:
-        GameDoAction(Game,5);
-        break;
     case SDLK_6:
-        GameDoAction(Game,6);
-        break;
     case SDLK_7:
-        GameDoAction(Game,7);
-        break;
     case SDLK_8:
-        GameDoAction(Game,8);
-        break;
     case SDLK_9:
-        GameDoAction(Game,9);
+        GameDoAction(Game,keycode-SDLK_0);
         break;
     case SDLK_ESCAPE:
         if(inpstate == STATE_SETVALUE)
@@ -235,8 +259,9 @@ static void scr_main_input()
         if(inpstate != STATE_SETVALUE)
         {
             ui_convert_currval();
-            if(curr_val_type == ENTRY_SONGREQ)
+            if(curr_val_type == ENTRY_SONGREQ && DRV_QUATTRO)
             {
+                Game->PlaylistControl = 0; // attenuated songs don't fade out
                 QDrv->SongRequest[curr_val_offset] ^= Q_TRACK_STATUS_ATTENUATE;
             }
         }
@@ -249,11 +274,14 @@ static void scr_main_input()
             if(curr_val_type == ENTRY_SONGREQ)
             {
                 Game->PlaylistControl = 0;
-                Q_LoopDetectionReset(QDrv);
+                //Q_LoopDetectionReset(QDrv);
+                DriverResetLoopCount();
                 if(keycode==SDLK_f)
-                    QDrv->SongRequest[curr_val_offset] |= Q_TRACK_STATUS_FADE;
+                    DriverFadeOutSong(curr_val_offset);
+                    //QDrv->SongRequest[curr_val_offset] |= Q_TRACK_STATUS_FADE;
                 if(keycode==SDLK_s)
-                    QDrv->SongRequest[curr_val_offset] &= ~(Q_TRACK_STATUS_BUSY);
+                    DriverStopSong(curr_val_offset);
+                    //QDrv->SongRequest[curr_val_offset] &= ~(Q_TRACK_STATUS_BUSY);
             }
             if(curr_val_type == ENTRY_VOICE)
             {
@@ -352,12 +380,14 @@ static void scr_main_input()
 
 void scr_main()
 {
+    /*
     if(DriverInterface->Type != DRIVER_QUATTRO)
     {
         return scr_main2();
         //screen_mode = SCR_MAIN2;
         //return;
     }
+    */
 
     if(refresh & R_SCR_MAIN)
     {
@@ -371,9 +401,12 @@ void scr_main()
 
     int i, j=0, x=0, y=0;
 
-    SCRN(1,1,FCOLUMNS-2,"%s",QDrv->SongMessage);
+    SCRN(1,1,FCOLUMNS-2,"%s",DriverGetSongMessage());
 
-    SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
+    if(DRV_QUATTRO)
+        SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
+    else
+        SCRN(0,FCOLUMNS-5,6,"%s",Audio->Enabled ? "" : "paused");
 
     if(got_input)
         scr_main_input();
@@ -402,22 +435,31 @@ void scr_main()
     if(curr_val < 0x20)
     {
         i=curr_val;
-        ui_info_track(i,5);
-        x += SCRN(49,1+x,48,", R: Restart, S: Stop, F: Fade");
-        j += SCRN(3,1,40,"Track %02x = %04x",i,QDrv->SongRequest[i]&0x7ff);
+        if(i<DriverGetSlotCount())
+        {
+            ui_info_track(i,5);
+            x += SCRN(49,1+x,48,", R: Restart, S: Stop, F: Fade");
+            j += SCRN(3,1,40,"Track %02x = %04x",i,DriverGetSongId(i));
 
-        y += SCRN(3,44+y,40,"%s %2.0f:%02.0f",
-                 QDrv->SongRequest[i]&0x8000 ? "Playing" : "Stopped",
-                 floor(QDrv->SongTimer[i]/60),floor(fmod(QDrv->SongTimer[i],60)));
+            double timer = DriverGetPlayingTime(i);
+            y += SCRN(3,44+y,40,"%s %2.0f:%02.0f",
+                     DriverGetSongStatus(i)&0x8000 ? "Playing" : "Stopped",
+                     floor(timer/60),floor(fmod(timer,60)));
 
-        int8_t loopcount = Q_LoopDetectionGetCount(QDrv,curr_val);
-        if(loopcount > 0)
-            y += SCRN(3,44+y,15,", Loop%3d",loopcount);
-
+            int8_t loopcount = DriverGetLoopCount(curr_val); //Q_LoopDetectionGetCount(QDrv,curr_val);
+            if(loopcount > 0)
+                y += SCRN(3,44+y,15,", Loop%3d",loopcount);
+        }
     }
     else if(curr_val < 0x120)
     {
-        j += SCRN(3,1,40,"Register %02x = %04x",curr_val-0x20,QDrv->Register[curr_val-0x20]);
+        i = curr_val-0x20;
+        static char tempstr[32];
+        if(i<DriverGetParameterCount())
+        {
+            DriverGetParameterName(i,tempstr,30);
+            j += SCRN(3,1,40,"%s = %04x",tempstr,DriverGetParameter(i));
+        }
     }
     else if(curr_val < 0x140)
     {
@@ -427,10 +469,10 @@ void scr_main()
         ui_info_voice(i,5);
         SCRN(3,1,40,"Voice %02x",i);
 
-        if(QDrv->Voice[i].TrackNo)
-            SCRN(3,44,40,"Track %02x, Channel %02x",QDrv->Voice[i].TrackNo-1,QDrv->Voice[i].ChannelNo);
+        i = DriverGetVoiceStatus(i);
+        if(i&0x8000)
+            SCRN(3,44,40,"Track %02x, Channel %02x",(i>>8)&0x1f,i&0x0f);
     }
-
     if(inpstate == STATE_SETVALUE)
     {
         SCRN(3,4+j,16," (Edit: %04x)",curr_val_edit);

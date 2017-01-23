@@ -22,6 +22,10 @@ enum {
 void ui_info_track(int id,int ypos);
 void ui_info_voice(int id,int ypos);
 
+// driver specific
+void ui_info_q_track(int id,int ypos);
+void ui_info_q_voice(int id,int ypos);
+
     int displaysection;
 
 #endif // SCR_MAIN_H_INCLUDED
