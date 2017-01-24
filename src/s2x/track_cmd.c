@@ -310,6 +310,9 @@ TRACKCOMMAND(tc_Percussion)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             // play sample on channel i
             S2X_PlayPercussion(S,i,T->PositionBase,temp,(T->Fadeout)>>8);
+
+            T->Channel[i&7].Vars[S2X_CHN_SMP]=temp+1; // for display
+            T->Channel[i&7].Vars[S2X_CHN_FRQ]=0;
         }
         mask<<=1;
         i++;
@@ -340,6 +343,9 @@ TRACKCOMMAND(tc_PercussionNA)
                     voice = T->Channel[i].VoiceNo;
                 S->PCM[voice].Flag=0;
                 S2X_PlayPercussion(S,voice,T->PositionBase,temp,(T->Fadeout)>>8);
+
+                T->Channel[i].Vars[S2X_CHN_SMP]=temp+1; // for display
+                T->Channel[i].Vars[S2X_CHN_FRQ]=0;
             }
         }
         mask<<=1;
@@ -367,37 +373,37 @@ struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 01 */ {2,tc_TrackVol},
 /* 02 */ {2,tc_Tempo},
 /* 03 */ {2,tc_Speed},
-/* 04 */ {-5,tc_JumpSub},
-/* 05 */ {-9,tc_Return},
-/* 06 */ {-2,tc_WriteChannel}, // key on
-/* 07 */ {-1,tc_WriteChannel}, // wave
-/* 08 */ {-1,tc_WriteChannel}, // volume
-/* 09 */ {-6,tc_Jump},
-/* 0a */ {-7,tc_Repeat},
-/* 0b */ {-8,tc_Loop},
-/* 0c */ {-3,tc_WriteChannel}, // transpose
-/* 0d */ {-1,tc_WriteChannel}, // detune
-/* 0e */ {-1,tc_WriteChannel}, // pitch env no
-/* 0f */ {-1,tc_WriteChannel}, // pitch env speed
-/* 10 */ {-1,tc_WriteChannel}, // legato
-/* 11 */ {-1,tc_WriteChannel}, // gate time
-/* 12 */ {-1,tc_WriteChannel}, // pitch env depth
-/* 13 */ {-1,tc_WriteChannel}, // volume env
-/* 14 */ {-1,tc_WriteChannel}, // delay
-/* 15 */ {-1,tc_WriteChannel}, // lfo
-/* 16 */ {-1,tc_WriteChannel}, // pan
-/* 17 */ {-1,tc_WriteChannel}, // pan envelope
-/* 18 */ {-1,tc_WriteChannel}, // link mode
-/* 19 */ {-4,tc_CJump},
+/* 04 */ {S2X_CMD_CALL,tc_JumpSub},
+/* 05 */ {S2X_CMD_RET,tc_Return},
+/* 06 */ {S2X_CMD_FRQ,tc_WriteChannel}, // key on
+/* 07 */ {S2X_CMD_CHN,tc_WriteChannel}, // wave
+/* 08 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume
+/* 09 */ {S2X_CMD_JUMP,tc_Jump},
+/* 0a */ {S2X_CMD_REPT,tc_Repeat},
+/* 0b */ {S2X_CMD_LOOP,tc_Loop},
+/* 0c */ {S2X_CMD_TRS,tc_WriteChannel}, // transpose
+/* 0d */ {S2X_CMD_CHN,tc_WriteChannel}, // detune
+/* 0e */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env no
+/* 0f */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env speed
+/* 10 */ {S2X_CMD_CHN,tc_WriteChannel}, // legato
+/* 11 */ {S2X_CMD_CHN,tc_WriteChannel}, // gate time
+/* 12 */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env depth
+/* 13 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume env
+/* 14 */ {S2X_CMD_CHN,tc_WriteChannel}, // delay
+/* 15 */ {S2X_CMD_CHN,tc_WriteChannel}, // lfo
+/* 16 */ {S2X_CMD_CHN,tc_WriteChannel}, // pan
+/* 17 */ {S2X_CMD_CHN,tc_WriteChannel}, // pan envelope
+/* 18 */ {S2X_CMD_CHN,tc_WriteChannel}, // link mode
+/* 19 */ {S2X_CMD_CJUMP,tc_CJump},
 /* 1a */ {2,tc_InitChannel}, // init voice (8-15) variant
-/* 1b */ {-2,tc_Percussion},
+/* 1b */ {S2X_CMD_WAV,tc_Percussion},
 /* 1c */ {3,tc_RequestSE},
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // PCM
-/* 1f */ {-2,tc_Percussion},
+/* 1f */ {S2X_CMD_WAV,tc_Percussion},
 /* 20 */ {2,tc_InitChannel}, // init voice (0-7)
 /* 21 */ {2,tc_InitChannel}, // init voice (8-15)
-/* 22 */ {-1,tc_WriteChannel}, // portamento
+/* 22 */ {S2X_CMD_CHN,tc_WriteChannel}, // portamento
 /* 23 */ {1,tc_Nop},
 /* 24 */ {1,tc_Nop},
 };
@@ -409,39 +415,39 @@ struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD] =
 /* 01 */ {2,tc_TrackVol},
 /* 02 */ {2,tc_Tempo},
 /* 03 */ {2,tc_Speed},
-/* 04 */ {-5,tc_JumpSub},
-/* 05 */ {-9,tc_Return},
-/* 06 */ {-2,tc_WriteChannel}, // key on
-/* 07 */ {-1,tc_WriteChannel}, // wave
-/* 08 */ {-1,tc_WriteChannel}, // volume
-/* 09 */ {-6,tc_Jump},
-/* 0a */ {-7,tc_Repeat},
-/* 0b */ {-8,tc_Loop},
-/* 0c */ {-3,tc_WriteChannel}, // transpose
-/* 0d */ {-1,tc_WriteChannel}, // detune
-/* 0e */ {-1,tc_WriteChannel}, // pitch env no
-/* 0f */ {-1,tc_WriteChannel}, // pitch env speed
-/* 10 */ {-1,tc_WriteChannel}, // legato
-/* 11 */ {-1,tc_WriteChannel}, // gate time
-/* 12 */ {-1,tc_WriteChannel}, // pitch env depth
-/* 13 */ {-1,tc_WriteChannel}, // volume env
-/* 14 */ {-1,tc_WriteChannel}, // delay
-/* 15 */ {-1,tc_WriteChannel}, // lfo
-/* 16 */ {-1,tc_WriteChannel}, // pan
-/* 17 */ {-1,tc_WriteChannel}, // pan envelope
-/* 18 */ {-1,tc_WriteChannel}, // link mode
-/* 19 */ {-4,tc_CJump},
+/* 04 */ {S2X_CMD_CALL,tc_JumpSub},
+/* 05 */ {S2X_CMD_RET,tc_Return},
+/* 06 */ {S2X_CMD_FRQ,tc_WriteChannel}, // key on
+/* 07 */ {S2X_CMD_CHN,tc_WriteChannel}, // wave
+/* 08 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume
+/* 09 */ {S2X_CMD_JUMP,tc_Jump},
+/* 0a */ {S2X_CMD_REPT,tc_Repeat},
+/* 0b */ {S2X_CMD_LOOP,tc_Loop},
+/* 0c */ {S2X_CMD_TRS,tc_WriteChannel}, // transpose
+/* 0d */ {S2X_CMD_CHN,tc_WriteChannel}, // detune
+/* 0e */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env no
+/* 0f */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env speed
+/* 10 */ {S2X_CMD_CHN,tc_WriteChannel}, // legato
+/* 11 */ {S2X_CMD_CHN,tc_WriteChannel}, // gate time
+/* 12 */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env depth
+/* 13 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume env
+/* 14 */ {S2X_CMD_CHN,tc_WriteChannel}, // delay
+/* 15 */ {S2X_CMD_CHN,tc_WriteChannel}, // lfo
+/* 16 */ {S2X_CMD_CHN,tc_WriteChannel}, // pan
+/* 17 */ {S2X_CMD_CHN,tc_WriteChannel}, // pan envelope
+/* 18 */ {S2X_CMD_CHN,tc_WriteChannel}, // link mode
+/* 19 */ {S2X_CMD_CJUMP,tc_CJump},
 /* 1a */ {1,tc_Nop},
-/* 1b */ {-2,tc_PercussionNA},
+/* 1b */ {S2X_CMD_WAV,tc_PercussionNA},
 /* 1c */ {3,tc_RequestSE}, // could be a communication byte as well
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // PCM
-/* 1f */ {-2,tc_PercussionNA},
-/* 20 */ {-1,tc_WriteChannel}, // set voice number
-/* 21 */ {-1,tc_WriteChannel}, // ^
-/* 22 */ {-1,tc_WriteChannel}, // portamento
+/* 1f */ {S2X_CMD_WAV,tc_PercussionNA},
+/* 20 */ {S2X_CMD_CHN,tc_WriteChannel}, // set voice number
+/* 21 */ {S2X_CMD_CHN,tc_WriteChannel}, // ^
+/* 22 */ {S2X_CMD_CHN,tc_WriteChannel}, // portamento
 /* 23 */ {3,tc_SetBank},
-/* 24 */ {-1,tc_InitChannelNA}, // set priority & initialize channel
+/* 24 */ {S2X_CMD_CHN,tc_InitChannelNA}, // set priority & initialize channel
 };
 
 // command table (system1)
@@ -451,34 +457,34 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 01 */ {2,tc_TrackVol},
 /* 02 */ {2,tc_Tempo},
 /* 03 */ {2,tc_Speed},
-/* 04 */ {-5,tc_JumpSub},
-/* 05 */ {-9,tc_Return},
-/* 06 */ {-2,tc_WriteChannel}, // key on
-/* 07 */ {-1,tc_WriteChannel}, // wave
-/* 08 */ {-1,tc_WriteChannel}, // volume
-/* 09 */ {-6,tc_Jump},
-/* 0a */ {-7,tc_Repeat},
-/* 0b */ {-8,tc_Loop},
-/* 0c */ {-3,tc_WriteChannel}, // transpose
-/* 0d */ {-1,tc_WriteChannel}, // detune
-/* 0e */ {-1,tc_WriteChannel}, // pitch env no
-/* 0f */ {-1,tc_WriteChannel}, // pitch env speed
-/* 10 */ {-1,tc_WriteChannel}, // legato
-/* 11 */ {-1,tc_WriteChannel}, // gate time
-/* 12 */ {-1,tc_WriteChannel}, // pitch env depth
-/* 13 */ {-1,tc_WriteChannel}, // volume env
-/* 14 */ {-1,tc_WriteChannel}, // delay
-/* 15 */ {-1,tc_WriteChannel}, // lfo
-/* 16 */ {-1,tc_WriteChannel}, // pan
-/* 17 */ {-1,tc_WriteChannel}, // not used
-/* 18 */ {-1,tc_WriteChannel}, // not used
+/* 04 */ {S2X_CMD_CALL,tc_JumpSub},
+/* 05 */ {S2X_CMD_RET,tc_Return},
+/* 06 */ {S2X_CMD_FRQ,tc_WriteChannel}, // key on
+/* 07 */ {S2X_CMD_CHN,tc_WriteChannel}, // patch number
+/* 08 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume
+/* 09 */ {S2X_CMD_JUMP,tc_Jump},
+/* 0a */ {S2X_CMD_REPT,tc_Repeat},
+/* 0b */ {S2X_CMD_LOOP,tc_Loop},
+/* 0c */ {S2X_CMD_TRS,tc_WriteChannel}, // transpose
+/* 0d */ {S2X_CMD_CHN,tc_WriteChannel}, // detune
+/* 0e */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env no
+/* 0f */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env speed
+/* 10 */ {S2X_CMD_CHN,tc_WriteChannel}, // legato
+/* 11 */ {S2X_CMD_CHN,tc_WriteChannel}, // gate time
+/* 12 */ {S2X_CMD_CHN,tc_WriteChannel}, // pitch env depth
+/* 13 */ {S2X_CMD_CHN,tc_WriteChannel}, // volume env
+/* 14 */ {S2X_CMD_CHN,tc_WriteChannel}, // delay
+/* 15 */ {S2X_CMD_CHN,tc_WriteChannel}, // lfo
+/* 16 */ {S2X_CMD_CHN,tc_WriteChannel}, // pan
+/* 17 */ {S2X_CMD_CHN,tc_WriteChannel}, // not used
+/* 18 */ {S2X_CMD_CHN,tc_WriteChannel}, // not used
 /* 19 */ {3,tc_RequestTrack}, // FM
 /* 1a */ {1,tc_Nop},
 /* 1b */ {1,tc_Nop},
 /* 1c */ {3,tc_RequestSE},
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // FM (one of them is for WSG...)
-/* 1f */ {-2,tc_WriteChannel}, // not used
+/* 1f */ {S2X_CMD_CHN,tc_WriteChannel}, // not used
 /* 20 */ {2,tc_InitChannel},
 /* 21 */ {2,tc_InitChannel},
 /* 22 */ {1,tc_Nop}, // not used

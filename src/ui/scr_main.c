@@ -406,7 +406,7 @@ void scr_main()
     if(DRV_QUATTRO)
         SCRN(0,FCOLUMNS-4,5,"%04x",QDrv->FrameCnt);
     else
-        SCRN(0,FCOLUMNS-5,6,"%s",Audio->Enabled ? "" : "paused");
+        SCRN(0,FCOLUMNS-5,6,"%s",Audio->Enabled ? "pause" : "");
 
     if(got_input)
         scr_main_input();

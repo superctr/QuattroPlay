@@ -17,18 +17,19 @@ struct S2X_TrackCommandEntry{
     S2X_TrackCommand cmd;
 };
 // command entry types
-// positive : skip <n> bytes
-//  0 : end of data
-// -1 : channel command
-// -2 : key on
-// -3 : portamento
-// -4 : conditional jump
-// -5 : subroutine
-// -6 : jump
-// -7 : repeat
-// -8 : loop
-// -9 : return (or end of data)
-
+enum {
+    S2X_CMD_END = 0,
+    S2X_CMD_CHN = -1,
+    S2X_CMD_FRQ = -2,
+    S2X_CMD_WAV = -3,
+    S2X_CMD_TRS = -4,
+    S2X_CMD_CJUMP = -5,
+    S2X_CMD_CALL = -6,
+    S2X_CMD_JUMP = -7,
+    S2X_CMD_REPT = -8,
+    S2X_CMD_LOOP = -9,
+    S2X_CMD_RET = -10
+};
 struct S2X_TrackCommandEntry* S2X_TrackCommandTable[S2X_TYPE_MAX];
 //struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD];
 //struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD];

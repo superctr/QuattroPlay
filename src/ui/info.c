@@ -20,6 +20,8 @@ void ui_info_track(int id,int ypos)
     {
     case DRIVER_QUATTRO:
         return ui_info_q_track(id,ypos);
+    case DRIVER_SYSTEM2:
+        return ui_info_s2_track(id,ypos);
     default:
         break;
     }

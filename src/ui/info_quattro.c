@@ -63,7 +63,7 @@ void ui_info_q_track(int id,int ypos)
         if(T->SubStackPos > 1)
             j += SCRN(ypos,44+j,20,",   %06x",T->SubStack[T->SubStackPos-2]);
         if(T->SubStackPos > 2)
-            j += SCRN(ypos,44+j,3," +%2d",T->SubStackPos-2);
+            j += SCRN(ypos,44+j,5," +%2d",T->SubStackPos-2);
     }
     ypos++;
 
@@ -74,7 +74,7 @@ void ui_info_q_track(int id,int ypos)
         if(T->RepeatStackPos > 1)
             j += SCRN(ypos,44+j,20,",%2d %06x",T->RepeatCount[T->RepeatStackPos-2],T->RepeatStack[T->RepeatStackPos-2]);
         if(T->RepeatStackPos > 2)
-            j += SCRN(7,44+j,3," +%2d",T->RepeatStackPos-2);
+            j += SCRN(ypos,44+j,5," +%2d",T->RepeatStackPos-2);
     }
     ypos++;
 
@@ -85,7 +85,7 @@ void ui_info_q_track(int id,int ypos)
         if(T->LoopStackPos > 1)
             j += SCRN(ypos,44+j,20,",%2d %06x",T->LoopCount[T->LoopStackPos-2],T->LoopStack[T->LoopStackPos-2]);
         if(T->LoopStackPos > 2)
-            j += SCRN(ypos,44+j,3," +%2d",T->LoopStackPos-2);
+            j += SCRN(ypos,44+j,5," +%2d",T->LoopStackPos-2);
     }
     ypos+=2;
 
@@ -93,9 +93,10 @@ void ui_info_q_track(int id,int ypos)
     switch(displaysection%2)
     {
     case 0:
-        ui_pattern_disp(id);
+        //ui_pattern_disp(id);
+        QP_PatternGenerate(id,&pattern);
 
-        if(!trackpattern_length)
+        if(!pattern.len)
             break;
 
         ypos++;
@@ -190,7 +191,7 @@ void ui_info_q_track(int id,int ypos)
         }
         ypos++;
 
-        for(j=0;j<trackpattern_length;j++)
+        for(j=0;j<pattern.len;j++)
         {
             SCRN(ypos,44,4,"+%2d",j);
             for(i=0;i<Q_MAX_TRKCHN;i++)
@@ -198,7 +199,7 @@ void ui_info_q_track(int id,int ypos)
                 x = 48+(i*4);
 
                 c1 = T->Channel[i].Enabled ? COLOR_D_BLUE : COLOR_BLACK;
-                y = trackpattern[j][i];
+                y = pattern.pat[j][i];
 
                 if(y == -1)
                 {
