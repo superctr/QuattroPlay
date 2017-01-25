@@ -32,4 +32,7 @@ int8_t S2X_LoopDetectionGetCount(S2X_State *S,int TrackNo);
 
 void S2X_ReadConfig(S2X_State *S,QP_Game *G);
 
+// internal defines for interface functions
+double S2X_ITickRate(void* d);
+
 #endif // S2X_HELPER_H_INCLUDED

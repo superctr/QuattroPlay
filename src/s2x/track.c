@@ -107,7 +107,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
     // TODO: add a track type variable...
     struct S2X_TrackCommandEntry* CmdTab = S2X_TrackCommandTable[S->DriverType];
 
-    S->SongTimer[TrackNo] += 1.0/120.0;
+    S->SongTimer[TrackNo] += 1.0/S2X_ITickRate(S);
 
     S2X_Track* T = &S->Track[TrackNo];
     uint8_t Command,CmdIndex;

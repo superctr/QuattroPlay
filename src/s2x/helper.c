@@ -61,12 +61,6 @@ void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data)
         do S2X_OPMReadQueue(S);
         while ((S->FMQueueWrite&0x1ff) != (S->FMQueueRead&0x1ff));
     }
-
-    //printf(" -FM write %02x = %02x (Ch %d Op %d Reg %02x)\n",fmreg,data,ch,op,reg);
-    //return YM2151_write_reg(&S->FMChip,fmreg,data);
-    // there really should be a delay for a few frames to let the sound chip breathe....
-    // i plan to implement an FM command queue, this should solve the problem of popping
-    // when starting a new note
 }
 
 void S2X_OPMReadQueue(S2X_State *S)
