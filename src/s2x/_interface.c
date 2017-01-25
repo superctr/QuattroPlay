@@ -21,15 +21,14 @@ int S2X_IInit(void* d,QP_Game *g)
     memset(&S->PCMChip,0,sizeof(C352));
     memset(&S->FMChip,0,sizeof(YM2151));
 
-    //d.quattro->McuType = Q_GetMcuTypeFromString(g->Type);
-    S->PCMClock = 24576000; // temporary
+    S->PCMClock = SYSTEMNA ? 50113000/2 : 24576000; // temporary
     C352_init(&S->PCMChip,S->PCMClock);
 
     S->PCMChip.vgm_log = 0;
 
     if(SYSTEMNA)
     {
-        S->PCMChip.rate = 87002; // 50113000/576
+        //S->PCMChip.rate = 87002; // 50113000/576
         S->PCMChip.wave = g->Data;
         S->PCMChip.wave_mask = 0x7fffff; // TODO: have a proper address mask...
     }
