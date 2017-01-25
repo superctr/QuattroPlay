@@ -78,6 +78,7 @@ static void q_generate(int TrackNo)
         return;
 
     // copy paramters
+    SDL_LockAudioDevice(Audio->dev);
     memcpy(regs,Q->Register,sizeof(Q->Register));
     memcpy(substack,T->SubStack,sizeof(T->SubStack));
     memcpy(repstack,T->RepeatStack,sizeof(T->RepeatStack));
@@ -94,6 +95,7 @@ static void q_generate(int TrackNo)
     lfsr = Q->LFSR1;
     left = T->RestCount;
     pos = T->Position;
+    SDL_UnlockAudioDevice(Audio->dev);
 
     // insert empty rows
     while(left--)
@@ -485,6 +487,7 @@ static void s2x_generate(int TrackNo)
         return;
 
     // copy paramters
+    SDL_LockAudioDevice(Audio->dev);
     cjump = (S->CJump) ? 0x400 : T->Flags&0x400;
     memcpy(substack,T->SubStack,sizeof(T->SubStack));
     memcpy(repstack,T->RepeatStack,sizeof(T->RepeatStack));
@@ -500,6 +503,7 @@ static void s2x_generate(int TrackNo)
     left = T->RestCount;
     posbase = T->PositionBase;
     pos = T->Position+posbase;
+    SDL_UnlockAudioDevice(Audio->dev);
 
     // insert empty rows
     while(left--)
