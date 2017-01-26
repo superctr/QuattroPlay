@@ -271,13 +271,13 @@ TRACKCOMMAND(tc_InitChannelNA)
     }
 }
 
-TRACKCOMMAND(tc_RequestSE)
+TRACKCOMMAND(tc_WriteComm)
 {
     LOGCMD;
 #if DEBUG
     int i = arg_byte(S,T->PositionBase,&T->Position);
     int temp = arg_byte(S,T->PositionBase,&T->Position);
-    Q_DEBUG("SE request %02x: %02x\n",i,temp);
+    Q_DEBUG("Communication byte set %02x: %02x\n",i,temp);
 #else
     T->Position+=2;
 #endif
@@ -311,8 +311,9 @@ TRACKCOMMAND(tc_Percussion)
             // play sample on channel i
             S2X_PlayPercussion(S,i,T->PositionBase,temp,(T->Fadeout)>>8);
 
-            T->Channel[i&7].Vars[S2X_CHN_SMP]=temp+1; // for display
+            T->Channel[i&7].Vars[S2X_CHN_VOF]=temp+1; // for display
             T->Channel[i&7].Vars[S2X_CHN_FRQ]=0;
+            S->SE[i&7].Track = TrackNo;
         }
         mask<<=1;
         i++;
@@ -344,8 +345,9 @@ TRACKCOMMAND(tc_PercussionNA)
                 S->PCM[voice].Flag=0;
                 S2X_PlayPercussion(S,voice,T->PositionBase,temp,(T->Fadeout)>>8);
 
-                T->Channel[i].Vars[S2X_CHN_SMP]=temp+1; // for display
+                T->Channel[i].Vars[S2X_CHN_VOF]=temp+1; // for display
                 T->Channel[i].Vars[S2X_CHN_FRQ]=0;
+                S->SE[voice&7].Track = TrackNo;
             }
         }
         mask<<=1;
@@ -397,7 +399,7 @@ struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 19 */ {S2X_CMD_CJUMP,tc_CJump},
 /* 1a */ {2,tc_InitChannel}, // init voice (8-15) variant
 /* 1b */ {S2X_CMD_WAV,tc_Percussion},
-/* 1c */ {3,tc_RequestSE},
+/* 1c */ {3,tc_WriteComm},
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // PCM
 /* 1f */ {S2X_CMD_WAV,tc_Percussion},
@@ -439,7 +441,7 @@ struct S2X_TrackCommandEntry S2X_NATrackCommandTable[S2X_MAX_TRKCMD] =
 /* 19 */ {S2X_CMD_CJUMP,tc_CJump},
 /* 1a */ {1,tc_Nop},
 /* 1b */ {S2X_CMD_WAV,tc_PercussionNA},
-/* 1c */ {3,tc_RequestSE}, // could be a communication byte as well
+/* 1c */ {3,tc_WriteComm},
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // PCM
 /* 1f */ {S2X_CMD_WAV,tc_PercussionNA},
@@ -481,7 +483,7 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 19 */ {3,tc_RequestTrack}, // FM
 /* 1a */ {1,tc_Nop},
 /* 1b */ {1,tc_Nop},
-/* 1c */ {3,tc_RequestSE},
+/* 1c */ {3,tc_WriteComm},    // might be SE request as well
 /* 1d */ {3,tc_RequestTrack}, // FM
 /* 1e */ {3,tc_RequestTrack}, // FM (one of them is for WSG...)
 /* 1f */ {S2X_CMD_CHN,tc_WriteChannel}, // not used

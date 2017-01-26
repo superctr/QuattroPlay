@@ -596,8 +596,9 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,ChipFlag|C352_FLG_KEYON);
 
-    S->SEWave[VoiceNo&7] = WaveNo;
-    S->SEVoice[VoiceNo&7] = VoiceNo+1;
+    S->SE[VoiceNo&7].Type = 1;
+    S->SE[VoiceNo&7].Wave = WaveNo;
+    S->SE[VoiceNo&7].Voice = VoiceNo;
 #if 0
     Q_DEBUG("ch %02x perc %02x %06x Vol:%04x Freq=%04x Start=%04x End=%04x Bank=%04x Flag=%04x\n",VoiceNo,WaveNo,pos,
             S2X_C352_R(S,VoiceNo,C352_VOL_FRONT),

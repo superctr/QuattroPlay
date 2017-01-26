@@ -19,6 +19,7 @@ typedef struct S2X_Channel S2X_Channel;
 typedef struct S2X_Track S2X_Track;
 typedef struct S2X_PCMVoice S2X_PCMVoice;
 typedef struct S2X_FMVoice S2X_FMVoice;
+typedef struct S2X_SE S2X_SE;
 typedef struct S2X_ChannelPriority S2X_ChannelPriority;
 typedef struct S2X_State S2X_State;
 typedef struct S2X_FMWrite S2X_FMWrite;
@@ -186,6 +187,15 @@ struct S2X_FMVoice {
     int ChannelNo;
 };
 
+// used for display
+struct S2X_SE {
+    int8_t Type;
+    uint8_t Track;
+    uint8_t Channel;
+    uint8_t Voice;
+    uint8_t Wave;
+};
+
 struct S2X_FMWrite {
     uint8_t Reg;
     uint8_t Data;
@@ -249,8 +259,9 @@ struct S2X_State {
     S2X_Channel* ActiveChannel[S2X_MAX_VOICES];
     S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
     S2X_FMVoice FM[S2X_MAX_VOICES_FM];
-    uint16_t SEWave[S2X_MAX_VOICES_SE];
-    int8_t SEVoice[S2X_MAX_VOICES_SE];
+//  uint16_t SEWave[S2X_MAX_VOICES_SE];
+//  int8_t SEVoice[S2X_MAX_VOICES_SE];
+    S2X_SE SE[S2X_MAX_VOICES_SE];
 
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];

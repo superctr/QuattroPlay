@@ -20,8 +20,8 @@ enum {
 
 enum {
     S2X_CHN_OFFSET = 6,
-    S2X_CHN_FRQ    = 0x06 - S2X_CHN_OFFSET,
-    S2X_CHN_WAV    = 0x07 - S2X_CHN_OFFSET, // or VOICE for FM
+    S2X_CHN_FRQ    = 0x06 - S2X_CHN_OFFSET, // confirmed
+    S2X_CHN_WAV    = 0x07 - S2X_CHN_OFFSET, // (or VOICE for FM)
     S2X_CHN_VOL    = 0x08 - S2X_CHN_OFFSET,
     S2X_CHN_TRS    = 0x0c - S2X_CHN_OFFSET,
     S2X_CHN_DTN    = 0x0d - S2X_CHN_OFFSET,
@@ -36,7 +36,7 @@ enum {
     S2X_CHN_PAN    = 0x16 - S2X_CHN_OFFSET,
     S2X_CHN_PANENV = 0x17 - S2X_CHN_OFFSET,
     S2X_CHN_C18    = 0x18 - S2X_CHN_OFFSET,
-    S2X_CHN_SMP    = 0x19 - S2X_CHN_OFFSET,
+    S2X_CHN_VOF    = 0x19 - S2X_CHN_OFFSET, // confirmed
     S2X_CHN_VNO    = 0x20 - S2X_CHN_OFFSET,
     S2X_CHN_PTA    = 0x22 - S2X_CHN_OFFSET,
     //...

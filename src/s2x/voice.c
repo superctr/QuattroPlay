@@ -114,8 +114,8 @@ void S2X_VoiceClear(S2X_State *S,int VoiceNo)
 {
     int i;
     for(i=0;i<S2X_MAX_VOICES_SE;i++)
-        if(S->SEVoice[i] == VoiceNo+1)
-            S->SEVoice[i] = 0;
+        if(S->SE[i].Voice == VoiceNo)
+            S->SE[i].Type = 0;
 
     int type = S2X_GetVoiceType(S,VoiceNo);
     int index = S2X_GetVoiceIndex(S,VoiceNo,type);

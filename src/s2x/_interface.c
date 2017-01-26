@@ -359,9 +359,9 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
         return -1;
     case S2X_VOICE_TYPE_SE:
         V->Status=0;
-        V->Preset=S->SEWave[index];
+        V->Preset=S->SE[index].Wave;
         V->VoiceType = VOICE_TYPE_PERCUSSION|VOICE_TYPE_PCM;
-        if(S->SEVoice[index] && S2X_C352_R(S,(S->SEVoice[index]-1),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+        if(S->SE[index].Type && S2X_C352_R(S,(S->SE[index].Voice),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
             V->Status|=VOICE_STATUS_PLAYING;
         break;
     case S2X_VOICE_TYPE_FM:
@@ -459,12 +459,12 @@ uint16_t S2X_IGetVoiceStatus(void* d,int id)
         if(S->PCM[index].Flag&0x80)
             v |= 0x80;
         // for NA-1/NA-2
-        if(S->SEVoice[index&7] == index+1 && S2X_C352_R(S,index,C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
-            v = 0xf000 | S->SEWave[index&7];
+        else if(S->SE[index&7].Type && S->SE[index&7].Voice == index && S2X_C352_R(S,index,C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+            v = 0xf000 | S->SE[index&7].Wave;
         break;
     case S2X_VOICE_TYPE_SE:
-        if(S->SEVoice[index] && S2X_C352_R(S,(16+index),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
-            v = 0xf000 | S->SEWave[index];
+        if(S->SE[index].Type && S2X_C352_R(S,(16+index),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
+            v = 0xf000 | S->SE[index].Wave;
         break;
     default:
         return 0;

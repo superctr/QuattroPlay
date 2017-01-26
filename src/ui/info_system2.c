@@ -165,7 +165,7 @@ void ui_info_s2_track(int id,int ypos)
             c2 = COLOR_WHITE;
             x = 48+(i*4);
             note = T->Channel[i].Vars[S2X_CHN_FRQ];
-            y = T->Channel[i].Vars[S2X_CHN_SMP];
+            y = T->Channel[i].Vars[S2X_CHN_VOF];
             if(T->Channel[i].Enabled || (!note && y))
             {
                 if(!note && y)
@@ -175,7 +175,7 @@ void ui_info_s2_track(int id,int ypos)
                     oct = (S->DriverType==S2X_TYPE_NA) ? 8 : 16;
                     // grey out if the voice is not currently playing
                     oct = (T->Channel[i].Enabled) ? T->Channel[i].VoiceNo : oct+i;
-                    if(S->SEVoice[i] != oct+1 || (DriverGetVoiceStatus(oct)&0xf000) != 0xf000)
+                    if(!S->SE[i].Type || S->SE[i].Track != id || (DriverGetVoiceStatus(oct)&0xf000) != 0xf000)
                         c2 = COLOR_L_GREY;
                 }
                 else if(!note)

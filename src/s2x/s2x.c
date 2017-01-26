@@ -43,8 +43,7 @@ void S2X_Reset(S2X_State *S)
     memset(S->PCMChip.v,0,sizeof(S->PCMChip.v));
     memset(S->PCM,0,sizeof(S->PCM));
     memset(S->FM,0,sizeof(S->FM));
-    memset(S->SEWave,0,sizeof(S->SEWave));
-    memset(S->SEVoice,0,sizeof(S->SEVoice));
+    memset(S->SE,0,sizeof(S->SE));
 
     for(i=0;i<S2X_MAX_VOICES;i++)
     {
