@@ -8,7 +8,7 @@
 #include "voice.h"
 #include "tables.h"
 
-#define TRACKCOMMAND(__name) static void __name(S2X_State* S,int TrackNo,S2X_Track* T,uint8_t Command)
+#define TRACKCOMMAND(__name) static void __name(S2X_State* S,int TrackNo,S2X_Track* T,uint8_t Command,int8_t CommandType)
 #define LOGCMD Q_DEBUG("Trk %02x Pos %06x, Cmd: %02x (%s)\n",TrackNo,T->Position,Command,__func__)
 
 #define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
@@ -100,7 +100,7 @@ TRACKCOMMAND(tc_CJump)
         T->Flags |= 0x400;
         return;
     }
-    return tc_Jump(S,TrackNo,T,Command);
+    return tc_Jump(S,TrackNo,T,Command,CommandType);
 }
 
 TRACKCOMMAND(tc_Repeat)
@@ -183,6 +183,8 @@ TRACKCOMMAND(tc_WriteChannel)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             T->Channel[i].Vars[(Command&0x3f)-S2X_CHN_OFFSET] = temp;
             T->Channel[i].UpdateMask |= 1<<((Command&0x3f)-S2X_CHN_OFFSET);
+            if(CommandType == S2X_CMD_FRQ)
+                T->Channel[i].LastEvent=1;
             // voice set var function here
             S2X_VoiceCommand(S,&T->Channel[i],Command,temp);
         }
@@ -190,7 +192,7 @@ TRACKCOMMAND(tc_WriteChannel)
         i++;
     }
     // key-on
-    if((Command&0x3f) == 0x06)
+    if(CommandType == S2X_CMD_FRQ)
         T->TicksLeft=0;
 }
 
@@ -312,7 +314,7 @@ TRACKCOMMAND(tc_Percussion)
             S2X_PlayPercussion(S,i,T->PositionBase,temp,(T->Fadeout)>>8);
 
             T->Channel[i&7].Vars[S2X_CHN_VOF]=temp+1; // for display
-            T->Channel[i&7].Vars[S2X_CHN_FRQ]=0;
+            T->Channel[i&7].LastEvent=2;
             S->SE[i&7].Track = TrackNo;
         }
         mask<<=1;
@@ -346,7 +348,7 @@ TRACKCOMMAND(tc_PercussionNA)
                 S2X_PlayPercussion(S,voice,T->PositionBase,temp,(T->Fadeout)>>8);
 
                 T->Channel[i].Vars[S2X_CHN_VOF]=temp+1; // for display
-                T->Channel[i].Vars[S2X_CHN_FRQ]=0;
+                T->Channel[i].LastEvent=2;
                 S->SE[voice&7].Track = TrackNo;
             }
         }

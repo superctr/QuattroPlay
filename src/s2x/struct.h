@@ -27,6 +27,7 @@ typedef struct S2X_FMWrite S2X_FMWrite;
 struct S2X_Channel {
     uint8_t Enabled;
     uint8_t VoiceNo;
+    uint8_t LastEvent; // used for display: 0=none, 1=key on, 2=sample
 
     uint32_t UpdateMask;
     uint8_t Vars[S2X_CHN_MAX];

@@ -10,7 +10,7 @@ void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo);
 
 #define S2X_MAX_TRKCMD 0x25
 
-typedef void (*S2X_TrackCommand)(S2X_State*,int,S2X_Track*,uint8_t);
+typedef void (*S2X_TrackCommand)(S2X_State*,int,S2X_Track*,uint8_t,int8_t);
 
 struct S2X_TrackCommandEntry{
     int type; // this will only be used for the pattern parser.

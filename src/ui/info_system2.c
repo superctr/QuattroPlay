@@ -166,9 +166,9 @@ void ui_info_s2_track(int id,int ypos)
             x = 48+(i*4);
             note = T->Channel[i].Vars[S2X_CHN_FRQ];
             y = T->Channel[i].Vars[S2X_CHN_VOF];
-            if(T->Channel[i].Enabled || (!note && y))
+            if(T->Channel[i].Enabled || T->Channel[i].LastEvent==2)
             {
-                if(!note && y)
+                if(T->Channel[i].LastEvent==2)
                 {
                     SCRN(ypos,x,4,"%03d",y-1);
                     // base voice number

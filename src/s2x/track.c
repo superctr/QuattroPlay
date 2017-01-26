@@ -148,7 +148,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
                 CmdIndex=Command&0x3f;
                 if(CmdIndex < S2X_MAX_TRKCMD)
                 {
-                    CmdTab[CmdIndex].cmd(S,TrackNo,T,Command);
+                    CmdTab[CmdIndex].cmd(S,TrackNo,T,Command,CmdTab[CmdIndex].type);
                 }
                 else
                 {
