@@ -84,6 +84,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     {
         T->Channel[i].VoiceNo = 0xff; // some games do not allocate voices for percussion tracks.
         T->Channel[i].Enabled = 0;
+        T->Channel[i].LastEvent = 0;
     }
 }
 
