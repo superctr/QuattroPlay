@@ -100,8 +100,6 @@ void S2X_TrackStop(S2X_State* S,int TrackNo)
 
 }
 
-// Call 0x0a - updates a track
-// source: 0x4fc4
 void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 {
     // TODO: add a track type variable...
@@ -184,7 +182,6 @@ void S2X_TrackCalcVolume(S2X_State* S,int TrackNo)
         T->Fadeout = 0;
 }
 
-// disables a track (split from song command 0x15)
 void S2X_TrackDisable(S2X_State *S,int TrackNo)
 {
     S2X_Track* T = &S->Track[TrackNo];
@@ -229,8 +226,6 @@ void S2X_TrackDisable(S2X_State *S,int TrackNo)
     Q_DEBUG("Track %02x terminated\n",TrackNo);
 }
 
-// Call 0x28 - clear channel
-// source: 0x4eb2
 void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo)
 {
     S2X_Channel *C = &S->Track[TrackNo].Channel[ChannelNo];

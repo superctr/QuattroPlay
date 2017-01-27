@@ -511,7 +511,6 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
 
     if(V->Flag & 0x40)
     {
-        //Q_DEBUG("ch %02d key on executed\n",V->VoiceNo);
         if(V->Delay)
         {
             V->Delay--;
@@ -546,8 +545,6 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     uint16_t ChipFlag;
 
     ChipFlag=0;
-    //if(flag & 0x10)
-    //    ChipFlag |= C352_FLG_LOOP;
     if(SYSTEMNA)
     {
         if(flag & 0x01)
@@ -569,7 +566,6 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
         S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(right<<8)|(left&0xff));
     else
         S2X_C352_W(S,VoiceNo,C352_VOL_FRONT,(left<<8)|(right&0xff));
-    //S2X_C352_W(S,VoiceNo,C352_FREQUENCY,S2X_ReadWord(S,pos+4)>>1);
 
     uint32_t start = S2X_ReadWord(S,pos+6);
     uint32_t end = S2X_ReadWord(S,pos+8);
@@ -588,8 +584,6 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     }
     S2X_C352_W(S,VoiceNo,C352_WAVE_START,start);
     S2X_C352_W(S,VoiceNo,C352_WAVE_END,end);
-    //S2X_C352_W(S,VoiceNo,C352_WAVE_START,S2X_ReadWord(S,pos+6));
-    //S2X_C352_W(S,VoiceNo,C352_WAVE_END,S2X_ReadWord(S,pos+8));
     S2X_C352_W(S,VoiceNo,C352_WAVE_BANK,bank);
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,ChipFlag|C352_FLG_KEYON);

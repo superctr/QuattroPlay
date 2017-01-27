@@ -128,6 +128,4 @@ void S2X_UpdateTick(S2X_State *S)
         S2X_VoiceUpdate(S,i);
     }
     C352_write(&S->PCMChip,0x202,i); // update key-ons
-
-
 }

@@ -21,14 +21,11 @@ int S2X_IInit(void* d,QP_Game *g)
     memset(&S->PCMChip,0,sizeof(C352));
     memset(&S->FMChip,0,sizeof(YM2151));
 
-    S->PCMClock = SYSTEMNA ? 50113000/2 : 24576000; // temporary
+    S->PCMClock = SYSTEMNA ? 50113000/2 : 49152000/2; // sound chip freq is master clock / 2
     C352_init(&S->PCMChip,S->PCMClock);
-
     S->PCMChip.vgm_log = 0;
-
     if(SYSTEMNA)
     {
-        //S->PCMChip.rate = 87002; // 50113000/576
         S->PCMChip.wave = g->Data;
         S->PCMChip.wave_mask = 0x7fffff; // TODO: have a proper address mask...
     }
@@ -124,7 +121,6 @@ int S2X_IGetParam(void* d,int id)
     default:
         return 0;
     }
-    //return d.quattro->Register[id&0xff];
 }
 int S2X_IGetParamName(void* d,int id,char* buffer,int len)
 {
@@ -147,21 +143,19 @@ char* S2X_IGetSongMessage(void* d)
     if(S->BankName[S->BankSelect])
         return S->BankName[S->BankSelect];
     return "System2x WIP Driver";
-    //return d.quattro->SongMessage;
 }
 char* S2X_IGetDriverInfo(void* d)
 {
     S2X_State*S = d;
     return S2X_DriverTypes[S->DriverType];
-    //return (char*)Q_McuNames[d.quattro->McuType];
 }
 int S2X_IRequestSlotCnt(void* d)
 {
-    return S2X_MAX_TRACKS; //Q_MAX_TRACKS;
+    return S2X_MAX_TRACKS;
 }
 int S2X_ISongCnt(void* d,int slot)
 {
-    return 512; //d.quattro->SongCount;
+    return 512;
 }
 void S2X_ISongRequest(void* d,int slot,int val)
 {
@@ -199,13 +193,11 @@ double S2X_ISongTime(void* d,int slot)
 int S2X_IGetLoopCnt(void* d,int slot)
 {
     S2X_State* S = d;
-    //return S2X_LoopDetectionGetCount(S,slot);
     return QP_LoopDetectGetCount(&S->LoopDetect,slot);
 }
 void S2X_IResetLoopCnt(void* d)
 {
     S2X_State* S = d;
-    //S2X_LoopDetectionReset(S);
     QP_LoopDetectReset(&S->LoopDetect);
 }
 
@@ -238,8 +230,7 @@ void S2X_IUpdateTick(void* d)
 double S2X_IChipRate(void* d)
 {
     S2X_State* S = d;
-    return S->SoundRate;// d.quattro->Chip.rate;
-    //return 85562;
+    return S->SoundRate;
 }
 void S2X_IUpdateChip(void* d)
 {
@@ -325,9 +316,6 @@ void S2X_IDebugAction(void* d,int id)
                    S->LoopDetect.Song[ldsng].StackPos,
                    S->LoopDetect.Song[ldsng].LoopId[S->LoopDetect.Song[ldsng].StackPos],
                    S->LoopDetect.Song[ldsng].LoopCnt);
-                   //S2X_LoopDetectionGetCount(S,i),
-                   //S->TrackLoopId[j],
-                   //S->TrackLoopCount[j]);
             for(j=0;j<S2X_MAX_TRKCHN;j++)
             {
                 if(T->Channel[j].Enabled && SYSTEMNA)

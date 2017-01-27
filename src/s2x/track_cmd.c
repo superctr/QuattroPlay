@@ -218,15 +218,10 @@ TRACKCOMMAND(tc_InitChannel)
     {
         if(mask&0x80)
         {
-            //printf("voice %d to be allocated\n",i);
             S2X_ChannelClear(S,TrackNo,i&7);
             T->Channel[i&7].VoiceNo = i;
-            //T->Channel[ChannelNo].Voice = &Q->Voice[VoiceNo];
-
             temp=100;
-
             S2X_VoiceSetPriority(S,i,TrackNo,i&7,temp);
-
             // check for other tracks
             pos = S2X_VoiceGetPriority(S,i,NULL,NULL);
             // no higher priority tracks on the voice? if so, allocate
@@ -235,7 +230,6 @@ TRACKCOMMAND(tc_InitChannel)
                 S2X_VoiceSetChannel(S,i,TrackNo,i&7);
                 S2X_VoiceClear(S,i);
             }
-
         }
         mask<<=1;
         i++;
@@ -255,14 +249,9 @@ TRACKCOMMAND(tc_InitChannelNA)
         {
             S2X_ChannelClear(S,TrackNo,i&7);
             T->Channel[i&7].VoiceNo = voiceno = (T->Channel[i].Vars[S2X_CHN_VNO])&0x0f;
-
             if(~Command&0x40)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
-
-            //Q_DEBUG("chn = %02x, vno = %02x, priority = %02x\n",i,voiceno,temp);
-
             S2X_VoiceSetPriority(S,voiceno,TrackNo,i&7,temp);
-
             // check for other tracks
             pri = S2X_VoiceGetPriority(S,voiceno,NULL,NULL);
             // no higher priority tracks on the voice? if so, allocate
