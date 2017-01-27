@@ -159,9 +159,7 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                     S2X_FMKeyOff(S,V);
                     break;
                 }
-                else if(C->Vars[S2X_CHN_LEG])
-                    C->Vars[S2X_CHN_LEG]--;
-                else
+                else if(!C->Vars[S2X_CHN_LEG])
                 {
                     S2X_FMKeyOff(S,V);
                     V->Delay = C->Vars[S2X_CHN_DEL];

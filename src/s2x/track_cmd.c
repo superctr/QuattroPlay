@@ -183,10 +183,14 @@ TRACKCOMMAND(tc_WriteChannel)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             T->Channel[i].Vars[(Command&0x3f)-S2X_CHN_OFFSET] = temp;
             T->Channel[i].UpdateMask |= 1<<((Command&0x3f)-S2X_CHN_OFFSET);
-            if(CommandType == S2X_CMD_FRQ)
-                T->Channel[i].LastEvent=1;
             // voice set var function here
             S2X_VoiceCommand(S,&T->Channel[i],Command,temp);
+            if(CommandType == S2X_CMD_FRQ)
+            {
+                T->Channel[i].LastEvent=1;
+                if(temp != 0xff && T->Channel[i].Vars[S2X_CHN_LEG])
+                    --T->Channel[i].Vars[S2X_CHN_LEG];
+            }
         }
         mask<<=1;
         i++;

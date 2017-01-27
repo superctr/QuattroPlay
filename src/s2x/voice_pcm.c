@@ -57,9 +57,7 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                     V->Length=1;
                     break;
                 }
-                else if(C->Vars[S2X_CHN_LEG])
-                    C->Vars[S2X_CHN_LEG]--;
-                else
+                else if(!C->Vars[S2X_CHN_LEG])
                 {
                     V->Delay = C->Vars[S2X_CHN_DEL];
                     V->Flag |= 0x50;
