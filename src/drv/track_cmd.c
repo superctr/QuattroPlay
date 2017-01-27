@@ -601,6 +601,12 @@ TRACKCOMMAND(tc_Repeat)
     }
 }
 // Command 0x13 - decrease counter then jump if 0.
+// interestingly this command is "broken" in all(?) H8 sound drivers...
+// it decrements the loop counter before writing to the stack, causing a
+// stated loop count of '1' to actually loop 256 times...
+// this seems to have been unintended, as one game (finfurl2) uses this
+// command but obviously wants the old behavior...
+// TODO: implement this bug. (make it optional or something)
 TRACKCOMMAND(tc_Loop)
 {
     uint8_t count = arg_byte(Q,TrackPos);
