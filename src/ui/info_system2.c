@@ -344,7 +344,7 @@ static int fm_info(S2X_State* S,uint8_t* insdat,int ypos)
     SCRN(ypos++,44,40,"Chip registers:");
     fm_con(fb_con&7,ypos,45);
     SCRN(ypos++,44+14,40,"FB :%d    LFO Set:  %02x",(fb_con>>3)&7,S->FMLfo);
-    SCRN(ypos++,44+14,40,"\x10          Wave: %s",fm_lfo_waveform[S->FMLfoWav&3]);
+    SCRN(ypos++,44+14,40,"\x10           Wave: %s",fm_lfo_waveform[S->FMLfoWav&3]);
     SCRN(ypos++,44+14,40,"            Freq: %3d",S->FMLfoFrq);
     SCRN(ypos++,44+14,40,"PMS:%d    Amp Mod: %3d",(pms_ams>>4)&7,S->FMLfoAms);
     SCRN(ypos++,44+14,40,"AMS:%d    Phs Mod: %3d",pms_ams&3,S->FMLfoPms);
