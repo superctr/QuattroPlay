@@ -297,7 +297,7 @@ void ui_info_q_voice(int id,int ypos)
     Q_State *Q = DriverInterface->Driver;
     Q_Voice* V = &Q->Voice[id];
 
-    set_color(ypos,44,28,40,COLOR_D_BLUE,COLOR_L_GREY);
+    set_color(ypos,44,43,35,COLOR_D_BLUE,COLOR_L_GREY);
 
     SCRN(ypos++,44,40,"Chip registers:");
     SCRN(ypos++,44,40,"%6s:  %04x%6s:%04x%6s:%04x",
@@ -315,7 +315,7 @@ void ui_info_q_voice(int id,int ypos)
     ypos++;
 
     if(V->GateTimeLeft)
-        SCRN(ypos,60,40,"(Time Left: %3d/%3d)",V->GateTimeLeft,V->GateTime);
+        SCRN(ypos,60,40,"(Time Left:%3d/%3d)",V->GateTimeLeft,V->GateTime);
 
     SCRN(ypos++,44,40,"Voice %s",V->Enabled ? "Enabled":"Disabled");
 
@@ -385,7 +385,7 @@ void ui_info_q_voice(int id,int ypos)
 
     if(!V->Enabled)
     {
-        set_color(tempypos,44,ypos-tempypos,40,COLOR_D_BLUE,COLOR_D_GREY);
+        set_color(tempypos,44,ypos-tempypos,35,COLOR_D_BLUE,COLOR_D_GREY);
     }
 
     ypos+=2;

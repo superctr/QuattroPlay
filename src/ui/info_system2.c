@@ -246,6 +246,116 @@ void ui_info_s2_track(int id,int ypos)
     }
 }
 
+static const char* fm_con_strings[] = {
+    "",                                                 /* 0 */
+    "\xda\xc4\xc4\xbf",                                 /* 1 /--\ */
+    "\xc0M1\xc1\x43\x31\xc4M2\xc4\x43\x32\xc4",         /* 2 \M1'C1-M2-C2- */
+    "\xc0M1\xc1\xc4\xc4\xc2M2\xc4\x43\x32\xc4",         /* 3 \M1'--,M2-C2- */
+    "    \x43\x31\xd9",                                 /* 4     C1/       */
+    "\xc0M1\xc1\xc4\xc4\xc4\xc4\xc4\xc2\x43\x32\xc4",   /* 5 \M1'-----,C2- */
+    "    \x43\x31\xc4M2\xd9",                           /* 6     C1-M1/    */
+    "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc2\x43\x32\xc4",   /* 7 \M1'C1---,C2- */
+    "       M2\xd9",                                    /* 8        M2/    */
+    "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc4\xc4\xc4\xc2",   /* 9 \M1'C1------, */
+    "       M2\xc4\x43\x32\xd9",                        /*10        M2-C2/ */
+    "\xc0M1\xc5\x43\x31\xc4\xc4\xc4\xc2\xc4\xc4\xc2",   /*11 \M1+C1---,--, */
+    "   \xc3\xc4\xc4\xc4M2\xd9  \xb3",                  /*12    }---M2/  | */
+    "   \xc0\xc4\xc4\xc4\xc4\xc4\xc4\x43\x32\xd9",      /*13    \------C2/ */
+    "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc2\xc4\xc4\xc2",   /*14 \M1'C1---,--, */
+    "       M2\xd9  \xb3",                              /*15        M2/  | */
+    "          \x43\x32\xd9",                           /*16           C2/ */
+    "\xc0M1\xc1\xc4\xc4\xc2\xc4\xc4\xc2\xc4\xc4\xc2",   /*17 \M1'C1,--,--, */
+    "    \x43\x31\xd9  \xb3  \xb3",                     /*18     C1/  |  | */
+};
+
+static const char* fm_lfo_waveform[4] = {
+    "SAW","SQU","TRI","NOI"
+};
+
+static const struct {
+    int8_t line[4];
+    int8_t offset[4];
+} fm_con_param[8] = {
+    {{2,0,0,0},{0,0,0,0}}, //0
+    {{3,4,0,0},{0,1,0,0}}, //1
+    {{5,6,0,0},{0,1,1,0}}, //2
+    {{7,8,0,0},{0,0,1,0}}, //3
+    {{9,10,0,0},{0,0,1,1}}, //4
+    {{11,12,13,0},{0,0,1,2}}, //5
+    {{14,15,16,0},{0,0,1,2}}, //6
+    {{17,18,15,16},{0,1,2,3}}, //7
+};
+
+static void fm_con(int id,int ypos,int xpos)
+{
+    int i;
+    SCRN(ypos++,xpos,14,"%s",fm_con_strings[1]);
+    for(i=0;i<4;i++)
+        SCRN(ypos+i,xpos,14,"%s",fm_con_strings[fm_con_param[id].line[i]]);
+    for(i=0;i<4;i++)
+        set_color(ypos+fm_con_param[id].offset[i],1+xpos+(i*3),1,2,COLOR_L_GREY,COLOR_D_BLUE);
+    SCRN(ypos+3,xpos,8,"CON:%d",id);
+}
+/*
+    instrument data format (very simple):
+    0x00     : Reg 0x20 Channel control (FB, Connect)
+    0x01     : Not used
+    0x02     : Not used
+    0x03     : Reg 0x38 PMS/AMS
+    0x04-0x07: Reg 0x40 Operator DT1/MUL
+    0x08-0x0b: Reg 0x60 Operator TL
+    0x0c-0x0f: Reg 0x80 Operator KS/AR
+    0x10-0x13: Reg 0xa0 Operator AME/D1R
+    0x14-0x17: Reg 0xc0 Operator DT2/D2R
+    0x18-0x1b: Reg 0xe0 Operator D1L/RR
+    0x1c-0x1f: Not used
+*/
+
+static int fm_op(uint8_t* insdat,int ypos,char* title)
+{
+    uint8_t dt1 = (insdat[0x04]>>4)&7;
+    uint8_t mul = insdat[0x04]&15;
+    uint8_t tl  = insdat[0x08]&127;
+    uint8_t ks  = insdat[0x0c]>>6;
+    uint8_t ar  = insdat[0x0c]&31;
+    uint8_t ase = insdat[0x10]>>7;
+    uint8_t d1r = insdat[0x10]&31;
+    uint8_t dt2 = insdat[0x14]>>6;
+    uint8_t d2r = insdat[0x14]&15;
+    uint8_t d1l = insdat[0x18]>>4;
+    uint8_t rr  = insdat[0x18]&15;
+
+    SCRN(ypos++,44,40,"%-31s%s",
+         title,
+         ase ? "ase" : "");
+    SCRN(ypos++,44,40,"%4s:%02d%5s:%02d%4s:%02d%4s:%02d%3s:%02d",
+         "AR",ar,"D1R",d1r,"D1L",d1l,"D2R",d2r,"RR",rr);
+    SCRN(ypos++,44,40,"%4s:%03d%4s:%02d%4s:%02d%4s:%02d%3s:%02d",
+         "TL",tl,"DT1",dt1,"DT2",dt2,"MUL",mul,"KS",ks);
+    return ypos;
+}
+
+
+static int fm_info(S2X_State* S,uint8_t* insdat,int ypos)
+{
+    uint8_t fb_con = insdat[0];
+    uint8_t pms_ams = insdat[3];
+
+    SCRN(ypos++,44,40,"Chip registers:");
+    fm_con(fb_con&7,ypos,45);
+    SCRN(ypos++,44+14,40,"FB :%d    LFO Set:  %02x",(fb_con>>3)&7,S->FMLfo);
+    SCRN(ypos++,44+14,40,"\x10          Wave: %s",fm_lfo_waveform[S->FMLfoWav&3]);
+    SCRN(ypos++,44+14,40,"            Freq: %3d",S->FMLfoFrq);
+    SCRN(ypos++,44+14,40,"PMS:%d    Amp Mod: %3d",(pms_ams>>4)&7,S->FMLfoAms);
+    SCRN(ypos++,44+14,40,"AMS:%d    Phs Mod: %3d",pms_ams&3,S->FMLfoPms);
+    ypos++;
+    ypos = fm_op(insdat,ypos,"Modulator 1");
+    ypos = fm_op(insdat+2,ypos,"Carrier 1");
+    ypos = fm_op(insdat+1,ypos,"Modulator 2");
+    ypos = fm_op(insdat+3,ypos,"Carrier 2");
+    return ++ypos;
+}
+
 void ui_info_s2_voice(int id,int ypos)
 {
     int tempypos;
@@ -265,7 +375,7 @@ void ui_info_s2_voice(int id,int ypos)
     struct S2X_Pitch* P = NULL;
     S2X_Channel* C = NULL;
 
-    set_color(ypos,44,28,40,COLOR_D_BLUE,COLOR_L_GREY);
+    set_color(ypos,44,43,35,COLOR_D_BLUE,COLOR_L_GREY);
 
     if(type == S2X_VOICE_TYPE_PCM || type ==S2X_VOICE_TYPE_SE)
     {
@@ -286,6 +396,13 @@ void ui_info_s2_voice(int id,int ypos)
                  "Loop",    S->PCMChip.v[id].wave_loop);
         ypos++;
     }
+    else if(type == S2X_VOICE_TYPE_FM)
+    {
+        uint8_t fmdata[32] = {0};
+        if(FM->InsPtr)
+            memcpy(fmdata,S->Data+FM->InsPtr,32);
+        ypos = fm_info(S,fmdata,ypos);
+    }
 
     tempypos=ypos+1;
 
@@ -298,7 +415,7 @@ void ui_info_s2_voice(int id,int ypos)
             return;
 
         if(PCM->Length)
-            SCRN(ypos,60,40,"(Time Left: %3d/%3d)",PCM->Length,PCM->Channel->Vars[S2X_CHN_GTM]);
+            SCRN(ypos,60,40,"(Time Left:%3d/%3d)",PCM->Length,PCM->Channel->Vars[S2X_CHN_GTM]);
 
         flag = PCM->Flag;
 
@@ -325,7 +442,7 @@ void ui_info_s2_voice(int id,int ypos)
             return;
 
         if(FM->Length)
-            SCRN(ypos,60,40,"(Time Left: %3d/%3d)",FM->Length,FM->Channel->Vars[S2X_CHN_GTM]);
+            SCRN(ypos,60,40,"(Time Left:%3d/%3d)",FM->Length,FM->Channel->Vars[S2X_CHN_GTM]);
 
         flag = FM->Flag;
 
@@ -377,7 +494,7 @@ void ui_info_s2_voice(int id,int ypos)
 
     if(~flag&0x80)
     {
-        set_color(tempypos,44,ypos-tempypos,40,COLOR_D_BLUE,COLOR_D_GREY);
+        set_color(tempypos,44,ypos-tempypos,35,COLOR_D_BLUE,COLOR_D_GREY);
     }
 
     //ypos+=2;

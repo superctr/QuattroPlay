@@ -120,8 +120,12 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo)
         // read new preset
         uint32_t pos = V->BaseAddr&0xffff00;
         pos += S2X_ReadWord(S,V->BaseAddr+0x02)+(5*LfoNo);
-        S2X_OPMWrite(S,0,0,OPM_LFO_WAV,S2X_ReadByte(S,pos));
-        S2X_OPMWrite(S,0,0,OPM_LFO_FRQ,S2X_ReadByte(S,pos+1));
+
+        S->FMLfoWav = S2X_ReadByte(S,pos);
+        S->FMLfoFrq = S2X_ReadByte(S,pos+1);
+        S2X_OPMWrite(S,0,0,OPM_LFO_WAV,S->FMLfoWav);
+        S2X_OPMWrite(S,0,0,OPM_LFO_FRQ,S->FMLfoFrq);
+
         S->FMLfoPms = S2X_ReadByte(S,pos+2);
         S->FMLfoAms = S2X_ReadByte(S,pos+3);
         uint8_t i = S2X_ReadByte(S,pos+4);

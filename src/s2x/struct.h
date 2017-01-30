@@ -242,6 +242,8 @@ struct S2X_State {
     uint8_t SongCount[2];
 
     uint8_t FMLfo;
+    uint8_t FMLfoWav;
+    uint8_t FMLfoFrq;
     uint8_t FMLfoPms;
     uint8_t FMLfoAms;
     uint16_t FMLfoDepthDelta;
