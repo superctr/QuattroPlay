@@ -143,6 +143,7 @@ void S2X_PCMUpdateReset(S2X_State *S,S2X_PCMVoice *V)
     V->Pitch.PortaFlag = V->Pitch.Portamento;
 
     // envelope setup
+    V->EnvNo = C->Vars[S2X_CHN_ENV]; // for display
     V->EnvPos=V->EnvPtr;
 
     if(ADSR_ENV)

@@ -115,6 +115,7 @@ struct S2X_PCMVoice {
 
     uint8_t Volume;
 
+    uint8_t EnvNo;
     uint32_t EnvPtr;
     uint32_t EnvPos;
     uint16_t EnvValue;

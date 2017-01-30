@@ -46,6 +46,7 @@ enum {
 enum {
     S2X_TYPE_SYSTEM2 = 0,
     S2X_TYPE_SYSTEM1,
+    S2X_TYPE_SYSTEM1_ALT,
     S2X_TYPE_NA,
     S2X_TYPE_MAX,
 };

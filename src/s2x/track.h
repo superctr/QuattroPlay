@@ -6,6 +6,7 @@ void S2X_TrackStop(S2X_State* S,int TrackNo);
 void S2X_TrackUpdate(S2X_State* S,int TrackNo);
 void S2X_TrackCalcVolume(S2X_State* S,int TrackNo);
 void S2X_TrackDisable(S2X_State *S,int TrackNo);
+void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mask);
 void S2X_ChannelClear(S2X_State *S,int TrackNo,int ChannelNo);
 
 #define S2X_MAX_TRKCMD 0x25
@@ -14,6 +15,7 @@ typedef void (*S2X_TrackCommand)(S2X_State*,int,S2X_Track*,uint8_t,int8_t);
 
 struct S2X_TrackCommandEntry{
     int type; // this will only be used for the pattern parser.
+    int param;
     S2X_TrackCommand cmd;
 };
 // command entry types

@@ -7,7 +7,7 @@
 #include "track.h"
 #include "voice.h"
 
-#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 void S2X_TrackInit(S2X_State* S, int TrackNo)
@@ -39,13 +39,15 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     // NA-1/NA-2 has a song count
     if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
         invalid=1;
+    // shitty hack for dspirit (song begins without an INIT command...)
+    else if(SYSTEM1 && (header_byte == 0x01 || header_byte == 0x02))
+        invalid=-1;
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
     else if(!SYSTEMNA && header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
         invalid=1;
-
-    if(invalid)
+    if(invalid>0)
     {
-        Q_DEBUG("Track %02x, song id %04x invalid\n",TrackNo,SongNo);
+        Q_DEBUG("Track %02x, song id %04x invalid (header byte=%02x)\n",TrackNo,SongNo,header_byte);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
         return;
     }
@@ -86,6 +88,9 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         T->Channel[i].Enabled = 0;
         T->Channel[i].LastEvent = 0;
     }
+    // part 2 of the shitty dspirit hack
+    if(invalid == -1)
+        S2X_ChannelInit(S,T,TrackNo,0x18,0xff);
 }
 
 void S2X_TrackStop(S2X_State* S,int TrackNo)
@@ -147,7 +152,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
                 CmdIndex=Command&0x3f;
                 if(CmdIndex < S2X_MAX_TRKCMD)
                 {
-                    CmdTab[CmdIndex].cmd(S,TrackNo,T,Command,CmdTab[CmdIndex].type);
+                    CmdTab[CmdIndex].cmd(S,TrackNo,T,Command,CmdTab[CmdIndex].param);
                 }
                 else
                 {

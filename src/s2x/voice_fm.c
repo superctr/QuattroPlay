@@ -7,7 +7,7 @@
 #include "voice.h"
 
 #define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
-#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
@@ -74,7 +74,7 @@ void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V)
     {
         if(OLD_VOL_MODE)
         {
-            d = ~((S2X_ReadByte(S,V->InsPtr+0x0b-i)^0x7f)*V->Volume) >> 8;
+            d = ~(((S2X_ReadByte(S,V->InsPtr+0x0b-i)&0x7f)^0x7f)*V->Volume) >> 8;
             d &= 0x7f;
         }
         else
@@ -162,10 +162,15 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                 else if(!C->Vars[S2X_CHN_LEG])
                 {
                     S2X_FMKeyOff(S,V);
-                    V->Delay = C->Vars[S2X_CHN_DEL];
+                    if(!SYSTEM1)
+                        V->Delay = C->Vars[S2X_CHN_DEL];
                     V->Flag |= 0x50;
                 }
                 V->Key = C->Vars[S2X_CHN_FRQ];
+                break;
+            case S2X_CHN_DEL:
+                if(SYSTEM1)
+                    V->Delay = data;
                 break;
             case S2X_CHN_VOL:
                 if(OLD_VOL_MODE)

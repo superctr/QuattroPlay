@@ -9,7 +9,7 @@
 #include "tables.h"
 #include "voice.h"
 
-#define SYSTEM1 (S->DriverType == S2X_TYPE_SYSTEM1)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 int S2X_IInit(void* d,QP_Game *g)

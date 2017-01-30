@@ -7,6 +7,7 @@
 #include "s2x.h"
 #include "helper.h"
 
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
 uint8_t S2X_ReadByte(S2X_State *S,uint32_t d)
@@ -108,7 +109,9 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
     {
         cfg = &G->Config[i];
         v = atoi(cfg->data);
-        if(!strcmp(cfg->name,"fm_volcalc") && v)
+        if(SYSTEM1 && !strcmp(cfg->name,"type") && v)
+            S->DriverType=S2X_TYPE_SYSTEM1+(v%2);
+        else if(!strcmp(cfg->name,"fm_volcalc") && v)
             S->ConfigFlags |= S2X_CFG_FM_VOL;
         else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
             S->ConfigFlags |= S2X_CFG_PCM_NEWADSR;
