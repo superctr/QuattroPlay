@@ -207,7 +207,7 @@ TRACKCOMMAND(tc_WriteChannelDummy)
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
     int i=0;
 #ifdef DEBUG
-    temp=0;
+    int temp=0;
     if(Command&0x40)
         temp = arg_byte(S,T->PositionBase,&T->Position);
 #endif
