@@ -44,7 +44,7 @@ int S2X_IInit(void* d,QP_Game *g)
 
     S->SoundRate = S->PCMChip.rate;
     S->FMDelta = S->FMChip.rate / S->SoundRate;
-    S->FMWriteRate = 2.5;
+    S->FMWriteRate = SYSTEM1 ? 1.0 : 2.5;
 
     g->MuteRear = 1;
 

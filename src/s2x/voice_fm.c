@@ -36,6 +36,9 @@ void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
     V->Flag&=~(0x10);
 }
 
+// there is no check to see if the current instrument has already been loaded
+// so some games set it twice in a row and you will see "OPM is not keeping up"
+// that is normal...
 void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
 {
     int i;

@@ -406,15 +406,24 @@ TRACKCOMMAND(tc_SetBank)
 TRACKCOMMAND(tc_Dummy)
 {
     LOGCMD;
+    int max=8;
+    if(CommandType>0)
+        max=CommandType-1;
 #ifdef DEBUG
     int i;
-    Q_DEBUG("args: %02x",arg_byte(S,T->PositionBase,&T->Position));
-    for(i=0;i<7;i++)
-        Q_DEBUG(", %02x",arg_byte(S,T->PositionBase,&T->Position));
-    Q_DEBUG("\n");
+    if(max>0)
+    {
+        Q_DEBUG("args: %02x",arg_byte(S,T->PositionBase,&T->Position));
+        for(i=0;i<max-1;i++)
+            Q_DEBUG(", %02x",arg_byte(S,T->PositionBase,&T->Position));
+        Q_DEBUG("\n");
+    }
 #endif
-    QP_LoopDetectStop(&S->LoopDetect,TrackNo);
-    S2X_TrackDisable(S,TrackNo);
+    if(CommandType==-1)
+    {
+        QP_LoopDetectStop(&S->LoopDetect,TrackNo);
+        S2X_TrackDisable(S,TrackNo);
+    }
 }
 
 // system 2/21 command table
@@ -575,7 +584,7 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 19 */ {S2X_CMD_CHN,S2X_CHN_PAN,tc_WriteChannel}, // pan
 /* 1a */ {1,-1,tc_Nop},
 /* 1b */ {2,-1,tc_WriteCommS1},
-/* 1c */ {S2X_CMD_END,-1,tc_Dummy},
+/* 1c */ {2, 2,tc_Dummy}, // shadowld song 0e: song request
 /* 1d */ {3,-1,tc_RequestTrack}, // FM
 /* 1e */ {3,-1,tc_RequestTrack}, // FM
 /* 1f */ {S2X_CMD_CHN,-1,tc_WriteChannel}, // not used

@@ -10,6 +10,7 @@
 #include "voice.h"
 
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+#define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 
 void S2X_Init(S2X_State *S)
 {
@@ -73,7 +74,19 @@ void S2X_Reset(S2X_State *S)
 
     S->FrameCnt=0;
 
-    if(!SYSTEMNA)
+    if(SYSTEM1)
+    {
+        if(!S->FMBase)
+            S->FMBase = 0x10000;
+        S->PCMBase=S->FMBase;
+    }
+    else if(SYSTEMNA)
+    {
+        S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);
+        S->SongCount[1] = S2X_ReadByte(S,S->PCMBase+0x10011);
+        Q_DEBUG("base = %06x\nmax(1) = %02x\nmax(2) = %02x\n",S->PCMBase,S->SongCount[0],S->SongCount[1]);
+    }
+    else
     {
         if(!S->FMBase)
         {
@@ -89,13 +102,6 @@ void S2X_Reset(S2X_State *S)
             if(S2X_ReadWord(S,0x10000) == 0x0008)
                 S->PCMBase=0x4000;
         }
-    }
-    else
-    {
-        S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);
-        S->SongCount[1] = S2X_ReadByte(S,S->PCMBase+0x10011);
-        Q_DEBUG("base = %06x\nmax(1) = %02x\nmax(2) = %02x\n",S->PCMBase,S->SongCount[0],S->SongCount[1]);
-
     }
 
     S->FMLfo=0xff;
