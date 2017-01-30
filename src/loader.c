@@ -410,8 +410,10 @@ int LoadGame(QP_Game *G)
 
 int UnloadGame(QP_Game *G)
 {
-    free(G->Data);
-    free(G->WaveData);
+    if(G->Data)
+        free(G->Data);
+    if(G->WaveData)
+        free(G->WaveData);
     //free(Q_Chip);
     QDrv = NULL;
     DriverDestroy(DriverInterface);

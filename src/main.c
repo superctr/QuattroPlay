@@ -149,9 +149,8 @@ int main(int argc, char *argv[])
 
             // Audio must be closed or locked before calling this
             DeInitGame(Game);
-
-            UnloadGame(Game);
         }
+        UnloadGame(Game);
 
         if(!loop)
             break;
