@@ -205,17 +205,24 @@ TRACKCOMMAND(tc_WriteChannelDummy)
 {
     LOGCMD;
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
-    int i=0, temp=0;
+    int i=0;
+#ifdef DEBUG
+    temp=0;
     if(Command&0x40)
         temp = arg_byte(S,T->PositionBase,&T->Position);
+#endif
     Q_DEBUG("T=%02x cmd %02x=",TrackNo,Command&0x3f);
     for(i=0;i<8;i++)
     {
         if(mask&0x80)
         {
+#ifdef DEBUG
             if(~Command&0x40)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             Q_DEBUG("%03d%s",temp,(i==7)?"":",");
+#else
+            T->Position++;
+#endif
         }
         else
         {
@@ -418,6 +425,8 @@ TRACKCOMMAND(tc_Dummy)
             Q_DEBUG(", %02x",arg_byte(S,T->PositionBase,&T->Position));
         Q_DEBUG("\n");
     }
+#else
+    T->Position+=max;
 #endif
     if(CommandType==-1)
     {

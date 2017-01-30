@@ -253,7 +253,7 @@ static const char* fm_con_strings[] = {
     "\xc0M1\xc1\xc4\xc4\xc2M2\xc4\x43\x32\xc4",         /* 3 \M1'--,M2-C2- */
     "    \x43\x31\xd9",                                 /* 4     C1/       */
     "\xc0M1\xc1\xc4\xc4\xc4\xc4\xc4\xc2\x43\x32\xc4",   /* 5 \M1'-----,C2- */
-    "    \x43\x31\xc4M2\xd9",                           /* 6     C1-M1/    */
+    "    \x43\x31\xc4M2\xd9",                           /* 6     C1-M2/    */
     "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc2\x43\x32\xc4",   /* 7 \M1'C1---,C2- */
     "       M2\xd9",                                    /* 8        M2/    */
     "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc4\xc4\xc4\xc2",   /* 9 \M1'C1------, */
