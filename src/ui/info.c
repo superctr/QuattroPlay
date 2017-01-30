@@ -33,6 +33,8 @@ void ui_info_voice(int id,int ypos)
     {
     case DRIVER_QUATTRO:
         return ui_info_q_voice(id,ypos);
+    case DRIVER_SYSTEM2:
+        return ui_info_s2_voice(id,ypos);
     default:
         break;
     }

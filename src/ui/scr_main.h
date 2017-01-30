@@ -29,6 +29,7 @@ void ui_info_voice(int id,int ypos);
 void ui_info_q_track(int id,int ypos);
 void ui_info_q_voice(int id,int ypos);
 void ui_info_s2_track(int id,int ypos);
+void ui_info_s2_voice(int id,int ypos);
 
     int displaysection;
 

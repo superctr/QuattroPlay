@@ -44,7 +44,7 @@ void ui_info_s2_track(int id,int ypos)
     double bpm = 0;
     if( (T->BaseTempo*T->Tempo) > 0 )
         bpm = (double)1800/ (T->BaseTempo*T->Tempo);
-    if(S->DriverType==S2X_TYPE_SYSTEM1)
+    if(S->ConfigFlags & S2X_CFG_SYSTEM1)
         bpm/=2;
 
     //                        .............
@@ -244,4 +244,141 @@ void ui_info_s2_track(int id,int ypos)
         SCRN(ypos,44,4,"this page not implemented yet");
         break;
     }
+}
+
+void ui_info_s2_voice(int id,int ypos)
+{
+    int tempypos;
+
+    S2X_State *S = DriverInterface->Driver;
+
+    int type = S2X_GetVoiceType(S,id);
+    int index = S2X_GetVoiceIndex(S,id,type);
+
+    S2X_PCMVoice* PCM = &S->PCM[index];
+    S2X_FMVoice* FM = &S->FM[index];
+
+    int flag;
+    int trs=0, note=0;
+    int8_t trs2=0;
+    char* tempstr;
+    struct S2X_Pitch* P = NULL;
+    S2X_Channel* C = NULL;
+
+    set_color(ypos,44,28,40,COLOR_D_BLUE,COLOR_L_GREY);
+
+    if(type == S2X_VOICE_TYPE_PCM || type ==S2X_VOICE_TYPE_SE)
+    {
+        //vno = S2X_VOICE_TYPE_SE ? 24+index : index;
+
+        SCRN(ypos++,44,40,"Chip registers:");
+        SCRN(ypos++,44,40,"%6s:  %04x%6s:%04x%6s:%04x",
+                 "Flag",    S->PCMChip.v[id].flags,
+                 "VolF",    S->PCMChip.v[id].vol_f,
+                 "VolR",    S->PCMChip.v[id].vol_r);
+        SCRN(ypos++,44,40,"%6s:%06x%6s:%04x (%5.0f Hz)",
+                 "Pos",     S->PCMChip.v[id].pos & 0xffffff,
+                 "Freq",    S->PCMChip.v[id].freq,
+                 ((double)S->PCMChip.v[id].freq/0x10000)*S->PCMChip.rate);
+        SCRN(ypos++,44,40,"%6s:%02x%04x%6s:%04x%6s:%04x",
+                 "Start",   S->PCMChip.v[id].wave_bank&0xff,S->PCMChip.v[id].wave_start,
+                 "End",     S->PCMChip.v[id].wave_end,
+                 "Loop",    S->PCMChip.v[id].wave_loop);
+        ypos++;
+    }
+
+    tempypos=ypos+1;
+
+    switch(type)
+    {
+    default:
+        return;
+    case S2X_VOICE_TYPE_PCM:
+        if(!PCM->Channel)
+            return;
+
+        if(PCM->Length)
+            SCRN(ypos,60,40,"(Time Left: %3d/%3d)",PCM->Length,PCM->Channel->Vars[S2X_CHN_GTM]);
+
+        flag = PCM->Flag;
+
+        SCRN(ypos++,44,40,"Voice %s",flag&0x80 ? "Enabled":"Disabled");
+        tempypos=ypos;
+
+        SCRN(ypos++,45,40,"%-10s%04x",
+                 "WaveNo",      PCM->WaveNo);
+        SCRN(ypos++,45,40,"%-10s%04x (%04x %s)",
+                 "Envelope",    PCM->EnvNo,PCM->EnvValue,
+                 (flag&0x10) ? "key on" : "key off");
+        SCRN(ypos++,45,40,"%-10s%4d (%4d,%4d)",
+                 "Volume",      PCM->Volume,
+                 PCM->Channel->Vars[S2X_CHN_VOL],PCM->Track->TrackVolume);
+        SCRN(ypos++,45,40,"%-10s%4d (%4d)",
+                 "Pan",         PCM->Pan,(int8_t)(PCM->Pan-128));
+        SCRN(ypos++,45,40,"%-10s%4d (%4d)",
+                 "PanSlide",    PCM->Channel->Vars[S2X_CHN_PANENV],(int8_t)PCM->PanSlide);
+        P = &PCM->Pitch;
+        C = PCM->Channel;
+        break;
+    case S2X_VOICE_TYPE_FM:
+        if(!FM->Channel)
+            return;
+
+        if(FM->Length)
+            SCRN(ypos,60,40,"(Time Left: %3d/%3d)",FM->Length,FM->Channel->Vars[S2X_CHN_GTM]);
+
+        flag = FM->Flag;
+
+        SCRN(ypos++,44,40,"Voice %s",flag&0x80 ? "Enabled":"Disabled");
+
+        SCRN(ypos++,45,40,"%-10s%04x",
+                 "InsNo",       FM->InsNo);
+        SCRN(ypos++,45,40,"%-10s%s",
+                 "Status",      (flag&0x10) ? "key on" : "key off");
+        SCRN(ypos++,45,40,"%-10s%4d (%4d,%4d)",
+                 "Volume",      FM->Volume,
+                 FM->Channel->Vars[S2X_CHN_VOL],FM->Track->TrackVolume);
+
+        switch(FM->Channel->Vars[S2X_CHN_PAN]&0xc0)
+        {
+        default:
+            tempstr = "(no output)";
+            break;
+        case 0x40:
+            tempstr = "left"; // Left
+            break;
+        case 0x80:
+            tempstr = "right";
+            break;
+        case 0xc0:
+            tempstr = "center";
+            break;
+        }
+
+        SCRN(ypos++,45,40,"%-10s%s",
+                 "Pan",         tempstr);
+
+        P = &FM->Pitch;
+        C = FM->Channel;
+        trs = 4;
+        break;
+    }
+
+    note = (P->Target>>8)+trs;
+    trs2 = C->Vars[S2X_CHN_TRS];
+
+    SCRN(ypos++,45,40,"%-10s %s%d (%+4d = %s%d)",
+             "Note",    Q_NoteNames[note%12],  (note-3)/12,
+             (int8_t)C->Vars[S2X_CHN_TRS], Q_NoteNames[abs(note+trs2)%12], (note+trs2-3)/12);
+    SCRN(ypos++,45,40,"%-10s%4d",
+             "Detune",    C->Vars[S2X_CHN_DTN]);
+    SCRN(ypos++,45,40,"%-10s%04x",
+             "PitchEnv",P->EnvNo);
+
+    if(~flag&0x80)
+    {
+        set_color(tempypos,44,ypos-tempypos,40,COLOR_D_BLUE,COLOR_D_GREY);
+    }
+
+    //ypos+=2;
 }
