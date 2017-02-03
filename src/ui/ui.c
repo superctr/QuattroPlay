@@ -93,7 +93,7 @@ void ui_handleinput(SDL_Keysym* ks)
         if(screen_mode == SCR_MAIN || screen_mode == SCR_SELECT)
             running=0;
         else
-            screen_mode = SCR_MAIN;
+            screen_mode = gameloaded ? SCR_MAIN : SCR_SELECT;
         break;
     case SDLK_p:
         if(gameloaded)
