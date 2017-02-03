@@ -422,11 +422,12 @@ void ui_info_s2_voice(int id,int ypos)
         SCRN(ypos++,44,40,"Voice %s",flag&0x80 ? "Enabled":"Disabled");
         tempypos=ypos;
 
-        SCRN(ypos++,45,40,"%-10s%04x",
-                 "WaveNo",      PCM->WaveNo);
-        SCRN(ypos++,45,40,"%-10s%04x (%04x %s)",
-                 "Envelope",    PCM->EnvNo,PCM->EnvValue,
-                 (flag&0x10) ? "key on" : "key off");
+        SCRN(ypos++,45,40,"%-10s%04x (%4d)",
+                 "WaveNo",      PCM->WaveNo,PCM->WaveNo);
+        SCRN(ypos++,45,40,"%-10s%04x (%02x, %04x)",
+                 "Envelope",    PCM->EnvNo,PCM->EnvNo,PCM->EnvValue);
+        SCRN(ypos++,45,40,"%-10s%s",
+                 "Status",      (flag&0x10) ? "key on" : "key off");
         SCRN(ypos++,45,40,"%-10s%4d (%4d,%4d)",
                  "Volume",      PCM->Volume,
                  PCM->Channel->Vars[S2X_CHN_VOL],PCM->Track->TrackVolume);
@@ -448,8 +449,8 @@ void ui_info_s2_voice(int id,int ypos)
 
         SCRN(ypos++,44,40,"Voice %s",flag&0x80 ? "Enabled":"Disabled");
 
-        SCRN(ypos++,45,40,"%-10s%04x",
-                 "InsNo",       FM->InsNo);
+        SCRN(ypos++,45,40,"%-10s%04x (%4d)",
+                 "InsNo",       FM->InsNo,FM->InsNo);
         SCRN(ypos++,45,40,"%-10s%s",
                  "Status",      (flag&0x10) ? "key on" : "key off");
         SCRN(ypos++,45,40,"%-10s%4d (%4d,%4d)",
@@ -485,12 +486,20 @@ void ui_info_s2_voice(int id,int ypos)
     trs2 = C->Vars[S2X_CHN_TRS];
 
     SCRN(ypos++,45,40,"%-10s %s%d (%+4d = %s%d)",
-             "Note",    Q_NoteNames[note%12],  (note-3)/12,
+             "Note",Q_NoteNames[note%12],  (note-3)/12,
              (int8_t)C->Vars[S2X_CHN_TRS], Q_NoteNames[abs(note+trs2)%12], (note+trs2-3)/12);
     SCRN(ypos++,45,40,"%-10s%4d",
-             "Detune",    C->Vars[S2X_CHN_DTN]);
-    SCRN(ypos++,45,40,"%-10s%04x (%04x)",
-             "PitchEnv",P->EnvNo,P->EnvMod);
+             "Detune",C->Vars[S2X_CHN_DTN]);
+    SCRN(ypos++,45,40,"%-10s%4d (%04x)",
+             "Porta",C->Vars[S2X_CHN_PTA],(uint16_t)(P->Value-P->Target));
+    SCRN(ypos++,45,40,"%-10s%04x (%4d, pos: %06x)",
+             "PitchEnv",P->EnvNo,P->EnvNo,P->EnvPos);
+    SCRN(ypos++,45,40,"%-10s%4d",
+             "EnvRate",P->EnvSpeed);
+    SCRN(ypos++,45,40,"%-10s%4d (vol: %03d)",
+             "EnvDepth",P->EnvDepth, P->VolDepth);
+    SCRN(ypos++,45,40,"%-10s%04x (vol: %02x)",
+             "EnvMod",P->EnvMod,P->VolDepth ? P->VolBase-P->VolMod : 0);
 
     if(~flag&0x80)
     {
