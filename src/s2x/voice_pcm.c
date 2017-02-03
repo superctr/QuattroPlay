@@ -5,7 +5,6 @@
 #include "tables.h"
 #include "track.h"
 #include "voice.h"
-#include "../drv/tables.h" /* quattro pitch table (used for NA-1/NA-2) */
 
 #define ADSR_ENV (S->ConfigFlags & (S2X_CFG_PCM_ADSR|S2X_CFG_PCM_NEWADSR))
 #define NEW_ADSR (S->ConfigFlags & S2X_CFG_PCM_NEWADSR)
@@ -471,8 +470,8 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
     if(!SYSTEMNA)
     {
         pitch &= 0x7fff;
-        freq1 = S2X_PitchTable[pitch>>8];
-        freq2 = S2X_PitchTable[(pitch>>8)+1];
+        freq1 = S->PCMPitchTable[pitch>>8];
+        freq2 = S->PCMPitchTable[(pitch>>8)+1];
         temp = freq1 + (((uint16_t)(freq2-freq1)*(pitch&0xff))>>8);
 
         reg = (temp*V->WavePitch)>>8;
@@ -485,8 +484,8 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
 
         if(pitch>0x6b00)
             pitch=0x6b00;
-        freq1 = Q_PitchTable[pitch>>8];
-        freq2 = Q_PitchTable[(pitch>>8)+1];
+        freq1 = S->PCMPitchTable[pitch>>8];
+        freq2 = S->PCMPitchTable[(pitch>>8)+1];
         freq1 += ((uint16_t)(freq2-freq1)*(pitch&0xff))>>8;
 
         S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,freq1);

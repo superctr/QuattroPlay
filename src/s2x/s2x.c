@@ -26,8 +26,12 @@ void S2X_Init(S2X_State *S)
     {
         Q_DEBUG("Loop detection initialization failed\n");
     }
-
-    //Q_GetMcuVer(S);
+    S2X_MakePitchTable(S);
+#if 0
+    int i;
+    for(i=0;i<128;i++)
+        Q_DEBUG("%04x%s",S->PCMPitchTable[i],((i+1)&7) ? " " : "\n");
+#endif
     S2X_Reset(S);
 }
 

@@ -6,6 +6,8 @@
 
 #include "s2x.h"
 #include "helper.h"
+#include "tables.h"
+#include "../drv/tables.h" /* quattro pitch table (used for NA-1/NA-2) */
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
@@ -160,3 +162,50 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         }
     }
 }
+
+uint8_t S2X_PitchTableBE[0x18] = {
+    0x00, 0x54, 0x00, 0x59, 0x00, 0x5e, 0x00, 0x64,
+    0x00, 0x6a, 0x00, 0x70, 0x00, 0x77, 0x00, 0x7e,
+    0x00, 0x86, 0x00, 0x8e, 0x00, 0x96, 0x00, 0x9f
+};
+
+/*
+ interesting, the envelope rate table seems to have been designed to
+ extend the pitch table in the event of a pitch table underflow (unsigned
+ so it's actually overflows). Solvalou takes advantage of this...
+*/
+void S2X_MakePitchTable(S2X_State *S)
+{
+    uint8_t *search = S2X_PitchTableBE;
+    int i,j;
+    if(SYSTEM1) // no need to get pitch table
+        return;
+    else if(SYSTEMNA)
+    {
+        // use quattro pitch table
+        memcpy(S->PCMPitchTable,Q_PitchTable,108*sizeof(uint16_t));
+        for(i=108;i<129;i++)
+            S->PCMPitchTable[i]=0xffff;
+    }
+    else
+    {
+        for(i=0;i<0x4000;i++)
+        {
+            if(!memcmp(S->Data+i,search,0x18))
+            {
+                Q_DEBUG("Pitch table located at 0x%04x\n",i);
+                for(j=0;j<129;j++)
+                    S->PCMPitchTable[j] = S2X_ReadWord(S,i+(j<<1));
+                return;
+            }
+        }
+        Q_DEBUG("Pitch table not found... Using default pitch table\n");
+        // use default pitch table.
+        memcpy(S->PCMPitchTable,S2X_PitchTable,sizeof(S2X_PitchTable));
+        // copy overflow values from envelope rate table
+        for(i=96;i<129;i++)
+            S->PCMPitchTable[i] = ((S2X_EnvelopeRateTable[i-96]&0xff)<<8)|((S2X_EnvelopeRateTable[i-96]>>8)&0xff);
+    }
+}
+
+

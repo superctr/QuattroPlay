@@ -31,6 +31,7 @@ int8_t S2X_LoopDetectionGetCount(S2X_State *S,int TrackNo);
 #endif // Q_DISABLE_LOOP_DETECTION
 
 void S2X_ReadConfig(S2X_State *S,QP_Game *G);
+void S2X_MakePitchTable(S2X_State *S);
 
 // internal defines for interface functions
 double S2X_ITickRate(void* d);
