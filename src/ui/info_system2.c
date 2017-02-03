@@ -264,7 +264,7 @@ static const char* fm_con_strings[] = {
     "\xc0M1\xc1\x43\x31\xc4\xc4\xc4\xc2\xc4\xc4\xc2",   /*14 \M1'C1---,--, */
     "       M2\xd9  \xb3",                              /*15        M2/  | */
     "          \x43\x32\xd9",                           /*16           C2/ */
-    "\xc0M1\xc1\xc4\xc4\xc2\xc4\xc4\xc2\xc4\xc4\xc2",   /*17 \M1'C1,--,--, */
+    "\xc0M1\xc1\xc4\xc4\xc2\xc4\xc4\xc2\xc4\xc4\xc2",   /*17 \M1'--,--,--, */
     "    \x43\x31\xd9  \xb3  \xb3",                     /*18     C1/  |  | */
 };
 
@@ -453,7 +453,7 @@ void ui_info_s2_voice(int id,int ypos)
         SCRN(ypos++,45,40,"%-10s%s",
                  "Status",      (flag&0x10) ? "key on" : "key off");
         SCRN(ypos++,45,40,"%-10s%4d (%4d,%4d)",
-                 "Volume",      FM->Volume,
+                 "Volume",      (S->ConfigFlags & S2X_CFG_FM_VOL) ? FM->Volume : ((~FM->Volume)&0x7f)<<1,
                  FM->Channel->Vars[S2X_CHN_VOL],FM->Track->TrackVolume);
 
         switch(FM->Channel->Vars[S2X_CHN_PAN]&0xc0)
@@ -489,8 +489,8 @@ void ui_info_s2_voice(int id,int ypos)
              (int8_t)C->Vars[S2X_CHN_TRS], Q_NoteNames[abs(note+trs2)%12], (note+trs2-3)/12);
     SCRN(ypos++,45,40,"%-10s%4d",
              "Detune",    C->Vars[S2X_CHN_DTN]);
-    SCRN(ypos++,45,40,"%-10s%04x",
-             "PitchEnv",P->EnvNo);
+    SCRN(ypos++,45,40,"%-10s%04x (%04x)",
+             "PitchEnv",P->EnvNo,P->EnvMod);
 
     if(~flag&0x80)
     {
