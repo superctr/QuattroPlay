@@ -7,6 +7,7 @@
 
 # uncomment if you're building on these platforms
 # WINDOWS = 1
+# not needed if you have sdl2-config
 # MACOSX = 1
 
 ifndef MACOSX
@@ -21,15 +22,22 @@ CXX = g++
 AR = ar
 LD = g++
 
-ifdef DEBUG
-CFLAGS  := -g -DDEBUG
-else
-CFLAGS  := -O3 -g0 -DRELEASE
-endif
+CFLAGS   :=
 LIB      :=
 LIBDIR   :=
 INC      := 
 LDFLAGS  :=
+
+ifdef DEBUG
+CFLAGS   := -g -DDEBUG
+else
+CFLAGS   := -O3 -g0 -DRELEASE
+LDFLAGS  := -s
+ifdef WINDOWS
+# disable console window
+LDFLAGS  += -mwindows
+endif
+endif
 
 ifdef USE_SDL_CONFIG
 INC      += $(shell sdl2-config --cflags)
@@ -84,6 +92,7 @@ OBJS = \
 	$(OBJ)/lib/vgm.o \
 	$(OBJ)/ui/info.o \
 	$(OBJ)/ui/info_quattro.o \
+	$(OBJ)/ui/info_system2.o \
 	$(OBJ)/ui/lib.o \
 	$(OBJ)/ui/scr_about.o \
 	$(OBJ)/ui/scr_main.o \
