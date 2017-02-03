@@ -11,8 +11,7 @@ void scr_about()
     SCRN(1,1,FCOLUMNS-2,QP_TITLE " Version " QP_VERSION " ("QP_WEBSITE")");
     SCRN(3,1,FCOLUMNS-2,"Copyright " QP_COPYRIGHT "; Licensed under " QP_LICENSE);
 
-    int y;
-    int h;
+    int y,h,i;
 
     y=5;
     if(gameloaded)
@@ -64,8 +63,17 @@ void scr_about()
         SCRN(y+6,3,FCOLUMNS-4,"%-20s%s",
              "Format",temp);
     }
+    else
+    {
+        h = y+1;
+        SCRN(h++,2,FCOLUMNS-3,"Available audio devices:");
+        for(i=0;i<SDL_GetNumAudioDevices(0);i++)
+        {
+            SCRN(h++,3,FCOLUMNS-4,"%d: \"%s\"",i,SDL_GetAudioDeviceName(i,0));
+        }
+        set_color(y,1,h-y,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
+    }
 
     if(got_input)
         screen_mode = last_scrmode;
-
 }
