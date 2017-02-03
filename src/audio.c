@@ -96,7 +96,7 @@ void QP_AudioCallback(void* data,Uint8* astream,int len)
 
 }
 
-void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevice)
+int QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,int ChannelCount,char *AudioDevice)
 {
     audio->Enabled = 0;
     //audio->state.SampleRate = SampleRate;
@@ -111,7 +111,7 @@ void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevi
     SDL_AudioSpec req;
     SDL_zero(req);
     req.callback = QP_AudioCallback;
-    req.channels = 4;
+    req.channels = ChannelCount;
     req.freq = SampleRate;
     req.format = AUDIO_F32;
     req.samples = SampleCount; // risky.
@@ -125,11 +125,13 @@ void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevi
         audio->state.SampleRate = audio->as.freq;
         audio->state.SampleCount = audio->as.samples;
         audio->Initialized=1;
+        return 0;
     }
     else
     {
         printf("Audio init failed: %s\n",SDL_GetError());
         audio->Initialized=0;
+        return -1;
     }
 }
 

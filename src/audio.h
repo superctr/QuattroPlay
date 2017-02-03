@@ -49,7 +49,7 @@ typedef struct {
 
 } QP_Audio;
 
-void QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,char *AudioDevice);
+int  QP_AudioInit(QP_Audio* audio,int SampleRate,int SampleCount,int ChannelCount,char *AudioDevice);
 void QP_AudioClose(QP_Audio* audio);
 void QP_AudioSetPause(QP_Audio* audio,int pause);
 void QP_AudioTogglePause(QP_Audio* audio);

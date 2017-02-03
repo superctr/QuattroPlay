@@ -459,10 +459,13 @@ int InitGame(QP_Game *Game)
 
     DriverReset(1);
 
-    QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,audiodev);
-
-    //if(Game->AutoPlay >= 0)
-    //    QDrv->BootSong=2;
+    if(QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,4,audiodev))
+    {
+        // we couldn't initialize audio with 4 channels, let's try 2 instead...
+        Game->BaseGain/=2; // you'll thank me for this
+        if(QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,2,audiodev))
+            return -1;
+    }
 
     Audio->state.AutoPlaySong = Game->AutoPlay;
     Audio->state.MuteRear = Game->MuteRear;
