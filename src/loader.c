@@ -441,7 +441,7 @@ int InitGame(QP_Game *Game)
 
     char* audiodev = NULL;
     if(strlen(Game->AudioDevice))
-        strcpy(audiodev,Game->AudioDevice);
+        audiodev = Game->AudioDevice;
 
     if(Game->VgmLog)
     {
