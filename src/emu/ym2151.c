@@ -1466,11 +1466,15 @@ void YM2151_update(YM2151* ym)
 
     int outl = 0;
     int outr = 0;
+    int32_t out = 0;
     for(ch=0; ch<8; ch++) {
         if(!(ym->mute_mask & 1<<ch))
         {
-            outl += ym->chanout[ch] & ym->pan[2*ch];
-            outr += ym->chanout[ch] & ym->pan[2*ch+1];
+            out = ym->chanout[ch];
+            if(out > 16383 || out < -16384)
+                out = 16383^(out>>31);
+            outl += out & ym->pan[2*ch];
+            outr += out & ym->pan[2*ch+1];
         }
     }
 
