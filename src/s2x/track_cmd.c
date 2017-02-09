@@ -237,6 +237,7 @@ void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mas
 {
     int temp,pos;
     int i=start;
+    mask &= ~(T->InitFlag);
     T->InitFlag |= mask;
     while(mask)
     {
