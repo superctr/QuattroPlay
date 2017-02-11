@@ -60,6 +60,7 @@ int LoadGame(QP_Game *G)
     int wave_pos[16];
     int wave_length[16];
     int wave_offset[16];
+    int wave_byteswap[16];
     unsigned int wave_maxlen; // max length of wave roms.
     G->ChipFreq = 0;
     G->SongCount = 0;
@@ -99,6 +100,7 @@ int LoadGame(QP_Game *G)
     memset(wave_length,0,sizeof(wave_length));
     memset(wave_offset,0,sizeof(wave_offset));
     memset(wave_filename,0,sizeof(wave_filename));
+    memset(wave_byteswap,0,sizeof(wave_byteswap));
     memset(G->Action,0,sizeof(G->Action));
     memset(G->Config,0,sizeof(G->Config));
     memset(G->Type,0,sizeof(G->Type));
@@ -190,6 +192,8 @@ int LoadGame(QP_Game *G)
                     wave_pos[wave_count] = strtol(initest.value,NULL,0);
                 else if(!strcmp(initest.key,"offset"))
                     wave_offset[wave_count] = strtol(initest.value,NULL,0);
+                else if(!strcmp(initest.key,"byteswap"))
+                    wave_byteswap[wave_count] = strtol(initest.value,NULL,0);
             }
             if(!strcmp(initest.section,"playlist"))
             {
@@ -365,7 +369,7 @@ int LoadGame(QP_Game *G)
 #endif
         wave_maxlen = 0x1000000 - wave_pos[i];
         snprintf(filename,127,"%s/%s/%s",QP_WavePath,path,wave_filename[i]);
-        if(read_file(filename,G->WaveData+wave_pos[i],wave_length[i],wave_offset[i],0,&wave_maxlen))
+        if(read_file(filename,G->WaveData+wave_pos[i],wave_length[i],wave_offset[i],wave_byteswap[i],&wave_maxlen))
             strcat(msgstring,my_strerror(filename));
         else
             G->WaveMask |= wave_pos[i]+wave_length[i]-1;
