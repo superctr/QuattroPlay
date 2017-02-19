@@ -466,7 +466,7 @@ int InitGame(QP_Game *Game)
     if(QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,4,audiodev))
     {
         // we couldn't initialize audio with 4 channels, let's try 2 instead...
-        Game->BaseGain/=2; // you'll thank me for this
+        Game->Gain/=2; // you'll thank me for this
         if(QP_AudioInit(Audio,DriverGetChipRate(),Game->AudioBuffer,2,audiodev))
             return -1;
     }
