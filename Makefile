@@ -116,10 +116,7 @@ $(OBJ)/%.o: $(SRC)/%.c
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ)/*.o $(OUTBIN)
+	rm -f $(OBJS) $(OUTBIN)
 
-clean_dirs: clean
-	rm -rf $(OBJ) $(OUT)
-
-.PHONY: build clean clean_dirs
+.PHONY: build clean
 
