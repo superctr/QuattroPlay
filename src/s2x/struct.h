@@ -13,12 +13,18 @@
 #define S2X_MAX_VOICES_FM 8
 #define S2X_MAX_VOICES S2X_MAX_VOICES_PCM+S2X_MAX_VOICES_SE+S2X_MAX_VOICES_FM
 
+#define S2X_MAX_VOICES_WSG 8
+
 #define S2X_MAX_BANK 15
 
 typedef struct S2X_Channel S2X_Channel;
+typedef struct S2X_WSGChannel S2X_WSGChannel;
 typedef struct S2X_Track S2X_Track;
+typedef struct S2X_WSGTrack S2X_WSGTrack;
+typedef struct S2X_Voice S2X_Voice;
 typedef struct S2X_PCMVoice S2X_PCMVoice;
 typedef struct S2X_FMVoice S2X_FMVoice;
+typedef struct S2X_WSGVoice S2X_WSGVoice;
 typedef struct S2X_SE S2X_SE;
 typedef struct S2X_ChannelPriority S2X_ChannelPriority;
 typedef struct S2X_State S2X_State;
@@ -33,6 +39,25 @@ struct S2X_Channel {
     uint8_t Vars[S2X_CHN_MAX];
 
     struct S2X_Track* Track;
+};
+
+struct S2X_WSGEnvelope {
+    uint8_t No;
+    uint16_t Pos;
+    uint8_t Val;
+};
+
+struct S2X_WSGChannel {
+    uint8_t Enabled;
+    uint8_t VoiceNo;
+    uint32_t Freq;
+    struct S2X_WSGEnvelope Env[2];
+    uint8_t Noise;
+    uint8_t PitchNo;
+    uint8_t WaveNo;
+    uint16_t SeqPos;
+    uint8_t SeqLoop;
+    uint8_t SeqRepeat;
 };
 
 struct S2X_Track {
@@ -55,6 +80,7 @@ struct S2X_Track {
     uint8_t LoopStackPos;
 
     struct S2X_Channel Channel[S2X_MAX_TRKCHN];
+    S2X_WSGChannel WSGChannel[S2X_MAX_VOICES_WSG];
 
     uint32_t SubStack[S2X_MAX_SUB_STACK];
 
@@ -96,6 +122,11 @@ struct S2X_Pitch {
     uint8_t VolMod;
 
     S2X_FMVoice* FM;
+};
+
+struct S2X_Voice {
+    int Type;
+    int Index;
 };
 
 struct S2X_PCMVoice {
@@ -189,6 +220,19 @@ struct S2X_FMVoice {
     int ChannelNo;
 };
 
+struct S2X_WSGVoice {
+
+    uint8_t WaveNo;
+    uint8_t LastWaveNo;
+    uint16_t Pitch;
+
+    S2X_WSGTrack* Track;
+    S2X_WSGChannel* Channel;
+    int TrackNo;
+    int ChannelNo;
+};
+
+
 // used for display
 struct S2X_SE {
     int8_t Type;
@@ -262,6 +306,7 @@ struct S2X_State {
     QP_LoopDetect LoopDetect;
 
     // voice vars
+    S2X_Voice Voice[S2X_MAX_VOICES];
     S2X_Channel* ActiveChannel[S2X_MAX_VOICES];
     S2X_PCMVoice PCM[S2X_MAX_VOICES_PCM];
     S2X_FMVoice FM[S2X_MAX_VOICES_FM];

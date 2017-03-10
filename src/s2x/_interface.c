@@ -339,9 +339,8 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
     S2X_FMVoice* FM;
     memset(V,0,sizeof(*V));
 
-    int type = S2X_GetVoiceType(S,id);
-    int index = S2X_GetVoiceIndex(S,id,type);
-    switch(type)
+    int index = S->Voice[id].Index;
+    switch(S->Voice[id].Type)
     {
     default:
         return -1;
@@ -430,10 +429,9 @@ uint16_t S2X_IGetVoiceStatus(void* d,int id)
     S2X_State* S = d;
     if(id>=S2X_MAX_VOICES)
         return 0;
-    int type = S2X_GetVoiceType(S,id);
-    int index = S2X_GetVoiceIndex(S,id,type);
     uint16_t v=0;
-    switch(type)
+    int index = S->Voice[id].Index;
+    switch(S->Voice[id].Type)
     {
     case S2X_VOICE_TYPE_FM:
         if(S->FM[index].TrackNo)

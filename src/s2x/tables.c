@@ -3,9 +3,17 @@
 #include "s2x.h"
 #include "tables.h"
 
+/*
+    S2X_TYPE_SYSTEM2 = 0,
+    S2X_TYPE_SYSTEM1,
+    S2X_TYPE_SYSTEM1_ALT,
+    S2X_TYPE_NA,
+    S2X_TYPE_MAX,
+*/
 char* S2X_DriverTypes[S2X_TYPE_MAX] = {
     "System 2",
-    "System 1",
+    "System 1 (Older)",
+    "System 1 (Newer)",
     "NA-1/2"
 };
 

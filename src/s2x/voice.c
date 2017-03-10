@@ -15,9 +15,8 @@ void S2X_VoiceSetChannel(S2X_State *S,int VoiceNo,int TrackNo,int ChannelNo)
 
     S->ActiveChannel[VoiceNo] = new_ch;
 
-    int type = S2X_GetVoiceType(S,VoiceNo);
-    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
-    switch(type)
+    int index = S->Voice[VoiceNo].Index;
+    switch(S->Voice[VoiceNo].Type)
     {
     default:
         return;
@@ -37,9 +36,8 @@ void S2X_VoiceClearChannel(S2X_State *S,int VoiceNo)
 {
     S->ActiveChannel[VoiceNo] = NULL;
     //S->Voice[VoiceNo].TrackNo = 0;
-    int type = S2X_GetVoiceType(S,VoiceNo);
-    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
-    switch(type)
+    int index = S->Voice[VoiceNo].Index;
+    switch(S->Voice[VoiceNo].Type)
     {
     default:
         return;
@@ -84,6 +82,18 @@ void S2X_VoiceSetPriority(S2X_State *S,int VoiceNo,int TrackNo,int ChannelNo,int
     S->ChannelPriority[VoiceNo][TrackNo].priority = Priority;
 }
 
+int S2X_SetVoiceType(S2X_State *S,int VoiceNo,int VoiceType,int Count)
+{
+    int i;
+    for(i=0;i<Count;i++)
+    {
+        S->Voice[VoiceNo+i].Type = VoiceType;
+        S->Voice[VoiceNo+i].Index = i;
+    }
+    return i+VoiceNo;
+}
+
+/*
 int S2X_GetVoiceType(S2X_State *S,int VoiceNo)
 {
     if(VoiceNo < 16)
@@ -107,7 +117,7 @@ int S2X_GetVoiceIndex(S2X_State *S,int VoiceNo,int VoiceType)
         return -1;
     }
 }
-
+*/
 
 // interface for PCM/FM specific functions
 void S2X_VoiceClear(S2X_State *S,int VoiceNo)
@@ -117,9 +127,8 @@ void S2X_VoiceClear(S2X_State *S,int VoiceNo)
         if(S->SE[i].Voice == VoiceNo)
             S->SE[i].Type = 0;
 
-    int type = S2X_GetVoiceType(S,VoiceNo);
-    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
-    switch(type)
+    int index = S->Voice[VoiceNo].Index;
+    switch(S->Voice[VoiceNo].Type)
     {
     default:
         return;
@@ -133,9 +142,8 @@ void S2X_VoiceCommand(S2X_State *S,S2X_Channel *C,int Command,uint8_t Data)
 {
     if(!C->Enabled)
         return;
-    int type = S2X_GetVoiceType(S,C->VoiceNo);
-    int index = S2X_GetVoiceIndex(S,C->VoiceNo,type);
-    switch(type)
+    int index = S->Voice[C->VoiceNo].Index;
+    switch(S->Voice[C->VoiceNo].Type)
     {
     default:
         return;
@@ -147,9 +155,8 @@ void S2X_VoiceCommand(S2X_State *S,S2X_Channel *C,int Command,uint8_t Data)
 }
 void S2X_VoiceUpdate(S2X_State *S,int VoiceNo)
 {
-    int type = S2X_GetVoiceType(S,VoiceNo);
-    int index = S2X_GetVoiceIndex(S,VoiceNo,type);
-    switch(type)
+    int index = S->Voice[VoiceNo].Index;
+    switch(S->Voice[VoiceNo].Type)
     {
     default:
         return;

@@ -7,6 +7,7 @@
 #include "s2x.h"
 #include "helper.h"
 #include "tables.h"
+#include "voice.h"
 #include "../drv/tables.h" /* quattro pitch table (used for NA-1/NA-2) */
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
@@ -208,4 +209,41 @@ void S2X_MakePitchTable(S2X_State *S)
     }
 }
 
+void S2X_InitDriverType(S2X_State *S)
+{
+    S2X_SetVoiceType(S,0,S2X_VOICE_TYPE_PCM,16);
+    S2X_SetVoiceType(S,16,S2X_VOICE_TYPE_SE,8);
+    S2X_SetVoiceType(S,24,S2X_VOICE_TYPE_FM,8);
+
+    switch(S->DriverType)
+    {
+    case S2X_TYPE_SYSTEM1:
+    case S2X_TYPE_SYSTEM1_ALT:
+        if(!S->FMBase)
+            S->FMBase = 0x10000;
+        S->PCMBase=S->FMBase;
+        break;
+    case S2X_TYPE_NA:
+        S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);
+        S->SongCount[1] = S2X_ReadByte(S,S->PCMBase+0x10011);
+        Q_DEBUG("base = %06x\nmax(1) = %02x\nmax(2) = %02x\n",S->PCMBase,S->SongCount[0],S->SongCount[1]);
+        break;
+    case S2X_TYPE_SYSTEM2:
+        if(!S->FMBase)
+        {
+            S->FMBase = 0x4000;
+            // some early games have PCM and FM swapped
+            if(S2X_ReadWord(S,0x10000) == 0x0008)
+                S->FMBase=0x10000;
+        }
+        if(!S->PCMBase)
+        {
+            S->PCMBase = 0x10000;
+            // some early games have PCM and FM swapped
+            if(S2X_ReadWord(S,0x10000) == 0x0008)
+                S->PCMBase=0x4000;
+        }
+        break;
+    }
+}
 
