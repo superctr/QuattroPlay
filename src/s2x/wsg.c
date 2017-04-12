@@ -319,7 +319,7 @@ void S2X_WSGChannelUpdate(S2X_State *S,int TrackNo,S2X_Channel *C,int ChannelNo)
     {
         if(C->WSG.Noise)
         {
-            C->WSG.Freq = note<<16;
+            C->WSG.Freq = note<<8;
         }
         else
         {
