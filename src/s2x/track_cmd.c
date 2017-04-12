@@ -241,7 +241,7 @@ static void RequestWSG(S2X_State *S, int TrackNo, int ParentSong, int SongNo)
 
 TRACKCOMMAND(tc_RequestWSG)
 {
-    LOGCMD;
+    //LOGCMD;
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
     int i=0, j;
     int temp=0;
@@ -278,7 +278,6 @@ TRACKCOMMAND(tc_RequestWSG)
 done:
         mask<<=1;
     }
-    Q_DEBUG("\n");
 }
 
 void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mask)

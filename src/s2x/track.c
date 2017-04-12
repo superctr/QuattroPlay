@@ -34,7 +34,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
 
     T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
-    Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
+    //Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
     int invalid=0;
 
@@ -58,7 +58,6 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
             T->Position = S2X_ReadWord(S,S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACK)+(2*data));
         else
             invalid=1;
-        Q_DEBUG("tab=%04x, id=%02x, data=%02x, pos=%04x\n",idtab,id,data,T->Position);
     }
     // NA-1/NA-2 has a song count
     else if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
@@ -71,7 +70,11 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         invalid=1;
     if(invalid>0)
     {
-        Q_DEBUG("Track %02x, song id %04x invalid (header byte=%02x)\n",TrackNo,SongNo,header_byte);
+        Q_DEBUG("Track %02x, song id %04x invalid (header byte=%02x at %06x)\n",
+                TrackNo,
+                SongNo,
+                header_byte,
+                T->PositionBase+T->Position);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
         return;
     }
@@ -84,7 +87,10 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->Flags = (T->Flags&~(S2X_TRACK_STATUS_START))|S2X_TRACK_STATUS_BUSY;
     S->SongRequest[TrackNo] = T->Flags;
 
-    Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->PositionBase+T->Position);
+    Q_DEBUG("T=%02x playing song %04x at %06x\n",
+            TrackNo,
+            SongNo,
+            T->PositionBase+T->Position);
 
     if(!S1_WSG)
         QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo+((TrackNo&8)<<6));
