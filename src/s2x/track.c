@@ -6,9 +6,11 @@
 #include "helper.h"
 #include "track.h"
 #include "voice.h"
+#include "wsg.h"
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+#define S1_WSG (S->ConfigFlags & S2X_CFG_SYSTEM1 && TrackNo > 7)
 
 void S2X_TrackInit(S2X_State* S, int TrackNo)
 {
@@ -24,9 +26,10 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     //T->Position = S2X_GetSongPos(S,SongNo);
 
     T->PositionBase = S->PCMBase;
-    if(!SYSTEMNA)
+    if(SYSTEM1)
+        T->PositionBase = (TrackNo > 7) ? S->PCMBase : S->FMBase;
+    else if(!SYSTEMNA)
         T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
-
     if(SongNo & 0x100)
         T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
 
@@ -36,8 +39,29 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     int invalid=0;
 
     uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
+    if(S1_WSG)
+    {
+        uint8_t id=0;
+        uint8_t data = SongNo-1;
+        uint16_t idtab = S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACKREQ);
+        if(idtab)
+        {
+            while(id<0x80)
+            {
+                data = S2X_ReadByte(S,idtab+id);
+                if(data == 0xff || data == SongNo-1)
+                    break;
+                id++;
+            }
+        }
+        if(data != 0xff)
+            T->Position = S2X_ReadWord(S,S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACK)+(2*data));
+        else
+            invalid=1;
+        Q_DEBUG("tab=%04x, id=%02x, data=%02x, pos=%04x\n",idtab,id,data,T->Position);
+    }
     // NA-1/NA-2 has a song count
-    if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
+    else if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
         invalid=1;
     // shitty hack for dspirit (song begins without an INIT command...)
     else if(SYSTEM1 && (header_byte == 0x01 || header_byte == 0x02))
@@ -62,7 +86,8 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
 
     Q_DEBUG("T=%02x playing song %04x at %06x\n",TrackNo,SongNo,T->PositionBase+T->Position);
 
-    QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo+((TrackNo&8)<<6));
+    if(!S1_WSG)
+        QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo+((TrackNo&8)<<6));
 
     T->SubStackPos=0;
     memset(T->SubStack,0,sizeof(T->SubStack));
@@ -118,6 +143,9 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
 
     if(~T->Flags & S2X_TRACK_STATUS_BUSY)
         return S2X_TrackDisable(S,TrackNo);
+
+    if(S1_WSG)
+        return S2X_WSGTrackUpdate(S,TrackNo,T);
 
     if((int16_t)(T->UpdateTime-S->FrameCnt) > 0)
         return;
@@ -202,6 +230,8 @@ void S2X_TrackDisable(S2X_State *S,int TrackNo)
     for(i=0;i<S2X_MAX_TRKCHN;i++)
     {
         c = &T->Channel[i];
+        c->WSG.Active=0;
+
         if(c->Enabled)
         {
             c->Enabled=0;

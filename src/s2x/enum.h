@@ -16,6 +16,7 @@ enum {
     S2X_VOICE_TYPE_PCM,
     S2X_VOICE_TYPE_SE, // pcm sound effects
     S2X_VOICE_TYPE_FM,
+    S2X_VOICE_TYPE_WSG,
 };
 
 enum {
@@ -68,6 +69,10 @@ enum {
     S2X_CFG_SYSTEM1 = 1<<4,
     // invert pan for FM channels
     S2X_CFG_FM_PAN = 1<<5,
+    // WSG header type
+    S2X_CFG_WSG_TYPE = 1<<6,
+    // WSG command 0b handling
+    S2X_CFG_WSG_CMD0B = 1<<7,
 };
 
 

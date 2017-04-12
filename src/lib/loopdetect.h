@@ -1,7 +1,7 @@
 #ifndef LOOPDETECT_H_INCLUDED
 #define LOOPDETECT_H_INCLUDED
 
-#define LOOPDETECT_MAX_STACK 4
+#define LOOPDETECT_MAX_STACK 8
 
 typedef struct QP_LoopDetect QP_LoopDetect;
 

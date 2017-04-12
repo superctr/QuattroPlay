@@ -81,6 +81,8 @@ OBJS = \
 	$(OBJ)/s2x/voice.o \
 	$(OBJ)/s2x/voice_fm.o \
 	$(OBJ)/s2x/voice_pcm.o \
+	$(OBJ)/s2x/voice_wsg.o \
+	$(OBJ)/s2x/wsg.o \
 	$(OBJ)/emu/c352.o \
 	$(OBJ)/emu/ym2151.o \
 	$(OBJ)/lib/audit.o \

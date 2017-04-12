@@ -87,7 +87,10 @@ void ui_info_q_track(int id,int ypos)
         if(T->LoopStackPos > 2)
             j += SCRN(ypos,44+j,5," +%2d",T->LoopStackPos-2);
     }
-    ypos+=2;
+
+    ypos++;
+    j = SCRN(ypos,44,25,"Tempo: %3d  Speed: %3d",T->BaseTempo,T->Tempo);
+    ypos++;
 
     colorsel_t c1, c2;
     switch(displaysection%2)

@@ -82,7 +82,10 @@ void ui_info_s2_track(int id,int ypos)
         if(T->LoopStackPos > 2)
             j += SCRN(ypos,44+j,5," +%2d",T->LoopStackPos-2);
     }
-    ypos+=2;
+
+    ypos++;
+    j = SCRN(ypos,44,25,"Tempo: %3d  Speed: %3d",T->BaseTempo,T->Tempo);
+    ypos++;
 
     int type,index,val;
 
@@ -126,8 +129,8 @@ void ui_info_s2_track(int id,int ypos)
             val=T->Channel[i].Vars[S2X_CHN_WAV];
             if(T->Channel[i].Enabled)
             {
-                type = S2X_GetVoiceType(S,T->Channel[i].VoiceNo);
-                index = S2X_GetVoiceIndex(S,T->Channel[i].VoiceNo,type);
+                type = S->Voice[T->Channel[i].VoiceNo].Type;
+                index = S->Voice[T->Channel[i].VoiceNo].Index;
                 if(type==S2X_VOICE_TYPE_PCM && S->PCM[index].Flag&0x80 )
                     val= S->PCM[index].WaveNo | 0x8000;
                 else if(type==S2X_VOICE_TYPE_FM && S->FM[index].Flag&0x80)
@@ -362,11 +365,12 @@ void ui_info_s2_voice(int id,int ypos)
 
     S2X_State *S = DriverInterface->Driver;
 
-    int type = S2X_GetVoiceType(S,id);
-    int index = S2X_GetVoiceIndex(S,id,type);
+    int type = S->Voice[id].Type;
+    int index = S->Voice[id].Index;
 
     S2X_PCMVoice* PCM = &S->PCM[index];
     S2X_FMVoice* FM = &S->FM[index];
+    S2X_WSGVoice* WSG = &S->WSG[index];
 
     int flag;
     int trs=0, note=0;
@@ -377,7 +381,7 @@ void ui_info_s2_voice(int id,int ypos)
 
     set_color(ypos,44,43,35,COLOR_D_BLUE,COLOR_L_GREY);
 
-    if(type == S2X_VOICE_TYPE_PCM || type ==S2X_VOICE_TYPE_SE)
+    if(type == S2X_VOICE_TYPE_PCM || type ==S2X_VOICE_TYPE_SE || type==S2X_VOICE_TYPE_WSG)
     {
         //vno = S2X_VOICE_TYPE_SE ? 24+index : index;
 
@@ -480,6 +484,35 @@ void ui_info_s2_voice(int id,int ypos)
         C = FM->Channel;
         trs = 4;
         break;
+    case S2X_VOICE_TYPE_WSG:
+
+        if(!WSG->Channel)
+            return;
+        S2X_WSGChannel *W = &WSG->Channel->WSG;
+
+        SCRN(ypos++,44,40,"Voice %s",W->Active ? "Enabled":"Disabled");
+
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "WaveNo",      WSG->WaveNo);
+        SCRN(ypos++,45,40,"%-10s%s",
+                "Mode",        W->Noise ? "Noise" : "Tone");
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "PitchTab",    W->PitchNo);
+        SCRN(ypos++,45,40,"%-10s%02x (%04x, %02x)",
+                "EnvelopeL",   W->Env[1].No,W->Env[1].Pos,W->Env[1].Val);
+        SCRN(ypos++,45,40,"%-10s%02x (%04x, %02x)",
+                "EnvelopeR",   W->Env[0].No,W->Env[0].Pos,W->Env[0].Val);
+        SCRN(ypos++,45,40,"%-10s%08x",
+                "Freq",        W->Freq);
+        SCRN(ypos++,45,40,"%-10s%04x",
+                "SeqPos",      W->SeqPos);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "SeqRepeat",   W->SeqRepeat);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "SeqLoop",     W->SeqLoop);
+        SCRN(ypos++,45,40,"%-10s%02x (%02x)",
+                "Tempo",       W->Tempo, W->SeqWait);
+        return;
     }
 
     note = (P->Target>>8)+trs;

@@ -114,6 +114,10 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         v = atoi(cfg->data);
         if(SYSTEM1 && !strcmp(cfg->name,"type") && v)
             S->DriverType=S2X_TYPE_SYSTEM1+(v%2);
+        else if(!strcmp(cfg->name,"wsg_type") && v)
+            S->ConfigFlags |= S2X_CFG_WSG_TYPE;
+        else if(!strcmp(cfg->name,"wsg_cmd0b") && v)
+            S->ConfigFlags |= S2X_CFG_WSG_CMD0B;
         else if(!strcmp(cfg->name,"fm_volcalc") && v)
             S->ConfigFlags |= S2X_CFG_FM_VOL;
         else if(!strcmp(cfg->name,"pcm_adsr") && v>1)
@@ -221,7 +225,8 @@ void S2X_InitDriverType(S2X_State *S)
     case S2X_TYPE_SYSTEM1_ALT:
         if(!S->FMBase)
             S->FMBase = 0x10000;
-        S->PCMBase=S->FMBase;
+        S->PCMBase=0x4000; // WSG
+        S2X_SetVoiceType(S,0,S2X_VOICE_TYPE_WSG,8);
         break;
     case S2X_TYPE_NA:
         S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);

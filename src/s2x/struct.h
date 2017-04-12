@@ -30,6 +30,31 @@ typedef struct S2X_ChannelPriority S2X_ChannelPriority;
 typedef struct S2X_State S2X_State;
 typedef struct S2X_FMWrite S2X_FMWrite;
 
+struct S2X_WSGEnvelope {
+    uint8_t No;
+    uint16_t Pos;
+    uint8_t Val;
+    uint8_t Flag;
+};
+
+struct S2X_WSGChannel {
+    uint8_t Active;
+
+    uint32_t Freq;
+    struct S2X_WSGEnvelope Env[2];
+    uint8_t Noise;
+    uint8_t PitchNo;
+    uint8_t WaveNo;
+    uint8_t WaveSet;
+
+    uint8_t Tempo;
+
+    uint16_t SeqWait;
+    uint16_t SeqPos;
+    uint8_t SeqLoop;
+    uint8_t SeqRepeat;
+};
+
 struct S2X_Channel {
     uint8_t Enabled;
     uint8_t VoiceNo;
@@ -37,27 +62,9 @@ struct S2X_Channel {
 
     uint32_t UpdateMask;
     uint8_t Vars[S2X_CHN_MAX];
+    S2X_WSGChannel WSG;
 
     struct S2X_Track* Track;
-};
-
-struct S2X_WSGEnvelope {
-    uint8_t No;
-    uint16_t Pos;
-    uint8_t Val;
-};
-
-struct S2X_WSGChannel {
-    uint8_t Enabled;
-    uint8_t VoiceNo;
-    uint32_t Freq;
-    struct S2X_WSGEnvelope Env[2];
-    uint8_t Noise;
-    uint8_t PitchNo;
-    uint8_t WaveNo;
-    uint16_t SeqPos;
-    uint8_t SeqLoop;
-    uint8_t SeqRepeat;
 };
 
 struct S2X_Track {
@@ -80,7 +87,6 @@ struct S2X_Track {
     uint8_t LoopStackPos;
 
     struct S2X_Channel Channel[S2X_MAX_TRKCHN];
-    S2X_WSGChannel WSGChannel[S2X_MAX_VOICES_WSG];
 
     uint32_t SubStack[S2X_MAX_SUB_STACK];
 
@@ -224,12 +230,14 @@ struct S2X_WSGVoice {
 
     uint8_t WaveNo;
     uint8_t LastWaveNo;
-    uint16_t Pitch;
+    uint32_t Pitch;
+    uint32_t LastPitch;
 
-    S2X_WSGTrack* Track;
-    S2X_WSGChannel* Channel;
+    S2X_Track* Track;
+    S2X_Channel* Channel;
     int TrackNo;
     int ChannelNo;
+    int VoiceNo;
 };
 
 
@@ -286,6 +294,7 @@ struct S2X_State {
     uint8_t SongCount[2];
 
     uint16_t PCMPitchTable[129];
+    uint8_t WSGWaveData[1024];
 
     uint8_t FMLfo;
     uint8_t FMLfoWav;
@@ -313,6 +322,7 @@ struct S2X_State {
 //  uint16_t SEWave[S2X_MAX_VOICES_SE];
 //  int8_t SEVoice[S2X_MAX_VOICES_SE];
     S2X_SE SE[S2X_MAX_VOICES_SE];
+    S2X_WSGVoice WSG[S2X_MAX_VOICES_WSG];
 
     // List of allocated voices for each track and the associated priority.
     S2X_ChannelPriority ChannelPriority[S2X_MAX_VOICES][S2X_MAX_TRACKS];

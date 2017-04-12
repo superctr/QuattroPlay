@@ -178,6 +178,10 @@ void C352_fetch_sample(C352 *c, int i)
 
 void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
 {
+    // disabling filter also disables volume ramp?
+    if(c->v[i].latch_flags & C352_FLG_FILTER)
+        c->v[i].curr_vol[ch] = v;
+
     // do volume ramping to prevent clicks
     int16_t vol_delta = c->v[i].curr_vol[ch] - v;
     if(vol_delta != 0)

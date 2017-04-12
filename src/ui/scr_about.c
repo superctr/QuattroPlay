@@ -32,11 +32,11 @@ void scr_about()
         SCRN(y+1,2,FCOLUMNS-3,"Sound driver settings");
         SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
              "Driver", DriverInterface->Name);
-        SCRN(y+3,3,FCOLUMNS-4,"%-20s%s",
+        SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",
              "Driver type",DriverGetDriverInfo());
-        SCRN(y+4,3,FCOLUMNS-4,"%-20s%.0f Hz",
-             "Tick rate", DriverGetTickRate());
         SCRN(y+5,3,FCOLUMNS-4,"%-20s%.0f Hz",
+             "Tick rate", DriverGetTickRate());
+        SCRN(y+6,3,FCOLUMNS-4,"%-20s%.0f Hz",
              "Chip rate", DriverGetChipRate());
 /*
         SCRN(y+4,3,FCOLUMNS-4,"%-20s%s",

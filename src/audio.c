@@ -38,7 +38,7 @@ void QP_AudioCallback(void* data,Uint8* astream,int len)
 
                 if(Game->VgmLog)
                 {
-                    vgm_delay(441000/120);
+                    vgm_delay(441000/DriverGetTickRate());
                 }
                 S->DriverUpdate-=1;
 

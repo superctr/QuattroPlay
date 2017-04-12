@@ -28,6 +28,10 @@ void S2X_VoiceSetChannel(S2X_State *S,int VoiceNo,int TrackNo,int ChannelNo)
         S->PCM[index].ChannelNo = ChannelNo;
         S->PCM[index].TrackNo = TrackNo+1; // 0 indicates no allocation
         break;
+    case S2X_VOICE_TYPE_WSG:
+        S->WSG[index].ChannelNo = ChannelNo;
+        S->WSG[index].TrackNo = TrackNo+1; // 0 indicates no allocation
+        break;
     }
 
 }
@@ -48,6 +52,10 @@ void S2X_VoiceClearChannel(S2X_State *S,int VoiceNo)
     case S2X_VOICE_TYPE_PCM:
         S->PCM[index].VoiceNo = 0;
         S->PCM[index].TrackNo = 0; // 0 indicates no allocation
+        break;
+    case S2X_VOICE_TYPE_WSG:
+        S->WSG[index].VoiceNo = 0;
+        S->WSG[index].TrackNo = 0; // 0 indicates no allocation
         break;
     }
 }
@@ -136,6 +144,8 @@ void S2X_VoiceClear(S2X_State *S,int VoiceNo)
         return S2X_FMClear(S,&S->FM[index],index);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMClear(S,&S->PCM[index],index);
+    case S2X_VOICE_TYPE_WSG:
+        return S2X_WSGClear(S,&S->WSG[index],index);
     }
 }
 void S2X_VoiceCommand(S2X_State *S,S2X_Channel *C,int Command,uint8_t Data)
@@ -151,6 +161,8 @@ void S2X_VoiceCommand(S2X_State *S,S2X_Channel *C,int Command,uint8_t Data)
         return S2X_FMCommand(S,C,&S->FM[index]);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMCommand(S,C,&S->PCM[index]);
+    case S2X_VOICE_TYPE_WSG:
+        return S2X_WSGCommand(S,C,&S->WSG[index]);
     }
 }
 void S2X_VoiceUpdate(S2X_State *S,int VoiceNo)
@@ -164,6 +176,8 @@ void S2X_VoiceUpdate(S2X_State *S,int VoiceNo)
         return S2X_FMUpdate(S,&S->FM[index]);
     case S2X_VOICE_TYPE_PCM:
         return S2X_PCMUpdate(S,&S->PCM[index]);
+    case S2X_VOICE_TYPE_WSG:
+        return S2X_WSGUpdate(S,&S->WSG[index]);
     }
 
 }

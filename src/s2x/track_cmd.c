@@ -233,6 +233,54 @@ TRACKCOMMAND(tc_WriteChannelDummy)
     Q_DEBUG("\n");
 }
 
+static void RequestWSG(S2X_State *S, int TrackNo, int ParentSong, int SongNo)
+{
+    S->SongRequest[TrackNo] = SongNo|(S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
+    S->ParentSong[TrackNo] = ParentSong;
+}
+
+TRACKCOMMAND(tc_RequestWSG)
+{
+    LOGCMD;
+    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0, j;
+    int temp=0;
+    if(Command&0x40)
+        temp = arg_byte(S,T->PositionBase,&T->Position);
+    for(i=0;i<8;i++)
+    {
+        if(mask&0x80)
+        {
+            if(~Command&0x40)
+                temp = arg_byte(S,T->PositionBase,&T->Position);
+            // Allocate a slot for the song ID.
+            // The original sound driver does something completely
+            // different but the result is fairly similar
+            for(j=8;j<16;j++)   // first look for the same song ID
+            {
+                if((S->SongRequest[j]&0xff) == temp)
+                {
+                    RequestWSG(S,j,TrackNo,temp);
+                    goto done;
+                }
+            }
+            for(j=8;j<16;j++)   // then look for any free slot
+            {
+                if(!(S->SongRequest[j] & (S2X_TRACK_STATUS_START|S2X_TRACK_STATUS_BUSY)))
+                {
+                    RequestWSG(S,j,TrackNo,temp);
+                    goto done;
+                }
+            }
+            // no free slots available, we just pick one
+            RequestWSG(S,i+8,TrackNo,temp);
+        }
+done:
+        mask<<=1;
+    }
+    Q_DEBUG("\n");
+}
+
 void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mask)
 {
     int temp,pos;
@@ -588,8 +636,8 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 13 */ {S2X_CMD_CHN,S2X_CHN_PITDEP,tc_WriteChannel}, // pitch env depth
 /* 14 */ {S2X_CMD_CHN,S2X_CHN_ENV,tc_WriteChannel}, // volume env
 /* 15 */ {S2X_CMD_CHN,S2X_CHN_DEL,tc_WriteChannel}, // delay, but it works different?
-/* 16 */ {S2X_CMD_CHN,S2X_CHN_C18,tc_WriteChannelDummy}, // plays a track on the WSG
-/* 17 */ {S2X_CMD_CHN,S2X_CHN_C18,tc_WriteChannelDummy}, //???
+/* 16 */ {S2X_CMD_CHN,S2X_CHN_C18,tc_RequestWSG}, // plays a track on the WSG
+/* 17 */ {S2X_CMD_CHN,S2X_CHN_C18,tc_WriteChannelDummy}, // play a DAC sample
 /* 18 */ {S2X_CMD_CHN,S2X_CHN_LFO,tc_WriteChannel}, // lfo
 /* 19 */ {S2X_CMD_CHN,S2X_CHN_PAN,tc_WriteChannel}, // pan
 /* 1a */ {1,-1,tc_Nop},

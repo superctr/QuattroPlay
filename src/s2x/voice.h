@@ -38,4 +38,9 @@ void S2X_FMSetLfo(S2X_State *S,S2X_FMVoice *V,int LfoNo);
 
 void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int VolMod);
 
+void S2X_WSGClear(S2X_State *S,S2X_WSGVoice *V,int VoiceNo);
+void S2X_WSGCommand(S2X_State *S,S2X_Channel *C,S2X_WSGVoice *V);
+void S2X_WSGUpdate(S2X_State *S,S2X_WSGVoice *V);
+
+
 #endif // S2X_VOICE_H_INCLUDED

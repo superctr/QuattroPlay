@@ -8,6 +8,7 @@
 #include "helper.h"
 #include "track.h"
 #include "voice.h"
+#include "wsg.h"
 
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
@@ -28,6 +29,8 @@ void S2X_Init(S2X_State *S)
     }
     S2X_InitDriverType(S);
     S2X_MakePitchTable(S);
+    if(SYSTEM1)
+        S2X_WSGLoadWave(S);
 #if 0
     int i;
     for(i=0;i<128;i++)

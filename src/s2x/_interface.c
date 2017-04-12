@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "../qp.h"
 #include "../lib/vgm.h"
@@ -8,6 +9,7 @@
 #include "helper.h"
 #include "tables.h"
 #include "voice.h"
+#include "wsg.h"
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
@@ -58,6 +60,13 @@ void S2X_IDeinit(void* d)
 void S2X_IVgmOpen(void* d)
 {
     S2X_State* S = d;
+
+    if(SYSTEM1)
+    {
+        S2X_InitDriverType(S);
+        S2X_WSGLoadWave(S);
+    }
+
     vgm_datablock(0x92,0x1000000,S->PCMChip.wave,0x1000000,S->PCMChip.wave_mask,0);
     S->PCMChip.vgm_log = 1;
 }
@@ -336,6 +345,7 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
 {
     S2X_State* S = d;
     S2X_PCMVoice* PCM;
+    S2X_WSGVoice* WSG;
     S2X_FMVoice* FM;
     memset(V,0,sizeof(*V));
 
@@ -421,6 +431,31 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
             V->Key += PCM->Channel->Vars[S2X_CHN_TRS];
         }
         break;
+    case S2X_VOICE_TYPE_WSG:
+        WSG = &S->WSG[index];
+        V->Status = 0;
+        V->Track = 0;
+        if(WSG->TrackNo)
+        {
+            V->Status|=VOICE_STATUS_ACTIVE;
+            V->Track = WSG->TrackNo-1;
+        }
+        if(WSG->Channel)
+        {
+            double afreq = (440*32)*(65536/(double)S->PCMChip.rate);
+            double keyfreq = WSG->Channel->WSG.Freq * (72.0/256.0);
+            double key = 46 + (12.0*log2(keyfreq/afreq));
+
+            V->Pitch = 256.0*key;
+            V->Key = key+0.5;
+
+            V->Preset = WSG->Channel->WSG.WaveNo;
+            if(WSG->Channel->WSG.Env[0].Val || WSG->Channel->WSG.Env[1].Val)
+                V->Status|=VOICE_STATUS_PLAYING;
+        }
+
+        V->Channel = WSG->ChannelNo;
+        V->VoiceType = VOICE_TYPE_MELODY|VOICE_TYPE_PCM;
     }
     return 0;
 }
@@ -451,6 +486,10 @@ uint16_t S2X_IGetVoiceStatus(void* d,int id)
     case S2X_VOICE_TYPE_SE:
         if(S->SE[index].Type && S2X_C352_R(S,(16+index),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
             v = 0xf000 | S->SE[index].Wave;
+        break;
+    case S2X_VOICE_TYPE_WSG:
+        if(S->WSG[index].TrackNo)
+            v = 0x8000|(S->WSG[index].TrackNo-1)<<8|(S->WSG[index].ChannelNo);
         break;
     default:
         return 0;
