@@ -233,53 +233,6 @@ TRACKCOMMAND(tc_WriteChannelDummy)
     Q_DEBUG("\n");
 }
 
-static void RequestWSG(S2X_State *S, int TrackNo, int ParentSong, int SongNo)
-{
-    S->SongRequest[TrackNo] = SongNo|(S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
-    S->ParentSong[TrackNo] = ParentSong;
-}
-
-TRACKCOMMAND(tc_RequestWSG)
-{
-    //LOGCMD;
-    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
-    int i=0, j;
-    int temp=0;
-    if(Command&0x40)
-        temp = arg_byte(S,T->PositionBase,&T->Position);
-    for(i=0;i<8;i++)
-    {
-        if(mask&0x80)
-        {
-            if(~Command&0x40)
-                temp = arg_byte(S,T->PositionBase,&T->Position);
-            // Allocate a slot for the song ID.
-            // The original sound driver does something completely
-            // different but the result is fairly similar
-            for(j=8;j<16;j++)   // first look for the same song ID
-            {
-                if((S->SongRequest[j]&0xff) == temp)
-                {
-                    RequestWSG(S,j,TrackNo,temp);
-                    goto done;
-                }
-            }
-            for(j=8;j<16;j++)   // then look for any free slot
-            {
-                if(!(S->SongRequest[j] & (S2X_TRACK_STATUS_START|S2X_TRACK_STATUS_BUSY)))
-                {
-                    RequestWSG(S,j,TrackNo,temp);
-                    goto done;
-                }
-            }
-            // no free slots available, we just pick one
-            RequestWSG(S,i+8,TrackNo,temp);
-        }
-done:
-        mask<<=1;
-    }
-}
-
 void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mask)
 {
     int temp,pos;
@@ -311,7 +264,6 @@ void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mas
 TRACKCOMMAND(tc_InitChannel)
 {
     int i = (Command&1)<<3;
-
     if(SYSTEM1 || (TrackNo & 8)) // FM
         i = 24;
     else if((Command&0x3f) == 0x1a)
@@ -384,6 +336,66 @@ TRACKCOMMAND(tc_RequestTrack)
 
     S->SongRequest[i] = temp| (S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
     S->ParentSong[i] = TrackNo;
+}
+
+static void RequestWSG(S2X_State *S, int TrackNo, int ParentSong, int SongNo)
+{
+    S->SongRequest[TrackNo] = SongNo|(S2X_TRACK_STATUS_START | S2X_TRACK_STATUS_SUB);
+    S->ParentSong[TrackNo] = ParentSong;
+}
+
+TRACKCOMMAND(tc_RequestWSG)
+{
+    //LOGCMD;
+    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0, j;
+    int temp=0;
+    if(Command&0x40)
+        temp = arg_byte(S,T->PositionBase,&T->Position);
+    for(i=0;i<8;i++)
+    {
+        if(mask&0x80)
+        {
+            if(~Command&0x40)
+                temp = arg_byte(S,T->PositionBase,&T->Position);
+            // Allocate a slot for the song ID.
+            // The original sound driver does something completely
+            // different but the result is fairly similar
+            for(j=8;j<16;j++)   // first look for the same song ID
+            {
+                if((S->SongRequest[j]&0xff) == temp)
+                {
+                    RequestWSG(S,j,TrackNo,temp);
+                    goto done;
+                }
+            }
+            for(j=8;j<16;j++)   // then look for any free slot
+            {
+                if(!(S->SongRequest[j] & (S2X_TRACK_STATUS_START|S2X_TRACK_STATUS_BUSY)))
+                {
+                    RequestWSG(S,j,TrackNo,temp);
+                    goto done;
+                }
+            }
+            // no free slots available, we just pick one
+            RequestWSG(S,i+8,TrackNo,temp);
+        }
+done:
+        mask<<=1;
+    }
+}
+
+TRACKCOMMAND(tc_X68KRequest)
+{
+    int i = arg_byte(S,T->PositionBase,&T->Position);
+    if(S->ConfigFlags & S2X_CFG_DSPIRIT)
+    {
+        // Hack for X68K Dragon Spirit
+        if(i==0x80) // Ending
+            RequestWSG(S,8,TrackNo,30);
+        else if(i==0x87) // Last Scene (TODO)
+            Q_DEBUG("voice sample here\n");
+    }
 }
 
 TRACKCOMMAND(tc_Percussion)
@@ -646,7 +658,7 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 1e */ {3,-1,tc_RequestTrack}, // FM
 /* 1f */ {S2X_CMD_CHN,-1,tc_WriteChannel}, // not used
 /* 20 */ {2,-1,tc_InitChannel},
-/* 21 */ {2,-1,tc_InitChannel},
+/* 21 */ {2,-1,tc_X68KRequest}, // Dragon Spirit X68K: ADPCM request
 /* 22 */ {1,-1,tc_Nop}, // not used
 /* 23 */ {1,-1,tc_Nop},
 /* 24 */ {1,-1,tc_Nop},

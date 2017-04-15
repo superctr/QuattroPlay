@@ -73,6 +73,8 @@ enum {
     S2X_CFG_WSG_TYPE = 1<<6,
     // WSG command 0b handling
     S2X_CFG_WSG_CMD0B = 1<<7,
+    // Dragon Spirit X68K hack for WSG/voice samples
+    S2X_CFG_DSPIRIT = 1<<8
 };
 
 

@@ -165,6 +165,8 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
                src+=0x10000;
             }
         }
+        else if(!strcmp(cfg->name,"fm_dsx68k") && v) // Dragon Spirit X68K hack
+            S->ConfigFlags |= S2X_CFG_DSPIRIT;
     }
 }
 
