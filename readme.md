@@ -2,9 +2,18 @@
 
 ## About
 
-This program implements the Quattro sound driver used by Namco games in the mid and late 90s. It can play music and sound effects from over 75 games, with a tracker-style pattern visualization, channel muting and more.
+This program implements the sound drivers used by Namco arcade games from the mid 80s to the late 90s. It can play music and sound effects from over 140 games, with a tracker-style pattern visualization, channel muting and more.
 
 QuattroPlay is free software licensed under the GPL version 2.
+
+### Supported Sound Drivers
+
+*   Thunder Ceptor (FM only)
+*   System 86 (FM only)
+*   System 1 (Except some games)
+*   System 2/21 (all known games supported)
+*   NA-1/2 (all known games supported)
+*   Quattro (System 11/12/22/23/NB/FL, all known games supported)
 
 ## Build instructions
 
@@ -112,7 +121,9 @@ This might not be complete yet.
 
 ## Notes
 
-*	Mostly everything works.
+*   The C30 chip is not emulated, instead the C352 is used. This makes VGM logging possible.
+*   The C140 chip is not emulated, instead the C352 is used. The compressed sample format differs, breaking VGM logs in a few games.
+*   The C219 chip is not emulated, instead the C352 is used. This actually improves the sound quality of VGM logs, as the C219 chip is not accurately emulated in VGM players.
 *	Position envelopes (used by a few songs in _Cyber Commando_) are not supported.
 
 ## Copyright
