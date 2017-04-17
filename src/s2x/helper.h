@@ -37,4 +37,6 @@ void S2X_InitDriverType(S2X_State *S);
 // internal defines for interface functions
 double S2X_ITickRate(void* d);
 
+uint8_t S2X_ConvertFMKeycode(uint8_t d);
+
 #endif // S2X_HELPER_H_INCLUDED

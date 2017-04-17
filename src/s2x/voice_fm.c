@@ -8,6 +8,7 @@
 
 #define OLD_VOL_MODE (S->ConfigFlags & S2X_CFG_FM_VOL)
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 
 void S2X_FMClear(S2X_State *S,S2X_FMVoice *V,int VoiceNo)
 {
@@ -42,8 +43,13 @@ void S2X_FMKeyOff(S2X_State *S,S2X_FMVoice *V)
 void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
 {
     int i;
-    uint32_t pos = V->BaseAddr&0xffff00;
-    pos += S2X_ReadWord(S,V->BaseAddr+0x06)+(32*InsNo);
+    uint32_t pos;
+
+    if(SYSTEM86)
+        pos = V->BaseAddr+S->FMInsTab;
+    else
+        pos = (V->BaseAddr&0xffff00)+S2X_ReadWord(S,V->BaseAddr+0x06);
+    pos += (32*InsNo);
 
     S2X_FMKeyOff(S,V);
     for(i=0;i<4;i++)
@@ -52,19 +58,21 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     V->InsPtr = pos;
     V->InsNo=InsNo;
     V->Flag|=0x80;
-    V->Carrier = S2X_FMConnection[S2X_ReadByte(S,pos)&0x07];
+    V->Carrier = SYSTEM86 ? 0 : S2X_FMConnection[S2X_ReadByte(S,pos)&0x07];
     V->ChipFlags = S2X_ReadByte(S,pos)&0x3f;
     V->InsLfo = S2X_ReadByte(S,pos+3);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
     for(i=2;i<28;i++)
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
-    for(i=0;i<=V->Carrier;i++)
-        S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
+    if(!SYSTEM86)
+        for(i=0;i<=V->Carrier;i++)
+            S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
     V->Channel->Vars[S2X_CHN_PAN]=0xc0;
 
-    return S2X_FMSetVol(S,V);
+    if(!SYSTEM86)
+        return S2X_FMSetVol(S,V);
 }
 
 // sets volume (Reads TL levels from instuments)
@@ -75,7 +83,11 @@ void S2X_FMSetVol(S2X_State *S,S2X_FMVoice *V)
     int i,d;
     for(i=0;i<=V->Carrier;i++)
     {
-        if(OLD_VOL_MODE)
+        if(SYSTEM86)
+        {
+            d = (~(V->Volume>>1)) & 0x7f;
+        }
+        else if(OLD_VOL_MODE)
         {
             d = ~(((S2X_ReadByte(S,V->InsPtr+0x0b-i)&0x7f)^0x7f)*V->Volume) >> 8;
             d &= 0x7f;
@@ -142,7 +154,7 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
     V->Track = C->Track;
     V->Channel = C;
     V->BaseAddr = V->Track->PositionBase;
-    if(SYSTEM1)
+    if(SYSTEM1 && !SYSTEM86)
         V->BaseAddr+=2;
     //V->BaseAddr = S->FMBase;
 
@@ -190,9 +202,14 @@ void S2X_FMCommand(S2X_State *S,S2X_Channel *C,S2X_FMVoice *V)
                     V->Volume = temp>127 ? 127 : temp;
                 }
                 S2X_FMSetVol(S,V);
+                if(SYSTEM86)
+                    S2X_FMWriteVol(S,V,V->Track->Fadeout>>8);
                 break;
             case S2X_CHN_LFO:
-                S2X_FMSetLfo(S,V,data);
+                if(SYSTEM86)
+                    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,data&0x73);
+                else
+                    S2X_FMSetLfo(S,V,data);
                 break;
             case S2X_CHN_PAN:
                 if(S->ConfigFlags & S2X_CFG_FM_PAN)
@@ -239,8 +256,8 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
         S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0);
         S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80);
     }
-
-    return S2X_FMWriteVol(S,V,V->Track->Fadeout>>8);
+    if(!SYSTEM86)
+        return S2X_FMWriteVol(S,V,V->Track->Fadeout>>8);
 }
 
 void S2X_FMUpdateGate(S2X_State *S,S2X_FMVoice *V)
@@ -252,7 +269,7 @@ void S2X_FMUpdateGate(S2X_State *S,S2X_FMVoice *V)
 void S2X_FMUpdateLfo(S2X_State *S,S2X_FMVoice *V)
 {
     int d;
-    if(!V->LfoFlag)
+    if(!V->LfoFlag || SYSTEM86)
         return;
     if(S->FMLfoDepthDelta)
     {

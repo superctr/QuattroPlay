@@ -466,6 +466,18 @@ static uint32_t s2x_pattern_arg_pos(uint32_t* TrackPos)
     *TrackPos += 2;
     return r;
 }
+static uint32_t s2x_s86jump(uint32_t* TrackPos)
+{
+    uint32_t songtab = posbase + S->FMSongTab + (2*s2x_pattern_arg_byte(TrackPos));
+    return posbase + ((S->Data[songtab]<<8)|(S->Data[songtab+1]&0xff));
+}
+static int16_t s2x_fmkeycode(uint8_t d)
+{
+    if((d&3) == 3)
+        return 0x100;
+    return ((d>>2)*3)+(d&3);
+}
+
 static void s2x_generate(int TrackNo)
 {
     struct S2X_TrackCommandEntry* CmdTab = S2X_TrackCommandTable[S->DriverType];
@@ -556,6 +568,8 @@ static void s2x_generate(int TrackNo)
                         // transpose write
                         if(skip == S2X_CMD_TRS)
                             transpose[i] = data;
+                        else if(skip == S2X_CMD_FRQ && S->DriverType == S2X_TYPE_SYSTEM86)
+                            P->pat[P->len][i] = s2x_fmkeycode(data&0xff);
                         else if(skip == S2X_CMD_FRQ && data<0xff)
                             P->pat[P->len][i] = ((data+transpose[i])&0xff);
                         else if(skip == S2X_CMD_FRQ)
@@ -583,6 +597,14 @@ static void s2x_generate(int TrackNo)
             case S2X_CMD_CALL: // sub
                 substack[subpos] = pos+2-posbase;
                 pos = s2x_pattern_arg_pos(&pos);
+                subpos++;
+                break;
+            case S2X_CMD_JUMP86: // jump
+                pos = s2x_s86jump(&pos);
+                break;
+            case S2X_CMD_CALL86: // sub
+                substack[subpos] = pos+1-posbase;
+                pos = s2x_s86jump(&pos);
                 subpos++;
                 break;
             case S2X_CMD_REPT: // repeat
@@ -634,6 +656,11 @@ static void s2x_generate(int TrackNo)
                 if(!subpos)
                     return;
                 pos = substack[--subpos]+posbase;
+                break;
+            case S2X_CMD_EMPTY:
+                for(i=0;i<S2X_MAX_TRKCHN;i++)
+                    P->pat[P->len][i] = -1;
+                P->len++;
                 break;
             default:
                 pos += skip-1;

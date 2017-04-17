@@ -42,10 +42,11 @@ void ui_info_s2_track(int id,int ypos)
     ypos++;
 
     double bpm = 0;
-    if( (T->BaseTempo*T->Tempo) > 0 )
-        bpm = (double)1800/ (T->BaseTempo*T->Tempo);
-    if(S->ConfigFlags & S2X_CFG_SYSTEM1)
-        bpm/=2;
+
+    if(S->DriverType == S2X_TYPE_SYSTEM86)
+        bpm = (double) ((T->BaseTempo*T->Tempo)/65536.0) * (DriverGetTickRate()*15);
+    else if((T->BaseTempo*T->Tempo) > 0)
+        bpm = (double) (DriverGetTickRate()*15) / (T->BaseTempo*T->Tempo);
 
     //                        .............
     SCRN(ypos,44,40,"Pos:   %06x  BPM:%7.2f  Vol:%3d",T->Position+T->PositionBase,bpm,T->TrackVolume);

@@ -48,6 +48,7 @@ enum {
     S2X_TYPE_SYSTEM2 = 0,
     S2X_TYPE_SYSTEM1,
     S2X_TYPE_SYSTEM1_ALT,
+    S2X_TYPE_SYSTEM86,
     S2X_TYPE_NA,
     S2X_TYPE_MAX,
 };
@@ -76,6 +77,5 @@ enum {
     // Dragon Spirit X68K hack for WSG/voice samples
     S2X_CFG_DSPIRIT = 1<<8
 };
-
 
 #endif // S2X_ENUM_H_INCLUDED

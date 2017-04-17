@@ -10,8 +10,10 @@
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+#define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 #define S1_WSG (S->ConfigFlags & S2X_CFG_SYSTEM1 && TrackNo > 7)
 
+// this has become a mess... need to split into a few functions i think.
 void S2X_TrackInit(S2X_State* S, int TrackNo)
 {
     S->SongTimer[TrackNo] = 0;
@@ -33,12 +35,17 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     if(SongNo & 0x100)
         T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
 
-    T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
+    if(SYSTEM86)
+        T->Position = S2X_ReadWord(S,T->PositionBase+S->FMSongTab+(2*(SongNo&0xff)));
+    else
+        T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
     //Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
 
     int invalid=0;
 
-    uint8_t header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
+    uint8_t header_byte = 0;
+    if(T->Position+T->PositionBase < 0x400000)
+        header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
     if(S1_WSG)
     {
         uint8_t id=0;
@@ -59,10 +66,13 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         else
             invalid=1;
     }
+    // skip detection for system86
+    else if(SYSTEM86)
+        invalid= (SongNo&0xff && T->Position >= -T->PositionBase) ? -1 : 1;
     // NA-1/NA-2 has a song count
     else if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
         invalid=1;
-    // shitty hack for dspirit (song begins without an INIT command...)
+    // shitty hack for dspirit & system86 (song begins without an INIT command...)
     else if(SYSTEM1 && (header_byte == 0x01 || header_byte == 0x02))
         invalid=-1;
     // the sound driver does a check to make sure first byte is either 0x20 or 0x21
@@ -153,7 +163,14 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
     if(S1_WSG)
         return S2X_WSGTrackUpdate(S,TrackNo,T);
 
-    if((int16_t)(T->UpdateTime-S->FrameCnt) > 0)
+    if(SYSTEM86 && T->Tempo)
+    {
+        uint32_t counter = T->UpdateTime + T->Tempo*T->BaseTempo;
+        T->UpdateTime=counter&0xffff;
+        if(counter < 0xffff)
+            return;
+    }
+    else if((int16_t)(T->UpdateTime-S->FrameCnt) > 0)
         return;
 
     if(T->RestCount)
@@ -196,9 +213,9 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
             }
         }
     }
-
     // Calculate tempo
-    T->UpdateTime += T->Tempo*T->BaseTempo;
+    if(!SYSTEM86)
+        T->UpdateTime += T->Tempo*T->BaseTempo;
 }
 
 // calculate track volume incl fade out and attenuation

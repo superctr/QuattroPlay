@@ -286,6 +286,10 @@ struct S2X_State {
     uint32_t FMBase;
     uint32_t WaveBase[S2X_MAX_BANK][8];
 
+    // song table pointers for System86
+    uint32_t FMSongTab;
+    uint32_t FMInsTab;
+
     // sound driver globals
     uint16_t FrameCnt;
     int BankSelect;

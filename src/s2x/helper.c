@@ -96,6 +96,11 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
         S->DriverType=S2X_TYPE_SYSTEM1;
         S->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
     }
+    else if(!strcmp(G->Type,"System86"))
+    {
+        S->DriverType=S2X_TYPE_SYSTEM86;
+        S->ConfigFlags|=S2X_CFG_SYSTEM1|S2X_CFG_FM_VOL;
+    }
     else if(!strcmp(G->Type,"NA"))
     {
         S->DriverType=S2X_TYPE_NA;
@@ -130,6 +135,10 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
             S->ConfigFlags |= S2X_CFG_FM_PAN;
         else if(!strcmp(cfg->name,"fm_writerate"))
             S->FMWriteRate = atof(cfg->data);
+        else if(!strcmp(cfg->name,"fm_songtab"))
+            S->FMSongTab = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"fm_instab"))
+            S->FMInsTab = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"fm_base"))
             S->FMBase = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"pcm_base"))
@@ -223,6 +232,12 @@ void S2X_InitDriverType(S2X_State *S)
 
     switch(S->DriverType)
     {
+    case S2X_TYPE_SYSTEM86:
+        if(!S->FMBase)
+            S->FMBase = -0x4000;
+        if(!S->FMSongTab)
+            S->FMBase = 0x4000;
+        break;
     case S2X_TYPE_SYSTEM1:
     case S2X_TYPE_SYSTEM1_ALT:
         if(!S->FMBase)
@@ -254,3 +269,9 @@ void S2X_InitDriverType(S2X_State *S)
     }
 }
 
+uint8_t S2X_ConvertFMKeycode(uint8_t d)
+{
+    if((d&3) == 3)
+        return 0xff;
+    return ((d>>2)*3)+(d&3);
+}

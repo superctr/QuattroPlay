@@ -12,6 +12,7 @@
 #define LOGCMD Q_DEBUG("Trk %02x Pos %06x, Cmd: %02x (%s)\n",TrackNo,T->PositionBase+T->Position,Command,__func__)
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
+#define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 
 static uint8_t arg_byte(S2X_State *S,int b,uint16_t* d)
 {
@@ -31,6 +32,11 @@ TRACKCOMMAND(tc_Nop)
     return;
 }
 
+TRACKCOMMAND(tc_Wait)
+{
+    T->TicksLeft=0;
+}
+
 TRACKCOMMAND(tc_TrackVol)
 {
     T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
@@ -46,9 +52,18 @@ TRACKCOMMAND(tc_Speed)
     T->Tempo = arg_byte(S,T->PositionBase,&T->Position);
 }
 
+static int Sys86Jump(S2X_State* S,uint32_t posbase,uint8_t id)
+{
+    return S2X_ReadWord(S,posbase+S->FMSongTab+(2*(id&0xff)));
+}
+
 TRACKCOMMAND(tc_JumpSub)
 {
-    int temp = arg_word(S,T->PositionBase,&T->Position);
+    int temp;
+    if(CommandType == 1)
+        temp = Sys86Jump(S,T->PositionBase,arg_byte(S,T->PositionBase,&T->Position));
+    else
+        temp = arg_word(S,T->PositionBase,&T->Position);
     // if calling the same subroutine inside itself, do not increase the stack
     if(T->SubStackPos && T->SubStack[T->SubStackPos-1] == T->Position)
     {
@@ -83,7 +98,10 @@ TRACKCOMMAND(tc_Return)
 
 TRACKCOMMAND(tc_Jump)
 {
-    T->Position = arg_word(S,T->PositionBase,&T->Position);
+    if(CommandType == 1)
+        T->Position = Sys86Jump(S,T->PositionBase,arg_byte(S,T->PositionBase,&T->Position));
+    else
+        T->Position = arg_word(S,T->PositionBase,&T->Position);
     QP_LoopDetectJump(&S->LoopDetect,TrackNo,T->PositionBase+T->Position);
 }
 
@@ -167,6 +185,17 @@ TRACKCOMMAND(tc_Loop)
     }
 }
 
+TRACKCOMMAND(tc_TrackVolS86)
+{
+    T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0;
+    for(i=0;i<S2X_MAX_TRKCHN;i++)
+    {
+        T->Channel[i].UpdateMask |= 1<<S2X_CHN_VOL;
+        S2X_VoiceCommand(S,&T->Channel[i],0,0);
+    }
+}
+
 TRACKCOMMAND(tc_WriteChannel)
 {
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
@@ -175,13 +204,21 @@ TRACKCOMMAND(tc_WriteChannel)
         temp = arg_byte(S,T->PositionBase,&T->Position);
     if((Command&0x3f)==0x21) // NA-1/2 bios has duplicate 'set voice number' commands
         Command=0x20 | (Command&0x40);
-    type = (CommandType == -1) ? (Command&0x3f)-S2X_CHN_OFFSET : CommandType;
+    type = (CommandType == -1) ? (Command&0x3f)-S2X_CHN_OFFSET : CommandType&0x3f;
     while(mask)
     {
         if(mask&0x80)
         {
             if(~Command&0x40)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
+            // some special cases for System86
+            if(SYSTEM86 && type == S2X_CHN_FRQ)
+            {
+                if(temp != 0xff) // convert keycode
+                    temp = S2X_ConvertFMKeycode(temp);
+                if(CommandType&0x40) // legato
+                    ++T->Channel[i].Vars[S2X_CHN_LEG];
+            }
             T->Channel[i].Vars[type] = temp;
             T->Channel[i].UpdateMask |= 1<<type;
             // voice set var function here
@@ -196,8 +233,8 @@ TRACKCOMMAND(tc_WriteChannel)
         mask<<=1;
         i++;
     }
-    // key-on
-    if(type == S2X_CHN_FRQ)
+    // for key-on
+    if(type == S2X_CHN_FRQ && CommandType != (S2X_CHN_FRQ|0x40))
         T->TicksLeft=0;
 }
 
@@ -495,6 +532,16 @@ TRACKCOMMAND(tc_Dummy)
     }
 }
 
+// set LFO (system86)
+TRACKCOMMAND(tc_SetLfo)
+{
+    uint8_t val = arg_byte(S,T->PositionBase,&T->Position);
+    const uint8_t regs[4] = {OPM_LFO_FRQ,OPM_LFO_WAV,OPM_LFO_DEP,OPM_LFO_DEP};
+    if(CommandType&2)
+        val = CommandType&1 ? val|0x80 : val&0x7f;
+    S2X_OPMWrite(S,0,0,regs[CommandType],val);
+}
+
 // system 2/21 command table
 struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 {
@@ -664,10 +711,53 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 24 */ {1,-1,tc_Nop},
 };
 
+// system86 track command table (genpeitd)
+struct S2X_TrackCommandEntry S2X_S86TrackCommandTable[S2X_MAX_TRKCMD] =
+{
+/* 00 */ {S2X_CMD_EMPTY,-1,tc_Wait},
+/* 01 */ {2,-1,tc_TrackVolS86},
+/* 02 */ {2,-1,tc_Tempo},
+/* 03 */ {2,-1,tc_Speed},
+/* 04 */ {S2X_CMD_END,-1,tc_Dummy},
+/* 05 */ {S2X_CMD_END,-1,tc_Dummy},
+/* 06 */ {S2X_CMD_CALL86,1,tc_JumpSub}, // subroutine
+/* 07 */ {S2X_CMD_RET,-1,tc_Return},
+/* 08 */ {S2X_CMD_FRQ,S2X_CHN_FRQ,tc_WriteChannel}, // key on
+/* 09 */ {S2X_CMD_CHN,S2X_CHN_WAV,tc_WriteChannel}, // patch number
+/* 0a */ {S2X_CMD_CHN,S2X_CHN_VOL,tc_WriteChannel}, // volume
+/* 0b */ {S2X_CMD_CHN,S2X_CHN_PAN,tc_WriteChannel}, // pan
+/* 0c */ {S2X_CMD_CHN,S2X_CHN_DTN,tc_WriteChannel}, // detune
+/* 0d */ {S2X_CMD_EMPTY,-1,tc_Wait},
+/* 0e */ {S2X_CMD_JUMP,-1,tc_Jump},
+/* 0f */ {S2X_CMD_JUMP86,1,tc_Jump},
+/* 10 */ {1,1,tc_Dummy}, // actually key off
+/* 11 */ {S2X_CMD_REPT,-1,tc_Repeat},
+/* 12 */ {S2X_CMD_LOOP,-1,tc_Loop},
+/* 13 */ {S2X_CMD_FRQ,S2X_CHN_FRQ|0x40,tc_WriteChannel}, // Not used
+/* 14 */ {S2X_CMD_CHN,S2X_CHN_LFO,tc_WriteChannel}, // Not used
+/* 15 */ {2,0,tc_SetLfo}, // LFO Freq
+/* 16 */ {2,3,tc_SetLfo}, // LFO Phase
+/* 17 */ {2,2,tc_SetLfo}, // LFO Waveform
+/* 18 */ {2,1,tc_SetLfo}, // LFO Amplitude
+/* 19 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1a */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1b */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1c */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1d */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1e */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 1f */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 20 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 21 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 22 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 23 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+/* 24 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
+};
+
 struct S2X_TrackCommandEntry* S2X_TrackCommandTable[S2X_TYPE_MAX] =
 {
     S2X_S2TrackCommandTable,
     S2X_S1TrackCommandTable,
     S2X_S1AltTrackCommandTable,
+    S2X_S86TrackCommandTable,
     S2X_NATrackCommandTable // NA
 };
