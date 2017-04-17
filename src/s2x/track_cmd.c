@@ -185,17 +185,6 @@ TRACKCOMMAND(tc_Loop)
     }
 }
 
-TRACKCOMMAND(tc_TrackVolS86)
-{
-    T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
-    int i=0;
-    for(i=0;i<S2X_MAX_TRKCHN;i++)
-    {
-        T->Channel[i].UpdateMask |= 1<<S2X_CHN_VOL;
-        S2X_VoiceCommand(S,&T->Channel[i],0,0);
-    }
-}
-
 TRACKCOMMAND(tc_WriteChannel)
 {
     uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
@@ -532,6 +521,17 @@ TRACKCOMMAND(tc_Dummy)
     }
 }
 
+// track vol (system86)
+TRACKCOMMAND(tc_TrackVolS86)
+{
+    T->TrackVolume = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0;
+    for(i=0;i<S2X_MAX_TRKCHN;i++)
+    {
+        T->Channel[i].UpdateMask |= 1<<S2X_CHN_VOL;
+        S2X_VoiceCommand(S,&T->Channel[i],0,0);
+    }
+}
 // set LFO (system86)
 TRACKCOMMAND(tc_SetLfo)
 {

@@ -167,7 +167,7 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
     {
         uint32_t counter = T->UpdateTime + T->Tempo*T->BaseTempo;
         T->UpdateTime=counter&0xffff;
-        if(counter < 0xffff)
+        if(counter < 0x10000)
             return;
     }
     else if((int16_t)(T->UpdateTime-S->FrameCnt) > 0)
