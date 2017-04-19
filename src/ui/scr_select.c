@@ -36,8 +36,11 @@ static void scr_select_input()
         returncode = select_pos+1;
         select_pos_check();
         Game->PlaylistPosition=select_pos;
-    case SDLK_r: // refresh
-
+        break;
+    case SDLK_F3: // refresh rom defs
+        if(!Audit->AuditFlag)
+            Audit->Count = 0;
+        break;
     default:
         break;
     }
@@ -54,19 +57,45 @@ void scr_select()
     }
     */
 
+    if(!Audit->AuditFlag && !Audit->Count)
+    {
+        Audit->AuditFlag = 2;
+        SDL_Thread *t = NULL;
+        t = SDL_CreateThread(AuditGames,"AuditGames",Audit);
+        if(!t)
+            AuditGames(Audit);
+    }
+    if(!Audit->AuditFlag && Audit->Count && !Audit->CheckCount)
+    {
+        Audit->AuditFlag = 1;
+        SDL_Thread *t = NULL;
+        t = SDL_CreateThread(AuditRoms,"AuditRoms",Audit);
+        if(!t)
+            AuditRoms(Audit);
+    }
+
     set_color(1,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_50,COLOR_L_GREY);
     set_color(3,1,1,FCOLUMNS-2,COLOR_D_BLUE|CFLAG_YSHIFT_25,COLOR_L_GREY);
     set_color(5,1,FROWS-7,FCOLUMNS-2,COLOR_D_BLUE,COLOR_L_GREY);
     set_color(49,0,1,FCOLUMNS,COLOR_D_BLUE,COLOR_L_GREY);
     SCRN(1,1,FCOLUMNS-2,QP_TITLE " Version " QP_VERSION " ("QP_WEBSITE")");
-    SCRN(3,1,FCOLUMNS-2,"Select a game");
 
-    if(Audit->Count == 0)
+    if(Audit->AuditFlag == 2)
+    {
+        SCRN(3,1,FCOLUMNS-2,"Reading definitions... (%d)",Audit->Count);
+        SCRN(5,1,FCOLUMNS-2,"Please wait ...");
+    }
+    else if(Audit->Count == -1)
     {
         SCRN(5,1,FCOLUMNS-2,"No game configs present");
     }
-    else
+    else if(Audit->Count > 0)
     {
+        if(Audit->AuditFlag == 1)
+            SCRN(3,1,FCOLUMNS-2,"Checking ROMs... (%d of %d)",Audit->CheckCount,Audit->Count);
+        else
+            SCRN(3,1,FCOLUMNS-2,"Select a game");
+
         if(got_input)
             scr_select_input();
 
@@ -91,6 +120,9 @@ void scr_select()
                 bg = COLOR_N_BLUE;
                 fg = COLOR_WHITE;
             }
+
+            if(!Audit->Entry[i].RomOk)
+                fg = COLOR_D_GREY;
 
             set_color(5+y,1,1,FCOLUMNS-2,bg,fg);
 

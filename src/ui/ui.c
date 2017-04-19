@@ -139,6 +139,10 @@ void ui_handleinput(SDL_Keysym* ks)
             DriverReset(0);
             SDL_UnlockAudioDevice(Audio->dev);
         }
+        else
+        {
+            got_input = 1;
+        }
         break;
     case SDLK_F5:
         Audio->state.MuteRear ^= 1;

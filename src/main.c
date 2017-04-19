@@ -114,11 +114,7 @@ int main(int argc, char *argv[])
     //Game->QDrv = QDrv;
 
     if(!strlen(Game->Name))
-    {
         loop=1;
-
-        AuditGames(Audit);
-    }
 
     if(ui_init())
     {

@@ -24,14 +24,20 @@ struct QP_AuditEntry{
     int RomCount;
     struct QP_AuditRom Rom[AUDIT_MAX_ROMS];
     int IniOk;
+    int RomOk;
 };
 
 struct QP_Audit{
     int Count;
     QP_AuditEntry Entry[AUDIT_MAX_COUNT];
+    int AuditFlag;
+    int CheckCount;
+    int OkCount;
+    int BadCount;
 };
 
-int AuditGames(QP_Audit* audit);
-void FreeAudit(QP_Audit* audit);
+int AuditGames(void* data);
+int AuditRoms(void* data);
 
+// void FreeAudit(QP_Audit* audit);
 #endif // AUDIT_H_INCLUDED

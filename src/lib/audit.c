@@ -13,6 +13,51 @@
 #include "ini.h"
 #include "audit.h"
 
+int AuditRoms(void* data)
+{
+    QP_Audit* audit = data;
+    audit->AuditFlag = 1;
+
+    FILE* file;
+    struct QP_AuditRom* rom;
+
+    audit->OkCount = audit->BadCount = audit->CheckCount = 0;
+    int okflag;
+    int i,j;
+    for(i=0;i<audit->Count;i++)
+    {
+        audit->Entry[i].RomOk = 0;
+        okflag = 1;
+        for(j=0;j<audit->Entry[i].RomCount;j++)
+        {
+            rom = &audit->Entry[i].Rom[j];
+            file = NULL;
+            file = fopen(rom->Path,"rb");
+            if(file)
+            {
+                rom->Ok = 1;
+                fclose(file);
+            }
+            else
+            {
+                rom->Ok = 0;
+                okflag = 0;
+            }
+        }
+        if(okflag)
+        {
+            audit->OkCount++;
+            audit->Entry[i].RomOk = 1;
+        }
+        else
+        {
+            audit->BadCount++;
+        }
+        audit->CheckCount++;
+    }
+    audit->AuditFlag = 0;
+    return 0;
+}
 
 void WriteRomEntry(struct QP_AuditRom *rom,int PathType,char* Path1,char* Path2)
 {
@@ -65,6 +110,7 @@ void WriteAuditEntry(QP_AuditEntry *entry, char *name)
 
         while(!ini_readnext(&initest))
         {
+            entry->RomOk = 0;
             if(!strcmp(initest.section,"data"))
             {
                 if(!strcmp(initest.key,"name"))
@@ -105,9 +151,14 @@ int AuditSortCompare(const void *a, const void *b)
     return strcmp(ea->Name,eb->Name);
 }
 
-int AuditGames(QP_Audit* audit)
+int AuditGames(void* data)
 {
-    char dir[128], temp[128];
+    QP_Audit* audit = data;
+
+    char dir[128], temp[256];
+    audit->AuditFlag = 2;
+    audit->Count = audit->CheckCount = audit-> OkCount = audit->BadCount = 0;
+    memset(audit->Entry,0,sizeof(audit->Entry));
 
     snprintf(dir,127,"./%s/",QP_IniPath);
 
@@ -141,8 +192,12 @@ int AuditGames(QP_Audit* audit)
     else
         return -1;
 
-    qsort(audit->Entry,audit->Count,sizeof(QP_AuditEntry),AuditSortCompare);
+    if(!audit->Count)
+        audit->Count = -1;
+    else
+        qsort(audit->Entry,audit->Count,sizeof(QP_AuditEntry),AuditSortCompare);
 
+    audit->AuditFlag = 0;
     return 0;
 }
 
