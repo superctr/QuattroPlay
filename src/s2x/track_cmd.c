@@ -715,7 +715,7 @@ struct S2X_TrackCommandEntry S2X_S1TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 17 */ {S2X_CMD_CHN,S2X_CHN_C18,tc_WriteChannelDummy}, // play a DAC sample
 /* 18 */ {S2X_CMD_CHN,S2X_CHN_LFO,tc_WriteChannel}, // lfo
 /* 19 */ {S2X_CMD_CHN,S2X_CHN_PAN,tc_WriteChannel}, // pan
-/* 1a */ {1,-1,tc_Nop},
+/* 1a */ {S2X_CMD_CHN,S2X_CHN_C18,tc_WriteChannelDummy}, // instrument flag ? (dspirit x68k)
 /* 1b */ {2,-1,tc_WriteCommS1},
 /* 1c */ {2, 2,tc_Dummy}, // shadowld song 0e: song request
 /* 1d */ {3,-1,tc_RequestTrack}, // FM
