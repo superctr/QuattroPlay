@@ -542,6 +542,23 @@ TRACKCOMMAND(tc_SetLfo)
     S2X_OPMWrite(S,0,0,regs[CommandType],val);
 }
 
+TRACKCOMMAND(tc_KeyOffS86)
+{
+    uint8_t mask = arg_byte(S,T->PositionBase,&T->Position);
+    int i=0;
+    while(mask)
+    {
+        if(mask&0x80)
+        {
+            T->Channel[i].Vars[S2X_CHN_FRQ] = -1;
+            T->Channel[i].UpdateMask |= 1<<S2X_CHN_FRQ;
+            S2X_VoiceCommand(S,&T->Channel[i],0,0);
+        }
+        mask<<=1;
+        i++;
+    }
+}
+
 // system 2/21 command table
 struct S2X_TrackCommandEntry S2X_S2TrackCommandTable[S2X_MAX_TRKCMD] =
 {
@@ -730,7 +747,7 @@ struct S2X_TrackCommandEntry S2X_S86TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 0d */ {S2X_CMD_EMPTY,-1,tc_Wait},
 /* 0e */ {S2X_CMD_JUMP,-1,tc_Jump},
 /* 0f */ {S2X_CMD_JUMP86,1,tc_Jump},
-/* 10 */ {1,1,tc_Dummy}, // actually key off
+/* 10 */ {2,-1,tc_KeyOffS86}, // actually key off
 /* 11 */ {S2X_CMD_REPT,-1,tc_Repeat},
 /* 12 */ {S2X_CMD_LOOP,-1,tc_Loop},
 /* 13 */ {S2X_CMD_FRQ,S2X_CHN_FRQ|0x40,tc_WriteChannel}, // Not used
