@@ -75,6 +75,8 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 V->PanSlide=0;
                 break;
             case S2X_CHN_PANENV:
+                if(SYSTEMNA && !data)
+                    break;
                 V->PanSlidePtr = V->BaseAddr+S2X_ReadWord(S,V->BaseAddr+0x0c)+(4*data);
                 V->PanSlide = S2X_ReadByte(S,V->PanSlidePtr+3);
                 break;
