@@ -404,6 +404,8 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
         }
         break;
     case S2X_VOICE_TYPE_PCMLINK:
+        V->VoiceType = VOICE_TYPE_MELODY|VOICE_TYPE_PCM;
+        V->PanType = PAN_TYPE_UNSIGNED;
         PCM = &S->PCM[index];
         if(PCM->ChannelLink < 0)
             break;
