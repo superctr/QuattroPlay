@@ -10,6 +10,7 @@ uint16_t S2X_ReadWord(S2X_State *S,uint32_t d);
 void S2X_UpdateMuteMask(S2X_State *S);
 void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data);
 void S2X_OPMReadQueue(S2X_State *S);
+void S2X_PCMWrite(S2X_State *S,S2X_PCMVoice* V,int reg,uint16_t data);
 
 // loop detection callback
 int S2X_LoopDetectValid(void* drv,int trackno);

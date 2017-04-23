@@ -74,6 +74,14 @@ void S2X_OPMReadQueue(S2X_State *S)
     return YM2151_write_reg(&S->FMChip,w->Reg,w->Data);
 }
 
+// only used when writes need to be synchronized for link mode
+void S2X_PCMWrite(S2X_State *S,S2X_PCMVoice* V,int reg,uint16_t data)
+{
+    C352_write(&S->PCMChip,(V->VoiceNo<<3)|reg,data);
+    if(V->ChannelLink >= 0)
+        C352_write(&S->PCMChip,((8+V->VoiceNo)<<3)|reg,data);
+}
+
 int S2X_LoopDetectValid(void* drv,int trackno)
 {
     S2X_State *S = drv;
@@ -131,6 +139,10 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
             S->ConfigFlags |= S2X_CFG_PCM_ADSR;
         else if(!strcmp(cfg->name,"pcm_paninvert") && v)
             S->ConfigFlags |= S2X_CFG_PCM_PAN;
+        else if(!strcmp(cfg->name,"pcm_link") && v>1)
+            S->ConfigFlags |= S2X_CFG_PCM_LINKMODE2;
+        else if(!strcmp(cfg->name,"pcm_link") && v>0)
+            S->ConfigFlags |= S2X_CFG_PCM_LINKMODE;
         else if(!strcmp(cfg->name,"fm_paninvert") && v)
             S->ConfigFlags |= S2X_CFG_FM_PAN;
         else if(!strcmp(cfg->name,"fm_writerate"))
@@ -251,6 +263,9 @@ void S2X_InitDriverType(S2X_State *S)
         Q_DEBUG("base = %06x\nmax(1) = %02x\nmax(2) = %02x\n",S->PCMBase,S->SongCount[0],S->SongCount[1]);
         break;
     case S2X_TYPE_SYSTEM2:
+        if(S->ConfigFlags & (S2X_CFG_PCM_LINKMODE|S2X_CFG_PCM_LINKMODE2))
+            S2X_SetVoiceType(S,8,S2X_VOICE_TYPE_PCMLINK,8);
+
         if(!S->FMBase)
         {
             S->FMBase = 0x4000;

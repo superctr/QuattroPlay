@@ -141,6 +141,7 @@ struct S2X_PCMVoice {
     uint8_t Flag;
     uint16_t ChipFlag;
     uint8_t LinkMode;
+    int16_t ChannelLink; // -1 disable
 
     uint8_t Delay;
     uint8_t Length;

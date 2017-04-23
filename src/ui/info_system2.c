@@ -382,7 +382,7 @@ void ui_info_s2_voice(int id,int ypos)
 
     set_color(ypos,44,43,35,COLOR_D_BLUE,COLOR_L_GREY);
 
-    if(type == S2X_VOICE_TYPE_PCM || type ==S2X_VOICE_TYPE_SE || type==S2X_VOICE_TYPE_WSG)
+    if(type == S2X_VOICE_TYPE_PCM || type == S2X_VOICE_TYPE_PCMLINK || type ==S2X_VOICE_TYPE_SE || type==S2X_VOICE_TYPE_WSG)
     {
         //vno = S2X_VOICE_TYPE_SE ? 24+index : index;
 
@@ -415,6 +415,9 @@ void ui_info_s2_voice(int id,int ypos)
     {
     default:
         return;
+    case S2X_VOICE_TYPE_PCMLINK:
+        if(!PCM->Channel || PCM->ChannelLink<0)
+            return;
     case S2X_VOICE_TYPE_PCM:
         if(!PCM->Channel)
             return;
@@ -440,6 +443,11 @@ void ui_info_s2_voice(int id,int ypos)
                  "Pan",         PCM->Pan,(int8_t)(PCM->Pan-128));
         SCRN(ypos++,45,40,"%-10s%4d (%4d)",
                  "PanSlide",    PCM->Channel->Vars[S2X_CHN_PANENV],(int8_t)PCM->PanSlide);
+
+        if(type == S2X_VOICE_TYPE_PCMLINK)
+            SCRN(ypos++,45,40,"%-10s%4d",
+                     "ChLink",  PCM->ChannelLink);
+
         P = &PCM->Pitch;
         C = PCM->Channel;
         break;

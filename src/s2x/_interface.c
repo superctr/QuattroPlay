@@ -403,6 +403,10 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
             }
         }
         break;
+    case S2X_VOICE_TYPE_PCMLINK:
+        PCM = &S->PCM[index];
+        if(PCM->ChannelLink < 0)
+            break;
     case S2X_VOICE_TYPE_PCM:
         PCM = &S->PCM[index];
         // temporary until i add a key on flag
@@ -474,6 +478,9 @@ uint16_t S2X_IGetVoiceStatus(void* d,int id)
         if(S->FM[index].Flag&0x10) // flag 0x80 is almost always set for FM tracks
             v |= 0x80;
         break;
+    case S2X_VOICE_TYPE_PCMLINK:
+        if(S->PCM[index].ChannelLink < 0)
+            break;
     case S2X_VOICE_TYPE_PCM:
         if(S->PCM[index].TrackNo)
             v = 0x8000|(S->PCM[index].TrackNo-1)<<8|(S->PCM[index].ChannelNo);

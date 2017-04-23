@@ -14,6 +14,7 @@ enum {
 enum {
     S2X_VOICE_TYPE_NONE = 0,
     S2X_VOICE_TYPE_PCM,
+    S2X_VOICE_TYPE_PCMLINK,
     S2X_VOICE_TYPE_SE, // pcm sound effects
     S2X_VOICE_TYPE_FM,
     S2X_VOICE_TYPE_WSG,
@@ -75,7 +76,10 @@ enum {
     // WSG command 0b handling
     S2X_CFG_WSG_CMD0B = 1<<7,
     // Dragon Spirit X68K hack for WSG/voice samples
-    S2X_CFG_DSPIRIT = 1<<8
+    S2X_CFG_DSPIRIT = 1<<8,
+    // link mode enabled (assault, finallap)
+    S2X_CFG_PCM_LINKMODE = 1<<9, // 0 disables
+    S2X_CFG_PCM_LINKMODE2 = 1<<10, // 0xff disables
 };
 
 #endif // S2X_ENUM_H_INCLUDED

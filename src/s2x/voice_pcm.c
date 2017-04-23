@@ -9,6 +9,7 @@
 #define ADSR_ENV (S->ConfigFlags & (S2X_CFG_PCM_ADSR|S2X_CFG_PCM_NEWADSR))
 #define NEW_ADSR (S->ConfigFlags & S2X_CFG_PCM_NEWADSR)
 #define PAN_INVERT (S->ConfigFlags & S2X_CFG_PCM_PAN)
+#define LINKMODE (S->ConfigFlags & (S2X_CFG_PCM_LINKMODE|S2X_CFG_PCM_LINKMODE2))
 
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
@@ -26,12 +27,18 @@ void S2X_PCMClear(S2X_State *S,S2X_PCMVoice *V,int VoiceNo)
     V->Pan = 0x80;
     V->WaveNo = 0xff;
     V->Pitch.FM = 0;
+    V->ChannelLink = -1;
 
     S2X_C352_W(S,VoiceNo,C352_FLAGS,0);
+    if(LINKMODE)
+        S2X_C352_W(S,(8+VoiceNo),C352_FLAGS,0);
+
 }
 void S2X_PCMKeyOff(S2X_State* S,S2X_PCMVoice *V)
 {
     S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
+    if(LINKMODE)
+        S2X_C352_W(S,(8+V->VoiceNo),C352_FLAGS,0);
     V->Flag &= 0x6f;
 }
 void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
@@ -86,7 +93,17 @@ void S2X_PCMCommand(S2X_State *S,S2X_Channel *C,S2X_PCMVoice *V)
                 V->Pitch.Portamento= data;
                 break;
             case S2X_CHN_C18:
-                Q_DEBUG("ch %02d enable link effect, param: %02d \n",V->VoiceNo,data);
+                if(!LINKMODE)
+                    Q_DEBUG("ch %02d enable link effect, param: %02d \n",V->VoiceNo,data);
+                else if(S->ConfigFlags & S2X_CFG_PCM_LINKMODE && !data)
+                    V->ChannelLink = -1;
+                else if(S->ConfigFlags & S2X_CFG_PCM_LINKMODE2 && data == 0xff)
+                    V->ChannelLink = -1;
+                else
+                    V->ChannelLink = data&0xff;
+                break;
+            case S2X_CHN_LFO:
+                Q_DEBUG("ch %02d enable wave effect, param: %02d \n",V->VoiceNo,data);
             default:
                 break;
             }
@@ -234,6 +251,17 @@ void S2X_PCMPanUpdate(S2X_State* S,S2X_PCMVoice *V)
         S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(right&0xff00)|(left>>8));
     else
         S2X_C352_W(S,V->VoiceNo,C352_VOL_FRONT,(left&0xff00)|(right>>8));
+
+    if(V->ChannelLink >= 0)
+    {
+        left = (left*V->ChannelLink)>>8;
+        right = (right*V->ChannelLink)>>8;
+
+        if(PAN_INVERT)
+            S2X_C352_W(S,(8+V->VoiceNo),C352_VOL_FRONT,(right&0xff00)|(left>>8));
+        else
+            S2X_C352_W(S,(8+V->VoiceNo),C352_VOL_FRONT,(left&0xff00)|(right>>8));
+    }
 }
 
 
@@ -416,9 +444,9 @@ void S2X_PCMWaveUpdate(S2X_State *S,S2X_PCMVoice *V)
         V->WaveBank = start>>16;
     }
 
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_START,start);
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_END,end);
-    S2X_C352_W(S,V->VoiceNo,C352_WAVE_LOOP,loop);
+    S2X_PCMWrite(S,V,C352_WAVE_START,start);
+    S2X_PCMWrite(S,V,C352_WAVE_END,end);
+    S2X_PCMWrite(S,V,C352_WAVE_LOOP,loop);
 
     V->WavePitch = S2X_ReadWord(S,pos+6);
 
@@ -478,6 +506,17 @@ void S2X_PCMPitchUpdate(S2X_State *S,S2X_PCMVoice *V)
 
         reg = (temp*V->WavePitch)>>8;
         S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,reg>>1);
+
+        if(V->ChannelLink >= 0)
+        {
+            // freq calculation in link mode works a bit differently depending on
+            // the game
+            if(S->ConfigFlags & S2X_CFG_PCM_LINKMODE2)
+                reg >>= 1; // finallap - octave lower
+            else
+                reg = (freq1*V->WavePitch)>>8; // assault - don't calculate detune
+            S2X_C352_W(S,(8+V->VoiceNo),C352_FREQUENCY,reg>>1);
+        }
     }
     else
     {
@@ -518,11 +557,11 @@ void S2X_PCMUpdate(S2X_State *S,S2X_PCMVoice *V)
             V->Delay--;
             return;
         }
-        S2X_C352_W(S,V->VoiceNo,C352_FLAGS,0);
+        S2X_PCMWrite(S,V,C352_FLAGS,0);
         S2X_PCMWaveUpdate(S,V);
         S2X_PCMPitchUpdate(S,V);
-        S2X_C352_W(S,V->VoiceNo,C352_WAVE_BANK,V->WaveBank);
-        S2X_C352_W(S,V->VoiceNo,C352_FLAGS,V->ChipFlag|C352_FLG_KEYON);
+        S2X_PCMWrite(S,V,C352_WAVE_BANK,V->WaveBank);
+        S2X_PCMWrite(S,V,C352_FLAGS,V->ChipFlag|C352_FLG_KEYON);
         V->Length = V->Channel->Vars[S2X_CHN_GTM];
         V->Flag=((V->Flag&0xbf)|0x80);
     }
