@@ -70,8 +70,8 @@ This might not be complete yet.
 *	__P__: pause
 *	__U__: update tick (be sure to pause first)
 *	__Esc__: Go to main screen
-*	__F1__: Go to about screen
-*	__F3__: Reset sound driver
+*	__F1__: Go to about screen. If no game is loaded, select audio device.
+*	__F3__: Reset sound driver. If no game is loaded, refresh game definitions.
 *	__F5__: toggle stereo/quad output
 *	__F6__: unmute all voices
 *	__F7__: decrease volume
@@ -80,7 +80,7 @@ This might not be complete yet.
 *	__F11__: log sound to file
 	*	Logs started from the GUI have filenames hardcoded to `qp_log.wav`. Don't log for too long; 30 seconds = 30 MB.
 	*	Format: 32-bit float, 4 channels, rate is either 85333 or 88200.
-*	__F12__: display statistics
+*	__F12__: display rendering stats
 *	__Space__: Go to playlist screen
 *	__Arrow keys__: move selection
 
@@ -90,6 +90,12 @@ This might not be complete yet.
 *	__R__: Restart current song
 *	__N__: Play next song
 *	__B__: Play previous song
+*   __1__: Make song selection follow the playlist (could be useful for videos)
+*	__L__: Display keyboard, while active:
+	*	__8__: Show pitch modulation
+	*	__9__: Show volume modulation
+	*   __I__: Transpose one octave down (shift notes right)
+	*   __D__: Transpose one octave up (shift notes left)
 
 ### Main screen
 
@@ -98,7 +104,7 @@ This might not be complete yet.
 	
 #### if Track selected
 
-*	__L__: display mode
+*	__L__: Change between display modes (e.g. pattern view)
 
 #### if Track or Register selected
 
