@@ -65,9 +65,11 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     for(i=2;i<28;i++)
         S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
     if(!SYSTEM86)
+    {
         for(i=0;i<=V->Carrier;i++)
             S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
-    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
+        S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
+    }
     S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
     V->Channel->Vars[S2X_CHN_PAN]=0xc0;
 
