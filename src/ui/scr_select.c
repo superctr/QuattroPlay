@@ -94,7 +94,7 @@ void scr_select()
         if(Audit->AuditFlag == 1)
             SCRN(3,1,FCOLUMNS-2,"Checking ROMs... (%d of %d)",Audit->CheckCount,Audit->Count);
         else
-            SCRN(3,1,FCOLUMNS-2,"Select a game");
+            SCRN(3,1,FCOLUMNS-2,"Select a game (%d of %d available)",Audit->OkCount,Audit->Count);
 
         if(got_input)
             scr_select_input();
