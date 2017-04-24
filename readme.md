@@ -23,7 +23,7 @@ The makefile is tested on Linux Mint, Ubuntu and Windows (using MSYS).
 
 The program works on macOS, but you might have to do modifications to the makefile. I can't help you there.
  
-For Windows, you can also use the codeblocks project file.
+For Windows, <s>you can also use the codeblocks project file</s> please use the makefile.
 
 ## Usage
 
