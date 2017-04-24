@@ -13,6 +13,38 @@
 
 #include "ui/ui.h"
 
+static char* config_filename = "quattroplay.ini";
+static const char* default_config = "; QuattroPlay global configuration\n\
+[config]\n\
+; Path to directory contining game configs for QuattroPlay.\n\
+inipath  = ini\n\
+; Path to directory containing data ROMs (subdirectory for each game)\n\
+datapath = roms\n\
+; Path to directory containing sample ROMs (subdirectory for each game)\n\
+wavepath = roms\n\
+; Default gain. This is multiplied with a game-specific setting.\n\
+gain     = 32.0\n\
+; Default game name. Used if the game name is not supplied through command\n\
+; line argument. Leave commented to enable a selection menu.\n\
+; gamename = dirtdash\n\
+; Control playback of startup song (ie Tekken \"Good Morning!\" sample)\n\
+; 0=Don't play (Some games may not like this)\n\
+; 1=Play\n\
+; 2=Play silently\n\
+bootsong = 1\n\
+; Sets initial pitch when the sound driver is reset.\n\
+; This will 'fix' playback of songs that begin with a portamento directly\n\
+; after the sound driver is reset.\n\
+; 0 = Reset pitch to 0\n\
+; 1 = Reset pitch to A3 (220hz)\n\
+portafix = 0\n\
+; Audio buffer size (default = 2048)\n\
+; Set it to a higher value if you encounter audio issues.\n\
+audiobuffer = 2048\n\
+; Audio device name (https://wiki.libsdl.org/SDL_GetAudioDeviceName)\n\
+; Leave this intact for now\n\
+; audiodevice =\n";
+
 int main(int argc, char *argv[])
 {
     int loop = 0;
@@ -39,8 +71,23 @@ int main(int argc, char *argv[])
     Game->BaseGain=32.0;
     Game->AudioBuffer=1024;
 
+    FILE* f = NULL;
+    f = fopen(config_filename,"r");
+    if(!f)
+    {
+        f = fopen(config_filename,"w");
+        if(!f)
+        {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","Config file does not exist. Please create one.",NULL);
+            SDL_Quit();
+            return -1;
+        }
+        fputs(default_config,f);
+    }
+    fclose(f);
+
     inifile_t initest;
-    if(!ini_open("quattroplay.ini",&initest))
+    if(!ini_open(config_filename,&initest))
     {
         while(!ini_readnext(&initest))
         {
@@ -72,7 +119,6 @@ int main(int argc, char *argv[])
     }
     else
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error","Config file does not exist. Please create one.",NULL);
         SDL_Quit();
         return -1;
     }
