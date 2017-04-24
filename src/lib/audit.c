@@ -189,8 +189,6 @@ int AuditGames(void* data)
         }
         (void)closedir(dp);
     }
-    else
-        return -1;
 
     if(!audit->Count)
         audit->Count = -1;
