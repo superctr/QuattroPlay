@@ -7,6 +7,7 @@
 
 // YM2151 Register names
 enum {
+    OPM_TEST = 0x01,
     OPM_KEYON = 0x08,
     OPM_LFO_FRQ = 0x18,
     OPM_LFO_DEP = 0x19,

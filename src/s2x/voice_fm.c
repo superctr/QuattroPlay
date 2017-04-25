@@ -61,20 +61,26 @@ void S2X_FMSetIns(S2X_State *S,S2X_FMVoice *V,int InsNo)
     V->Carrier = SYSTEM86 ? 0 : S2X_FMConnection[S2X_ReadByte(S,pos)&0x07];
     V->ChipFlags = S2X_ReadByte(S,pos)&0x3f;
     V->InsLfo = S2X_ReadByte(S,pos+3);
-    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
-    for(i=2;i<28;i++)
-        S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
-    if(!SYSTEM86)
-    {
-        for(i=0;i<=V->Carrier;i++)
-            S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
-        S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
-    }
-    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
     V->Channel->Vars[S2X_CHN_PAN]=0xc0;
 
-    if(!SYSTEM86)
-        return S2X_FMSetVol(S,V);
+    if(SYSTEM86)
+    {
+        for(i=0;i<28;i++)
+            S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
+        return;
+    }
+
+    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags); // mute while setting parameters
+
+    for(i=2;i<28;i++)
+        S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL+(i*8),S2X_ReadByte(S,pos+i));
+
+    for(i=0;i<=V->Carrier;i++)
+        S2X_OPMWrite(S,V->VoiceNo,3-i,OPM_OP_TL,0x7f);
+
+    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_PMS_AMS,0);
+    S2X_OPMWrite(S,V->VoiceNo,0,OPM_CH_CONTROL,V->ChipFlags|0xC0);
+    return S2X_FMSetVol(S,V);
 }
 
 // sets volume (Reads TL levels from instuments)
@@ -258,8 +264,15 @@ void S2X_FMUpdateReset(S2X_State *S,S2X_FMVoice *V)
         S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0);
         S2X_OPMWrite(S,0,0,OPM_LFO_DEP,0x80);
     }
-    if(!SYSTEM86)
-        return S2X_FMWriteVol(S,V,V->Track->Fadeout>>8);
+
+    if(SYSTEM86)
+    {
+        S2X_OPMWrite(S,0,0,OPM_TEST,0x02); // Reset LFO phase
+        S2X_OPMWrite(S,0,0,OPM_TEST,0x00);
+        return;
+    }
+
+    return S2X_FMWriteVol(S,V,V->Track->Fadeout>>8);
 }
 
 void S2X_FMUpdateGate(S2X_State *S,S2X_FMVoice *V)

@@ -532,6 +532,7 @@ TRACKCOMMAND(tc_TrackVolS86)
         S2X_VoiceCommand(S,&T->Channel[i],0,0);
     }
 }
+
 // set LFO (system86)
 TRACKCOMMAND(tc_SetLfo)
 {
@@ -750,12 +751,12 @@ struct S2X_TrackCommandEntry S2X_S86TrackCommandTable[S2X_MAX_TRKCMD] =
 /* 10 */ {2,-1,tc_KeyOffS86}, // actually key off
 /* 11 */ {S2X_CMD_REPT,-1,tc_Repeat},
 /* 12 */ {S2X_CMD_LOOP,-1,tc_Loop},
-/* 13 */ {S2X_CMD_FRQ,S2X_CHN_FRQ|0x40,tc_WriteChannel}, // Not used
-/* 14 */ {S2X_CMD_CHN,S2X_CHN_LFO,tc_WriteChannel}, // Not used
+/* 13 */ {S2X_CMD_FRQ,S2X_CHN_FRQ|0x40,tc_WriteChannel}, // set keycode only
+/* 14 */ {S2X_CMD_CHN,S2X_CHN_LFO,tc_WriteChannel}, // LFO AMS/PMS
 /* 15 */ {2,0,tc_SetLfo}, // LFO Freq
 /* 16 */ {2,3,tc_SetLfo}, // LFO Phase
-/* 17 */ {2,2,tc_SetLfo}, // LFO Waveform
-/* 18 */ {2,1,tc_SetLfo}, // LFO Amplitude
+/* 17 */ {2,1,tc_SetLfo}, // LFO Waveform
+/* 18 */ {2,2,tc_SetLfo}, // LFO Amplitude
 /* 19 */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
 /* 1a */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
 /* 1b */ {S2X_CMD_END,-1,tc_Dummy}, // Not used
