@@ -4,10 +4,16 @@
 #include "quattro.h"
 #include "tables.h"
 
-/******************************************************************************
-*  ROM tables
-******************************************************************************/
 /*
+ Equivalent generating functions:
+
+ Q_EnvelopeRateTable(n) = 65536*pow(1.07251,n-127)+0.5  <- Not accurate below a threshold
+ Q_PitchTable(n) = 128*pow(1.0594631,n)+0.5
+ Q_VolumeTable(n) = 256*pow(0.9793,n)+0.5
+ *These are not 100% accurate
+
+ ROM tables:
+
  Notice that the order of the tables vary on some drivers, which changes the
  value of the out-of-bounds entries.
 
@@ -28,6 +34,7 @@
   pacapp   - song 0x02 (reg 0x01 selects wave number)
 */
 
+// ROM tables follow:
 uint16_t Q_EnvelopeRateTable[0xa0] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0009, // 00
     0x000B, 0x000D, 0x000F, 0x0011, 0x0013, 0x0015, 0x0017, 0x0019,
@@ -54,8 +61,6 @@ uint16_t Q_EnvelopeRateTable[0xa0] = {
 
 };
 
-// taken from rom, but you can generate a similar table with:
-// f(n) = 0x80*pow(1.0594631,n)+0.5
 uint16_t Q_PitchTable[0x6c] = {
     0x0088, 0x0090, 0x0098, 0x00A1, 0x00AB, 0x00B5, 0x00C0, 0x00CB, // 00
     0x00D7, 0x00E4, 0x00F2, 0x0100, 0x010F, 0x011F, 0x0130, 0x0143,
@@ -72,10 +77,7 @@ uint16_t Q_PitchTable[0x6c] = {
     0x879C, 0x8FAC, 0x9837, 0xA145, 0xAADB, 0xB504, 0xBFC8, 0xCB2F, // 60
     0xD744, 0xE411, 0xF1A1, 0xFFFF
 };
-
-/*
- c76.bin > followed by lfo wave table
-*/
+// c76.bin > followed by lfo wave table
 
 uint16_t Q_LfoWaveTable[0xb0] = {
     0x0013, 0x2510, 0x440B, 0x5904, 0x6084, 0x598B, 0x4490, 0x2593, // 00
@@ -148,11 +150,12 @@ uint8_t Q_VolumeTable[0x100] = {
     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00
 };
 
-/******************************************************************************
-*  Helper tables (These aren't found in the original code)
-* Maps of the members of the track and channel structs to be used
-* in the track command parser.
-******************************************************************************/
+/*
+    Helper tables:
+     (These aren't found in the original code)
+    Maps of the members of the track and channel structs to be used
+    in the track command parser.
+*/
 
 // These can be redefined for big endian.
 
