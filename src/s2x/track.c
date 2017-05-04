@@ -123,15 +123,21 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->LoopStackPos=0;
     memset(T->LoopStack,0,sizeof(T->LoopStack));
 
-    T->UpdateTime = S->FrameCnt;
     T->Fadeout = 0;
     T->RestCount = 0;
     T->SubStackPos = 0;
     T->LoopStackPos = 0;
     T->InitFlag = 0;
 
-    T->Tempo=0;
+    T->UpdateTime = S->FrameCnt;
+    T->Tempo = 0;
     T->BaseTempo=1;
+
+    if(SYSTEM86)
+    {
+        T->UpdateTime = -1;
+        T->Tempo = 1;
+    }
 
     int i;
     for(i=0;i<S2X_MAX_TRKCHN;i++)
