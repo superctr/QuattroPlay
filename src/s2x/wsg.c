@@ -77,6 +77,35 @@ void S2X_WSGLoadWave(S2X_State *S)
 #endif
 }
 
+// Return 1 on failure
+int S2X_WSGTrackStart(S2X_State *S,int TrackNo,S2X_Track *T,int SongNo)
+{
+    uint8_t id=0;
+    uint8_t data = SongNo-1;
+    uint16_t idtab = S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACKREQ);
+    if(idtab)
+    {
+        while(id<0x80)
+        {
+            data = S2X_ReadByte(S,idtab+id);
+            if(data == 0xff || data == SongNo-1)
+                break;
+            id++;
+        }
+    }
+    if(data != 0xff)
+    {
+        T->Position = S2X_ReadWord(S,S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACK)+(2*data));
+        T->InitFlag = 0;
+#ifdef DEBUG
+        uint16_t ttype = S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACKTYPE);
+        Q_DEBUG("WSG track type: %02x\n", S2X_ReadByte(S,ttype+data));
+#endif
+        return 1;
+    }
+    return 0;
+}
+
 void S2X_WSGTrackUpdate(S2X_State *S,int TrackNo,S2X_Track *T)
 {
     uint16_t pos;
@@ -146,12 +175,11 @@ void S2X_WSGEnvelopeUpdate(S2X_State *S,struct S2X_WSGEnvelope *E,S2X_Channel *C
             E->Pos--;
             break;
         case 0x11: // decay
-            d = S2X_ReadByte(S,E->Pos)&0x0f;
-            if(E->Val > d)
-            {
-                E->Val--;
+            d = S2X_ReadByte(S,E->Pos);
+            if(!E->Val || (--E->Val&0x0f) != d)
                 E->Pos--;
-            }
+            else
+                E->Pos++;
             break;
         case 0x12: // sustain until end
             if(E->Val > C->WSG.SeqWait)
@@ -159,12 +187,11 @@ void S2X_WSGEnvelopeUpdate(S2X_State *S,struct S2X_WSGEnvelope *E,S2X_Channel *C
             E->Pos--;
             break;
         case 0x13: // attack
-            d = S2X_ReadByte(S,E->Pos)&0x0f;
-            if(E->Val < d)
-            {
-                E->Val++;
+            d = S2X_ReadByte(S,E->Pos);
+            if((++E->Val&0x0f) != d)
                 E->Pos--;
-            }
+            else
+                E->Pos++;
             break;
         case 0x14: // loop
             E->Flag=0;
@@ -186,6 +213,7 @@ void S2X_WSGEnvelopeUpdate(S2X_State *S,struct S2X_WSGEnvelope *E,S2X_Channel *C
             return S2X_WSGEnvelopeUpdate(S,E,C);
         }
     }
+    E->Val &= 0x0f;
     //...
 }
 
@@ -308,10 +336,21 @@ void S2X_WSGChannelUpdate(S2X_State *S,int TrackNo,S2X_Channel *C,int ChannelNo)
             C->WSG.SeqPos+= (S->ConfigFlags&S2X_CFG_WSG_CMD0B) ? 2 : 1;
             return S2X_WSGChannelUpdate(S,TrackNo,C,ChannelNo);
         default:
-            WSG_DEBUG("warning: unimplemented command %02x; ",d);
+            Q_DEBUG("WSG warning: unimplemented command %02x; ",d);
             WSG_DEBUG("stop channel %02x\n",ChannelNo);
             return S2X_WSGChannelStop(S,TrackNo,C,ChannelNo);
         case 0x03:
+            WSG_DEBUG("WSG stop track %02x (%02x)\n",TrackNo, S2X_ReadByte(S,C->WSG.SeqPos));
+            // special case for splatterhouse credit jingle
+            if(S->ConfigFlags & S2X_CFG_WSG_CMD0B && (S->SongRequest[TrackNo]&0x1ff) == 1)
+            {
+                if(ChannelNo==6)
+                {
+                    S2X_WSGTrackStart(S,TrackNo,&S->Track[TrackNo],2);
+                    S->SongRequest[TrackNo]++;
+                }
+                return;
+            }
             return S2X_TrackDisable(S,TrackNo);
         }
     }

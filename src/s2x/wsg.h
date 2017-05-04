@@ -13,6 +13,7 @@ enum S2X_WSGHeaderId {
 
 uint16_t S2X_WSGReadHeader(S2X_State *S,enum S2X_WSGHeaderId id);
 void S2X_WSGLoadWave(S2X_State *S);
+int S2X_WSGTrackStart(S2X_State *S,int TrackNo,S2X_Track *T,int SongNo);
 void S2X_WSGTrackUpdate(S2X_State *S,int TrackNo,S2X_Track *T);
 void S2X_WSGChannelUpdate(S2X_State *S,int TrackNo,S2X_Channel *C,int ChannelNo);
 void S2X_WSGChannelStart(S2X_State *S,int TrackNo,S2X_Channel *C,int ChannelNo,uint16_t pos,uint8_t flag);

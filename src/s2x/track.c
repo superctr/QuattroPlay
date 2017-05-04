@@ -13,7 +13,59 @@
 #define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 #define S1_WSG (S->ConfigFlags & S2X_CFG_SYSTEM1 && TrackNo > 7)
 
-// this has become a mess... need to split into a few functions i think.
+// find song position, taking into account the track type and platform...
+static void GetSongPos(S2X_State *S,int TrackNo,S2X_Track *T)
+{
+    uint16_t SongNo = S->SongRequest[TrackNo]&0x1ff;
+    T->PositionBase = S->PCMBase;
+
+    // wsg in tracks 8-15
+    if(SYSTEM1)
+        T->PositionBase = (TrackNo > 7) ? S->PCMBase : S->FMBase;
+    // fm in tracks 8-15
+    else if(!SYSTEMNA)
+        T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
+
+    // bit 8 for alternate song bank. (not all games have this actually, maybe we should have config option)
+    if(SongNo & 0x100)
+        T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
+
+    // system86 games may store the song table anywhere so we read that from config...
+    if(SYSTEM86)
+        T->Position = S2X_ReadWord(S,T->PositionBase+S->FMSongTab+(2*(SongNo&0xff)));
+    // otherwise they're always in the header
+    else
+        T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
+
+}
+
+// Read the first byte of a song and determine if it's valid.
+// -1 : Valid but all channels need to be initialized manually
+//  0 : Invalid
+//  1 : Valid
+static int CheckValid(S2X_State *S,int TrackNo,S2X_Track *T)
+{
+    uint16_t SongNo = S->SongRequest[TrackNo]&0x1ff;
+    uint8_t header_byte = 0;
+
+    if(T->Position+T->PositionBase < 0x400000)
+        header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
+
+    // skip detection for system86
+    if(SYSTEM86)
+        return (SongNo&0xff && T->Position >= -T->PositionBase) ? -1 : 0;
+    // NA-1/NA-2 has a song count
+    else if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
+        return 0;
+    // dspirit & system86 (songs may begin without an INIT command...)
+    else if(SYSTEM1 && (header_byte == 0x01 || header_byte == 0x02))
+        return -1;
+    // the sound driver does a check to make sure first byte is either 0x20 or 0x21
+    else if(!SYSTEMNA && header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
+        return 0;
+    return 1;
+}
+
 void S2X_TrackInit(S2X_State* S, int TrackNo)
 {
     S->SongTimer[TrackNo] = 0;
@@ -26,64 +78,23 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     uint16_t SongNo = S->SongRequest[TrackNo]&0x1ff;
 
     //T->Position = S2X_GetSongPos(S,SongNo);
-
-    T->PositionBase = S->PCMBase;
-    if(SYSTEM1)
-        T->PositionBase = (TrackNo > 7) ? S->PCMBase : S->FMBase;
-    else if(!SYSTEMNA)
-        T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;
-    if(SongNo & 0x100)
-        T->PositionBase += (SYSTEMNA) ? 0x10000 : 0x20000;
-
-    if(SYSTEM86)
-        T->Position = S2X_ReadWord(S,T->PositionBase+S->FMSongTab+(2*(SongNo&0xff)));
-    else
-        T->Position = S2X_ReadWord(S,T->PositionBase+S2X_ReadWord(S,T->PositionBase)+(2*(SongNo&0xff)));
-    //Q_DEBUG("track pos=%04x,%04x\n",S2X_ReadWord(S,T->PositionBase),T->Position);
-
-    int invalid=0;
-
-    uint8_t header_byte = 0;
-    if(T->Position+T->PositionBase < 0x400000)
-        header_byte = S2X_ReadByte(S,T->PositionBase+T->Position)&0x3f;
+    int valid=0;
     if(S1_WSG)
     {
-        uint8_t id=0;
-        uint8_t data = SongNo-1;
-        uint16_t idtab = S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACKREQ);
-        if(idtab)
-        {
-            while(id<0x80)
-            {
-                data = S2X_ReadByte(S,idtab+id);
-                if(data == 0xff || data == SongNo-1)
-                    break;
-                id++;
-            }
-        }
-        if(data != 0xff)
-            T->Position = S2X_ReadWord(S,S2X_WSGReadHeader(S,S2X_WSG_HEADER_TRACK)+(2*data));
-        else
-            invalid=1;
+        valid = S2X_WSGTrackStart(S,TrackNo,T,SongNo);
     }
-    // skip detection for system86
-    else if(SYSTEM86)
-        invalid= (SongNo&0xff && T->Position >= -T->PositionBase) ? -1 : 1;
-    // NA-1/NA-2 has a song count
-    else if(SYSTEMNA && (SongNo&0xff) > S->SongCount[SongNo>>8])
-        invalid=1;
-    // shitty hack for dspirit & system86 (song begins without an INIT command...)
-    else if(SYSTEM1 && (header_byte == 0x01 || header_byte == 0x02))
-        invalid=-1;
-    // the sound driver does a check to make sure first byte is either 0x20 or 0x21
-    else if(!SYSTEMNA && header_byte != 0x20 && header_byte != 0x21 && header_byte != 0x1a)
-        invalid=1;
-    if(invalid>0)
+    else
+    {
+        GetSongPos(S,TrackNo,T);
+        valid = CheckValid(S,TrackNo,T);
+    }
+
+    if(!valid)
     {
         Q_DEBUG("Track %02x, song id %04x invalid (header byte=%02x at %06x)\n",
                 TrackNo,
                 SongNo,
-                header_byte,
+                S2X_ReadByte(S,T->PositionBase+T->Position),
                 T->PositionBase+T->Position);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
         return;
@@ -129,8 +140,8 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
         T->Channel[i].Enabled = 0;
         T->Channel[i].LastEvent = 0;
     }
-    // part 2 of the shitty dspirit hack
-    if(invalid == -1)
+    // initialize channels if needed
+    if(valid == -1)
         S2X_ChannelInit(S,T,TrackNo,0x18,0xff);
 }
 
