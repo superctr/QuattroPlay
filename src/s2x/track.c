@@ -91,10 +91,9 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
 
     if(!valid)
     {
-        Q_DEBUG("Track %02x, song id %04x invalid (header byte=%02x at %06x)\n",
+        Q_DEBUG("Track %02x, song id %04x invalid (start pos: %06x)\n",
                 TrackNo,
                 SongNo,
-                S2X_ReadByte(S,T->PositionBase+T->Position),
                 T->PositionBase+T->Position);
         S->SongRequest[TrackNo] &= ~(S2X_TRACK_STATUS_START);
         return;
