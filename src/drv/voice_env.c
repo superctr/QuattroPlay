@@ -94,6 +94,8 @@ void Q_VoiceEnvUpdate(Q_State *Q,int VoiceNo,Q_Voice *V)
             return;
         if(--V->GateTimeLeft > 0)
             return;
+        if(V->Enabled)
+            V->Enabled = 2; // show key off
         do
         {
             d = Q_ReadByte(Q,V->EnvPos++);
