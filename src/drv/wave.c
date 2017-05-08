@@ -43,8 +43,8 @@ void Q_WaveLinkUpdate(Q_State* Q,int VoiceNo,Q_Voice *V)
         if(Q_ReadWord(Q,V->WaveLinkPos+0x0a) & C352_FLG_REVERSE)
             V->EnvNo++;
 
-        Q_C352_W(Q,VoiceNo,C352_WAVE_START,Q_ReadWord(Q,V->WaveLinkPos+0x08)); // next bank
         Q_C352_W(Q,VoiceNo,C352_WAVE_LOOP, Q_ReadWord(Q,V->WaveLinkPos+0x0c)); // start position of next link
+        Q_C352_W(Q,VoiceNo,C352_WAVE_START,Q_ReadWord(Q,V->WaveLinkPos+0x08)); // next bank
 
         V->WaveLinkPos += 8;
         V->WaveLinkFlag++;
@@ -61,8 +61,8 @@ void Q_WaveLinkUpdate(Q_State* Q,int VoiceNo,Q_Voice *V)
                 V->WaveLinkPos = (V->WaveLinkPos&0xff0000) | Q_ReadWord(Q,V->WaveLinkPos+2);
 
             Q_C352_W(Q,VoiceNo,C352_FLAGS,     (NextFlag&0xfffe)|(Q_ReadWord(Q,V->WaveLinkPos+0x02)&0x01)); // ?
-            Q_C352_W(Q,VoiceNo,C352_WAVE_START,Q_ReadWord(Q,V->WaveLinkPos+0x00)); // next bank
             Q_C352_W(Q,VoiceNo,C352_WAVE_LOOP, Q_ReadWord(Q,V->WaveLinkPos+0x04)); // start position of next link
+            Q_C352_W(Q,VoiceNo,C352_WAVE_START,Q_ReadWord(Q,V->WaveLinkPos+0x00)); // next bank
         }
         else
         {
