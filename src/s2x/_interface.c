@@ -33,7 +33,7 @@ int S2X_IInit(void* d,QP_Game *g)
     }
     else
     {
-        S->PCMChip.mulaw_type=C352_MULAW_TYPE_C140;
+        C352_set_mulaw_type(&S->PCMChip,C352_MULAW_TYPE_C140);
         S->PCMChip.wave = g->WaveData;
         S->PCMChip.wave_mask = g->WaveMask;
     }

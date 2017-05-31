@@ -87,6 +87,8 @@ typedef struct {
 
     uint16_t random;
 
+    int16_t mulaw_table[256];
+
     // special
     uint32_t mute_mask;
     uint8_t mute_rear;
@@ -96,13 +98,13 @@ typedef struct {
 } C352;
 
 int C352_init(C352 *c,uint32_t clk);
+void C352_set_mulaw_type(C352 *c,int mulaw_type);
 
-// should be run with the C352_rate
+// run this at the rate specified in C352_rate (hz)
 void C352_update(C352 *c);
-
-int16_t C352_update_voice(C352 *c, int v);
 
 void C352_write(C352 *c, uint16_t addr, uint16_t data);
 uint16_t C352_read(C352 *c, uint16_t addr);
+
 
 #endif // C352_H_INCLUDED

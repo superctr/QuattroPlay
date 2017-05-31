@@ -25,7 +25,54 @@ int C352_init(C352 *c, uint32_t clk)
     c->control1 = 0;
     c->control2 = 0;
     c->random = 0x1234;
+
+    C352_set_mulaw_type(c,C352_MULAW_TYPE_C352);
+
     return c->rate;
+}
+
+// Generated tables verified with Wii Virtual Console emulators
+// (Starblade, Knuckle Heads)
+void C352_set_mulaw_type(C352 *c,int mulaw_type)
+{
+    int i=0, j=0;
+    c->mulaw_type = mulaw_type;
+    switch(mulaw_type)
+    {
+    default:
+    case C352_MULAW_TYPE_C352: // also C219
+        for(i=0;i<128;i++)
+        {
+            c->mulaw_table[i] = j<<5;
+            if(i < 16)
+                j += 1;
+            else if(i < 24)
+                j += 2;
+            else if(i < 48)
+                j += 4;
+            else if(i < 100)
+                j += 8;
+            else
+                j += 16;
+        }
+        for(i=128;i<256;i++)
+            c->mulaw_table[i] = (~c->mulaw_table[i-128])&0xffe0;
+        break;
+    case C352_MULAW_TYPE_C140:
+        for(i=0;i<256;i++)
+        {
+            j=(int8_t)i;
+            int8_t s1 = j&7;
+            int8_t s2 = abs(j>>3)&31;
+
+            c->mulaw_table[i] = 0x80<<s1 & 0xff00;
+            c->mulaw_table[i] += s2<<(s1 ? s1+3 : 4);
+
+            if(j<0)
+                c->mulaw_table[i] = -c->mulaw_table[i];
+        }
+        break;
+    }
 }
 
 uint16_t C352RegMap[8] = {
@@ -88,7 +135,7 @@ uint16_t C352_read(C352 *c, uint16_t addr)
 }
 
 
-void C352_fetch_sample(C352 *c, int i)
+inline void C352_fetch_sample(C352 *c, int i)
 {
     C352_Voice *v = &c->v[i];
 	v->last_sample = v->sample;
@@ -104,38 +151,14 @@ void C352_fetch_sample(C352 *c, int i)
 	}
 	else
 	{
-		int8_t s, s1,s2;
+		int8_t s;
 
 		s = (int8_t)c->wave[v->pos&c->wave_mask];
 
 		if(v->flags & C352_FLG_MULAW)
-        {
-            // rom encoding differs a bit
-            if(c->mulaw_type == C352_MULAW_TYPE_C140)
-            {
-                // C140 mulaw (based on MAME for now)
-                s1=s&7;
-                s2=s>>3;
-                v->sample = (s2<<s1)<<3;
-                if (s1 && s2<0)
-                    v->sample -= ((2<<(s1-1))-1)<<7;
-                else if (s1)
-                    v->sample += ((2<<(s1-1))-1)<<7;
-            }
-            else
-            {
-                // C352 mulaw
-                s2 = (s&0x7f)>>4;
-                s1=s;
-
-                v->sample = ((s2*s2)<<4) - (~(s2<<1))*(s1&0x0f);
-                v->sample = (s&0x80) ? (~v->sample)<<5 : v->sample<<5;
-            }
-        }
+            v->sample = c->mulaw_table[s&0xff];
 		else
-        {
 			v->sample = s<<8;
-        }
 
 		uint16_t pos = v->pos&0xffff;
 
@@ -176,7 +199,7 @@ void C352_fetch_sample(C352 *c, int i)
 }
 
 
-void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
+inline void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
 {
     // disabling filter also disables volume ramp?
     if(c->v[i].latch_flags & C352_FLG_FILTER)
@@ -188,7 +211,7 @@ void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
         c->v[i].curr_vol[ch] += (vol_delta>0) ? -1 : 1;
 }
 
-int16_t C352_update_voice(C352 *c, int i)
+inline int16_t C352_update_voice(C352 *c, int i)
 {
     C352_Voice *v = &c->v[i];
 
