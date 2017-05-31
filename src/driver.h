@@ -69,41 +69,67 @@ struct QP_DriverInterface {
     // IInit is allowed to fail, this aborts the program
     int (*IInit)(void*,QP_Game *game);
 
+    // Deinitializes a sound driver. Any and all allocated memory should be
+    // freed by this call
     void (*IDeinit)(void*);
+    // Setup vgm logging for this sound driver
     void (*IVgmOpen)(void*);
     void (*IVgmClose)(void*);
+    // Reset the sound driver. Initial is set to 1 for the initial setup (right after IInit)
     void (*IReset)(void*,QP_Game *game,int initial);
 
+    // Driver parameters, bank switch, registers, conditional jumps etc.
+    // Get parameter count.
     int (*IGetParamCnt)(void*);
     void (*ISetParam)(void*,int id,int val);
     int (*IGetParam)(void*,int id);
-
+    // Return a user-friendly name for the parameter
     int (*IGetParamName)(void*,int id,char* buffer,int len);
+
+    // Return a song message / song title.
     char* (*IGetSongMessage)(void*);
+    // Return some user-friendly description of the sound driver
     char* (*IGetDriverInfo)(void*);
 
+    // Get request slot count. Slots do not have to be symmetrical.
     int (*IRequestSlotCnt)(void*);
+    // Get the amount of valid song IDs for that slot.
     int (*ISongCnt)(void*,int slot);
+    // Request a song in the specified slot.
     void (*ISongRequest)(void*,int slot,int val);
+    // Stop a song in the specified slot
     void (*ISongStop)(void*,int slot);
+    // Fade out a song in the specified slot
     void (*ISongFade)(void*,int slot);
+    // Get song status. See enum above for bit description. Bits 0-11 = song id.
     int (*ISongStatus)(void*,int slot);
+    // as above, but just gets the song ID.
     int (*ISongId)(void*,int slot);
+    // Get currently playing time for the slot, in seconds.
     double (*ISongTime)(void*,int slot);
-
+    // Get the loop count for the specified slot.
     int (*IGetLoopCnt)(void*,int slot);
+    // Reset the loop count for all slots
     void (*IResetLoopCnt)(void*);
 
+    // Return zero if all voices are silent
     int (*IDetectSilence)(void*);
 
+    // Get driver tick rate, in Hz
     double (*ITickRate)(void*);
+    // Driver tick
     void (*IUpdateTick)(void*);
+    // Get audio tick rate, in Hz
     double (*IChipRate)(void*);
+    // Audio tick
     void (*IUpdateChip)(void*);
+    // Get samples from the audio
     void (*ISampleChip)(void*,float* samples,int samplecnt);
 
+    // Channel mute bitmask
     uint32_t (*IGetMute)(void*);
     void (*ISetMute)(void*,uint32_t data);
+    // Channel isolation bitmask
     uint32_t (*IGetSolo)(void*);
     void (*ISetSolo)(void*,uint32_t data);
 
