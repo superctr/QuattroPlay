@@ -135,7 +135,7 @@ uint16_t C352_read(C352 *c, uint16_t addr)
 }
 
 
-inline void C352_fetch_sample(C352 *c, int i)
+static inline void C352_fetch_sample(C352 *c, int i)
 {
     C352_Voice *v = &c->v[i];
 	v->last_sample = v->sample;
@@ -199,7 +199,7 @@ inline void C352_fetch_sample(C352 *c, int i)
 }
 
 
-inline void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
+static inline void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
 {
     // disabling filter also disables volume ramp?
     if(c->v[i].latch_flags & C352_FLG_FILTER)
@@ -211,7 +211,7 @@ inline void C352_update_volume(C352 *c,int i,int ch,uint8_t v)
         c->v[i].curr_vol[ch] += (vol_delta>0) ? -1 : 1;
 }
 
-inline int16_t C352_update_voice(C352 *c, int i)
+static inline int16_t C352_update_voice(C352 *c, int i)
 {
     C352_Voice *v = &c->v[i];
 
