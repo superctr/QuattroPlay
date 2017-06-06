@@ -127,6 +127,9 @@ TRACKCOMMAND(tc_Repeat)
     int temp = arg_word(S,T->PositionBase,&T->Position);
     int pos = T->RepeatStackPos;
 
+    if(SYSTEM86)
+        i--;
+
     if(pos > 0 && T->RepeatStack[pos-1] == T->Position)
     {
         // loop address stored in stack
