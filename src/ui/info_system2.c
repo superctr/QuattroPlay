@@ -340,18 +340,19 @@ static int fm_op(uint8_t* insdat,int ypos,char* title)
 }
 
 
-static int fm_info(S2X_State* S,uint8_t* insdat,int ypos)
+static int fm_info(S2X_State* S,uint8_t* insdat,int ypos,int lfo_set)
 {
     uint8_t fb_con = insdat[0];
     uint8_t pms_ams = insdat[3];
+    uint8_t pms_ams2= lfo_set ? pms_ams : 0;
 
     SCRN(ypos++,44,40,"Chip registers:");
     fm_con(fb_con&7,ypos,45);
     SCRN(ypos++,44+14,40,"FB :%d    LFO Set:  %02x",(fb_con>>3)&7,S->FMLfo);
     SCRN(ypos++,44+14,40,"\x10           Wave: %s",fm_lfo_waveform[S->FMLfoWav&3]);
     SCRN(ypos++,44+14,40,"            Freq: %3d",S->FMLfoFrq);
-    SCRN(ypos++,44+14,40,"PMS:%d    Amp Mod: %3d",(pms_ams>>4)&7,S->FMLfoAms);
-    SCRN(ypos++,44+14,40,"AMS:%d    Phs Mod: %3d",pms_ams&3,S->FMLfoPms);
+    SCRN(ypos++,44+14,40,"PMS:%d/%d  Amp Mod: %3d",(pms_ams2>>4)&7,(pms_ams>>4)&7,S->FMLfoAms);
+    SCRN(ypos++,44+14,40,"AMS:%d/%d  Phs Mod: %3d",pms_ams2&3,pms_ams&3,S->FMLfoPms);
     ypos++;
     ypos = fm_op(insdat,ypos,"Modulator 1");
     ypos = fm_op(insdat+2,ypos,"Carrier 1");
@@ -406,7 +407,7 @@ void ui_info_s2_voice(int id,int ypos)
         uint8_t fmdata[32] = {0};
         if(FM->InsPtr)
             memcpy(fmdata,S->Data+FM->InsPtr,32);
-        ypos = fm_info(S,fmdata,ypos);
+        ypos = fm_info(S,fmdata,ypos,FM->Lfo == S->FMLfo);
     }
 
     tempypos=ypos+1;
