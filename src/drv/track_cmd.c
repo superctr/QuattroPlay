@@ -688,7 +688,7 @@ TRACKCOMMAND(tc_SetReg)
     // destination register no
     dest = arg_byte(Q,TrackPos);
     if(mode&0x40) // indirect
-        dest = Q->Register[dest];
+        dest = Q->Register[dest]&0xff;
 
     source = arg_operand(Q,TrackPos,mode<<2);
 

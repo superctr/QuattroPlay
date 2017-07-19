@@ -302,7 +302,7 @@ static void q_generate(int TrackNo)
                 // destination register no
                 dest = q_pattern_arg_byte(&pos);
                 if(data&0x40) // indirect
-                    dest = regs[dest];
+                    dest = regs[dest]&0xff;
                 source = q_pattern_arg_operand(&pos,data<<2,regs);
                 reg = regs[dest];
                 setflags = 0;
