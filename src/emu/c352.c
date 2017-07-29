@@ -103,7 +103,7 @@ void C352_write(C352 *c, uint16_t addr, uint16_t data)
     {
         for(i=0;i<C352_VOICES;i++)
         {
-            if((c->v[i].flags & C352_FLG_KEYON))
+            if(c->v[i].flags & C352_FLG_KEYON)
             {
                 c->v[i].pos = (c->v[i].wave_bank<<16) | c->v[i].wave_start;
 
@@ -117,7 +117,7 @@ void C352_write(C352 *c, uint16_t addr, uint16_t data)
                 c->v[i].curr_vol[0] = c->v[i].curr_vol[1] = 0;
                 c->v[i].curr_vol[2] = c->v[i].curr_vol[3] = 0;
             }
-            else if(c->v[i].flags & C352_FLG_KEYOFF)
+            if(c->v[i].flags & C352_FLG_KEYOFF)
             {
                 c->v[i].flags &= ~(C352_FLG_BUSY|C352_FLG_KEYOFF);
                 c->v[i].counter = 0xffff;
