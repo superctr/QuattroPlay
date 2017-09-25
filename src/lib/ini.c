@@ -71,16 +71,16 @@ int ini_readkey(inifile_t* ini)
 
 int ini_readspaces(inifile_t* ini)
 {
-    while(isspace(ini->c))
+    while(1)
     {
-        ini->c = getc(ini->f);
-
         if(ini->c == EOF)
             return -1;
         if(ini_newline(ini))
             return -1;
+        if(!isspace(ini->c))
+            return 0;
+        ini->c = getc(ini->f);
     }
-    return 0;
 }
 
 void ini_escape(inifile_t* ini)
