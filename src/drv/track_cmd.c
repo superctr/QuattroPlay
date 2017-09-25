@@ -52,7 +52,7 @@ static uint16_t arg_operand(Q_State *Q,uint32_t* TrackPos,uint8_t mode)
         // register operand
         val = Q->Register[arg_byte(Q,TrackPos)];
         if(mode&0x40) // indirect
-            val = Q->Register[val];
+            val = Q->Register[val&0xff];
     }
     return val;
 }

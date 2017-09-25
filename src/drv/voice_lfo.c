@@ -77,6 +77,7 @@ void Q_VoiceLfoUpdate(Q_State *Q,int VoiceNo,Q_Voice *V)
         if(V->LfoPhase != freq)
             return;
         depth = Q_VoiceLfoGetRandom(Q);
+        V->LfoPhase=0;
         break;
     case 0x0f: // random 2
         V->LfoPhase++;
