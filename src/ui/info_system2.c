@@ -410,6 +410,16 @@ void ui_info_s2_voice(int id,int ypos)
         ypos = fm_info(S,fmdata,ypos,FM->Lfo == S->FMLfo);
     }
 
+    if(S->DriverType == S2X_TYPE_NA && id<16)
+    {
+        SCRN(ypos++,44,40,"Voice Bank %d (voice %d-%d)",id/4,id&12,(id&12)+3);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "Select",  S->WaveBank[id/4]);
+        SCRN(ypos++,45,40,"%-10s%06x",
+                "Offset",  S->WaveBase[S->BankSelect][S->WaveBank[id/4]]);
+        ypos++;
+    }
+
     tempypos=ypos+1;
 
     switch(type)

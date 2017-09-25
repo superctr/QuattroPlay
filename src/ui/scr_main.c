@@ -248,7 +248,7 @@ static void scr_main_input()
         ui_bounds_check();
         if(inpstate != STATE_SETVALUE)
         {
-            Game->PlaylistControl = 0;
+            //Game->PlaylistControl = 0;
             ui_convert_currval();
             curr_val_edit+=increment;
             ui_bounds_check();
