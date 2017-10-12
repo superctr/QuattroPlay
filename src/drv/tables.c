@@ -9,7 +9,7 @@
 
  Q_EnvelopeRateTable(n) = 65536*pow(1.07251,n-127)+0.5  <- Not accurate below a threshold
  Q_PitchTable(n) = 128*pow(1.0594631,n)+0.5
- Q_VolumeTable(n) = 256*pow(0.9793,n)+0.5
+ Q_VolumeTable(n) = 256*pow(10,-n/110)+0.5  <- attenuation: -(x/5.5)dB
  *These are not 100% accurate
 
  ROM tables:
