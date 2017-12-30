@@ -9,6 +9,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef WIN32
+#include "windows.h"
+#else
+#include "libgen.h"
+#endif // WIN32
+
 #include "SDL2/SDL.h"
 
 #include "qp.h"
@@ -36,15 +42,31 @@ static int rom_deinterleave(QP_Game *G)
     return 0;
 }
 
+char* my_realpath(char* filepath)
+{
+#ifdef WIN32
+    char *buf = malloc(1024), *filepart;
+    if(buf)
+        *buf = 0;
+    GetFullPathName(filepath,1024,buf,&filepart);
+    if(filepart)
+        *filepart = 0;
+    return buf;
+#else
+    char *buf = strdup(filepath);
+    char *filepart = dirname(buf);
+#endif
+}
+
 // Loads game ini, then the sound data and wave roms...
+// this is a huge and messy function and needs to be replaced.
 int LoadGame(QP_Game *G)
 {
     //Q_State* Q = G->QDrv;
 
-    static char msgstring[2048];
-
-    static char filename[128];
-    static char path[128];
+    static char msgstring[1024];
+    static char *filename;
+    static char *path;
     //static char gamehackname[128];
     static char wave0[16];
     static char wave1[16];
@@ -83,13 +105,21 @@ int LoadGame(QP_Game *G)
     static char data_filename[16][128];
     static char driver_name[128];
 
+    char *ini_realpath = 0;
+
+    filename = malloc(2048);
+    path = malloc(2048);
     msgstring[0] = 0;
     path[0] = 0;
 
     sprintf(msgstring,"Failed to load '%s':",G->Name);
     int loadok = strlen(msgstring);
 
-    snprintf(filename,127,"%s/%s.ini",QP_IniPath,G->Name);
+    // if dot is found, direct path to ini is assumed
+    if(strrchr(G->Name,'.'))
+        snprintf(filename,127,"%s",G->Name);
+    else
+        snprintf(filename,127,"%s/%s.ini",QP_IniPath,G->Name);
 
 #ifdef DEBUG
     printf("Now loading '%s' ...\n",filename);
@@ -109,6 +139,7 @@ int LoadGame(QP_Game *G)
     inifile_t initest;
     if(!ini_open(filename,&initest))
     {
+        ini_realpath = my_realpath(filename);
         while(!ini_readnext(&initest))
         {
             //printf("'%s'.'%s' = '%s'\n",initest.section,initest.key,initest.value);
@@ -272,6 +303,9 @@ int LoadGame(QP_Game *G)
 
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",msgstring,NULL);
         ini_close(&initest);
+
+        free(filename);
+        free(path);
         return -1;
     }
 
@@ -304,8 +338,12 @@ int LoadGame(QP_Game *G)
         snprintf(filename,127,"%s/%s/%s",QP_DataPath,path,data_filename[i]);
         if(read_file(filename,G->Data+data_pos,0,0,byteswap,&data_size))
         {
-            strcat(msgstring,my_strerror(filename));
-            //return -1;
+            // try direct path too
+            snprintf(filename,127,"%s/%s",ini_realpath,data_filename[i]);
+            if(read_file(filename,G->Data+data_pos,0,0,byteswap,&data_size))
+            {
+                strcat(msgstring,my_strerror(filename));
+            }
         }
 #ifdef DEBUG
         printf("Data %d\n",i);
@@ -370,10 +408,17 @@ int LoadGame(QP_Game *G)
         wave_maxlen = 0x1000000 - wave_pos[i];
         snprintf(filename,127,"%s/%s/%s",QP_WavePath,path,wave_filename[i]);
         if(read_file(filename,G->WaveData+wave_pos[i],wave_length[i],wave_offset[i],wave_byteswap[i],&wave_maxlen))
-            strcat(msgstring,my_strerror(filename));
-        else
-            G->WaveMask |= wave_pos[i]+wave_length[i]-1;
+        {
+            snprintf(filename,127,"%s/%s",ini_realpath,wave_filename[i]);
+            if(read_file(filename,G->WaveData+wave_pos[i],wave_length[i],wave_offset[i],wave_byteswap[i],&wave_maxlen))
+                strcat(msgstring,my_strerror(filename));
+        }
+        G->WaveMask |= wave_pos[i]+wave_length[i]-1;
     }
+
+    free(ini_realpath);
+    free(filename);
+    free(path);
 
 #ifdef DEBUG
     printf("Wave Mask = %06x\n",G->WaveMask);

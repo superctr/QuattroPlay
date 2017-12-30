@@ -268,6 +268,12 @@ int ui_main(screen_mode_t sm)
             case SDL_RENDER_TARGETS_RESET:
                 screen.screen_dirty=1;
                 break;
+            case SDL_DROPFILE:
+                running=0;
+                returncode=-1;
+                strncpy(QP_DragDropPath,event.drop.file,sizeof(QP_DragDropPath)-1);
+                SDL_free(event.drop.file);
+                break;
             default:
                 break;
             }

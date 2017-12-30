@@ -48,7 +48,7 @@ audiobuffer = 2048\n\
 int main(int argc, char *argv[])
 {
     int loop = 0;
-    int val;
+    int val = 0;
     SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_TIMER);
 
     Audio = (QP_Audio*)malloc(sizeof(QP_Audio));
@@ -170,22 +170,27 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-        if(loop)
+        if(val == -1)
+        {
+            strcpy(Game->Name,QP_DragDropPath);
+        }
+        else if(loop)
         {
             val = ui_main(SCR_SELECT);
             if(!val)
                 break;
-            --val;
-            strcpy(Game->Name,Audit->Entry[val].Name);
+            if(val == -1)
+                strcpy(Game->Name,QP_DragDropPath);
+            else
+                strcpy(Game->Name,Audit->Entry[--val].Name);
         }
-
         val = (LoadGame(Game) || InitGame(Game));
         if(!val)
         {
             QP_AudioSetPause(Audio,0);
             Audio->state.UpdateRequest = QPAUDIO_CHIP_PLAY|QPAUDIO_DRV_PLAY;
 
-            ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
+            val = ui_main(loop ? SCR_PLAYLIST : SCR_MAIN);
 
             QP_AudioClose(Audio);
 
@@ -194,7 +199,7 @@ int main(int argc, char *argv[])
         }
         UnloadGame(Game);
 
-        if(!loop)
+        if(!loop && !val)
             break;
     }
 

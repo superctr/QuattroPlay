@@ -21,6 +21,8 @@
     char QP_WavePath[128];
     char QP_DataPath[128];
 
+    char QP_DragDropPath[256];
+
     QP_Audio *Audio;
     QP_Game  *Game;
     QP_Audit *Audit;
