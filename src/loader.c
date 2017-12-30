@@ -51,11 +51,11 @@ char* my_realpath(char* filepath)
     GetFullPathName(filepath,1024,buf,&filepart);
     if(filepart)
         *filepart = 0;
-    return buf;
 #else
     char *buf = strdup(filepath);
     char *filepart = dirname(buf);
 #endif
+    return buf;
 }
 
 // Loads game ini, then the sound data and wave roms...
