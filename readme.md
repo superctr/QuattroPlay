@@ -22,8 +22,6 @@ Only dependency is SDL2 (sudo apt-get install libsdl2-dev)
 The makefile is tested on Linux Mint, Ubuntu and Windows (using MSYS).
 
 The program works on macOS, but you might have to do modifications to the makefile. I can't help you there.
- 
-For Windows, <s>you can also use the codeblocks project file</s> please use the makefile.
 
 ## Usage
 
@@ -31,11 +29,13 @@ Currently zipped MAME ROMs are not supported, you will have to store them in a s
 
 Then run it from command line/terminal:
 
-	bin/Debug/QuattroPlay.exe <gamename>
+	bin/QuattroPlay.exe <gamename>
 or
 
-	./bin/Debug/QuattroPlay <gamename>
+	./bin/QuattroPlay <gamename>
  
+Running without the <gamename> argument will allow you to select a game from a menu. It is also possible to load .ini files with associated data and wave files by drag and drop while the program is running.
+
 ## GUI usage
 
 The current user interface is a bit complicated... Currently it only uses the keyboard.
@@ -50,7 +50,7 @@ By highlighting one of the values in the last group you can mute or solo channel
 
 ## Command line usage
 
-	./bin/Debug/QuattroPlay [options] <gamename> [<song ID>]
+	./bin/QuattroPlay [options] <gamename> [<song ID>]
 
 If Song ID is specified, the song will automatically start. If enabled with
 the -w or -v parameters, the filenames will also contain the game name and
@@ -127,6 +127,7 @@ This might not be complete yet.
 
 ## Notes
 
+*	Playlists are all defined in the .INI files. If you find any errors or have any suggestions, please create an issue in the github repository.
 *   The C30 chip is not emulated, instead the C352 is used. This makes VGM logging possible.
 *   The C140 chip is not emulated, instead the C352 is used. The compressed sample format differs, breaking VGM logs in a few games.
 *   The C219 chip is not emulated, instead the C352 is used. This actually improves the sound quality of VGM logs, as the C219 chip is not accurately emulated in VGM players.
