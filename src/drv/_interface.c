@@ -145,9 +145,7 @@ int Q_IDetectSilence(void* d)
     for(i=0;i<Q_MAX_VOICES;i++)
         if(!Q->Voice[i].Enabled)
             voicectr++;
-    if(voicectr != Q_MAX_VOICES)
-        return 1;
-    return 0;
+    return (voicectr == Q_MAX_VOICES);
 }
 
 double Q_ITickRate(void* d)
