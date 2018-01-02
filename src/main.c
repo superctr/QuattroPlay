@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
         }
         UnloadGame(Game);
 
-        if(!loop && !val)
+        if(val != -1 && !loop)
             break;
     }
 
