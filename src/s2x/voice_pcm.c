@@ -588,6 +588,12 @@ void S2X_PlayPercussion(S2X_State *S,int VoiceNo,int BaseAddr,int WaveNo,int Vol
     ChipFlag=0;
     if(SYSTEMNA)
     {
+        if(left != right)
+        {
+            left ^= right;
+            right ^= left;
+            left ^= right;
+        }
         if(flag & 0x01)
             ChipFlag |= C352_FLG_MULAW;
         if(flag & 0x04)
