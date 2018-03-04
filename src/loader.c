@@ -588,7 +588,10 @@ void GameDoUpdate(QP_Game *G)
 
     // todo...
     if(DriverInterface->Type == DRIVER_QUATTRO && QDrv->BootSong != 0)
+    {
+        Audio->state.Gain = G->BaseGain*G->Gain*G->UIGain*(1-G->Fadeout);
         return;
+    }
 
     if(!G->PlaylistControl)
         G->Fadeout=0;
