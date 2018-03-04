@@ -1,6 +1,8 @@
 /*
     Simple delay line / reverb DSP for QuattroPlay
 
+    8 delay lines (4 per channel)
+
     Register map
     00-1f : Delay lines
     20-23 : Delay preset setting
@@ -13,7 +15,7 @@
 
     Preset setting (Writes here will reset the delay line configuration):
     20 : Preset setting (0=No preset)
-    21 : Base feedback
+    21 : Base feedback (0-255)
     22 : Left delay base
     23 : Right delay base
 */
@@ -34,10 +36,11 @@ int DelayDSP_init(DelayDSP *c)
     c->in_count = 0;
     c->enable_count = 0;
 
-    c->preset_time1 = 0x100;
-    c->preset_time2 = 0x101;
+    // default settings for a nice room reverb
+    c->preset_time1 = 250;
+    c->preset_time2 = 251;
     c->preset_set = 1;
-    c->preset_feedback = 220<<8;
+    c->preset_feedback = 230;
 
     DelayDSP_set_preset(c);
 
@@ -140,14 +143,16 @@ uint16_t DelayDSP_read(DelayDSP *c, uint16_t addr)
 static struct {
     uint16_t time_base[4];
     uint16_t filter[4];
+    uint16_t feedback[4];
 } PresetArray[] = {
     {
         { 0, 0, 0, 0 },
         { 0, 0, 0, 0 },
     },
     {
-        { 7, 11, 13, 17 },
-        { 0x1500,0x1000,0xa00,0x800 },
+        { 7, 11, 13, 17 }, // time base, should be prime numbers
+        { 0x1500,0x1000,0x0a00,0x0800 }, // filter base
+        { 0x0100,0x0100,0x0100,0x0100 }, // feedback base
     },
 
 };
@@ -165,7 +170,7 @@ void DelayDSP_set_preset(DelayDSP *c)
         c->line[i].line_end = temp ? addr+temp-1 : addr;
         addr += temp;
         c->line[i].input_filter = temp ? PresetArray[preset].filter[i/2] : 0;
-        c->line[i].feedback = temp ? c->preset_feedback : 0;
+        c->line[i].feedback = temp ? c->preset_feedback * PresetArray[preset].feedback[i/2] : 0;
         c->line[i].pos = c->line[i].line_start;
     }
 
