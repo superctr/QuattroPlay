@@ -14,6 +14,8 @@ int Q_IInit(void* d,QP_Game *g)
     Q->McuType = Q_GetMcuTypeFromString(g->Type);
     Q->ChipClock = g->ChipFreq;
     C352_init(&Q->Chip,g->ChipFreq);
+    DelayDSP_init(&Q->Delay);
+    DelayDSP_set_input(&Q->Delay,Q->Chip.out,4,2);
     Q->Chip.mulaw_type = C352_MULAW_TYPE_C352;
     Q->Chip.vgm_log = 0;
 
@@ -63,12 +65,19 @@ int Q_IGetParamCnt(void* d)
 void Q_ISetParam(void* d,int id,int val)
 {
     Q_State *Q = d;
-    Q->Register[id&0xff] = val;
+
+    if(Q->Register[0] == 1 && id >= 0xd0)
+        DelayDSP_write(&Q->Delay,id-0xd0,val);
+    else
+        Q->Register[id&0xff] = val;
 }
 int Q_IGetParam(void* d,int id)
 {
     Q_State *Q = d;
-    return Q->Register[id&0xff];
+    if(Q->Register[0] == 1 && id >= 0xd0)
+        return DelayDSP_read(&Q->Delay,id-0xd0);
+    else
+        return Q->Register[id&0xff];
 }
 int Q_IGetParamName(void* d,int id,char* buffer,int len)
 {
@@ -165,6 +174,7 @@ void Q_IUpdateChip(void* d)
 {
     Q_State *Q = d;
     C352_update(&Q->Chip);
+    DelayDSP_update(&Q->Delay);
 }
 void Q_ISampleChip(void* d,float* samples,int samplecnt)
 {
@@ -173,7 +183,8 @@ void Q_ISampleChip(void* d,float* samples,int samplecnt)
     if(samplecnt > 4)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
-        samples[i] = (double) Q->Chip.out[i] / (1<<18);
+    //    samples[i] = (double) Q->Chip.out[i] / (1<<18);
+        samples[i] = (double) Q->Delay.output[i] / (1<<18);
 }
 
 uint32_t Q_IGetMute(void* d)

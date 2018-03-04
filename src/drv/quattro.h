@@ -11,6 +11,7 @@
 #define Q_MAX_REGISTER 256
 
 #include "../emu/c352.h"
+#include "../emu/delay.h"
 
 #include "enum.h"
 #include "struct.h"

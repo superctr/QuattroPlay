@@ -231,6 +231,7 @@ struct Q_State {
 
     uint32_t ChipClock;
     C352 Chip;
+    DelayDSP Delay;
 
 // ========================================================================= //
 // Game hacks - hopefully we'll see as little of these as possible.
