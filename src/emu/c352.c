@@ -255,16 +255,11 @@ void C352_update(C352 *c)
             flags = c->v[i].latch_flags;
 
             // Left
-            c->out[0] += (flags & C352_FLG_PHASEFL) ? -s * (c->v[i].curr_vol[0])
-                                                    :  s * (c->v[i].curr_vol[0]);
-            c->out[2] += (flags & C352_FLG_PHASERL) ? -s * (c->v[i].curr_vol[2])
-                                                    :  s * (c->v[i].curr_vol[2]);
-
+            c->out[0] += ((flags & C352_FLG_PHASEFL) ? -s : s) * (c->v[i].curr_vol[0]) >> 10;
+            c->out[2] += ((flags & C352_FLG_PHASERL) ? -s : s) * (c->v[i].curr_vol[2]) >> 10;
             // Right
-            c->out[1] += (flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[1])
-                                                    :  s * (c->v[i].curr_vol[1]);
-            c->out[3] += (flags & C352_FLG_PHASEFR) ? -s * (c->v[i].curr_vol[3])
-                                                    :  s * (c->v[i].curr_vol[3]);
+            c->out[1] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[1]) >> 10;
+            c->out[3] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[3]) >> 10;
         }
     }
 }

@@ -77,7 +77,7 @@ typedef struct {
     uint32_t rate;
 
     C352_Voice v[C352_VOICES];
-    double out[4];
+    int16_t out[4];
 
     uint16_t control1; // unknown purpose for both
     uint16_t control2;

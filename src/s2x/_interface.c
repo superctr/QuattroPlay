@@ -276,7 +276,7 @@ void S2X_ISampleChip(void* d,float* samples,int samplecnt)
     if(samplecnt > 4)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
-        samples[i] = S->PCMChip.out[i] / (1<<28);
+        samples[i] = (double) S->PCMChip.out[i] / (1<<18);
     if(samplecnt > 2)
         samplecnt=2;
     for(i=0;i<samplecnt;i++)
