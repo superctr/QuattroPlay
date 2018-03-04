@@ -184,7 +184,7 @@ void Q_ISampleChip(void* d,float* samples,int samplecnt)
         samplecnt=4;
     for(i=0;i<samplecnt;i++)
     //    samples[i] = (double) Q->Chip.out[i] / (1<<18);
-        samples[i] = (double) Q->Delay.output[i] / (1<<18);
+        samples[i] = (double) Q->Delay.output[i] / (1<<16);
 }
 
 uint32_t Q_IGetMute(void* d)

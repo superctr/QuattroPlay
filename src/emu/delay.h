@@ -25,10 +25,12 @@ typedef struct {
     int16_t *input;
     int16_t output[4];
 
-    int preset_set;
-    int preset_time1;
-    int preset_time2;
-    int preset_feedback;
+    uint16_t preset_set;
+    uint16_t preset_time1;
+    uint16_t preset_time2;
+    uint16_t preset_feedback;
+    uint16_t preset_vol;
+    uint16_t preset_filter;
 
     int16_t delay_memory[0x10000];
     DelayDSP_Line line[DELAYDSP_LINES];
