@@ -13,7 +13,7 @@ typedef struct {
     uint16_t input_filter;
 
     uint16_t pos;
-    int16_t filter_state;
+    int32_t filter_state;
 
 } DelayDSP_Line;
 

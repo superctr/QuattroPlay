@@ -46,11 +46,8 @@ int DelayDSP_init(DelayDSP *c)
     c->preset_time1 = 170;
     c->preset_time2 = 1;
     c->preset_feedback = 250;
-    c->preset_vol = 250;
-    c->preset_filter = 250;
-//  c->preset_feedback = 245;
-//  c->preset_vol = 100;
-//  c->preset_filter = 170;
+    c->preset_vol = 100;
+    c->preset_filter = 100;
 
     DelayDSP_set_preset(c);
 
@@ -91,8 +88,8 @@ int16_t DelayDSP_update_line(DelayDSP *c,int line,int16_t input)
     else
         d->pos++;
 
-    d->filter_state = (int32_t)((output_sample - d->filter_state)*d->input_filter)>>16;
-    return d->filter_state;
+    d->filter_state += (int32_t)((output_sample - (d->filter_state>>16))*d->input_filter);
+    return d->filter_state>>16;
 }
 
 void DelayDSP_update(DelayDSP *c)
@@ -164,40 +161,53 @@ static struct {
     uint8_t volume[4];
     uint8_t filter[4];
 } PresetArray[] = {
-    {
-        { 0, 0, 0, 0 },
-        { 0, 0, 0, 0 },
-        { 0, 0, 0, 0 },
+    { // 0
+        { 0, 0, 0, 0 }, // Delay time, should be prime numbers. total should be < 128
+        { 0, 0, 0, 0 }, // Delay feedback
+        { 0, 0, 0, 0 }, // Output volume
+        { 0, 0, 0, 0 }, // Output filter cutoff
     },
-    { // room
-        {   7, 11, 13, 17 }, // time base, should be prime numbers
-        { 230,230,230,230 }, // feedback base
-        { 240,240,240,240 }, // volume base
-        {  20, 15, 10,  8 }, // filter base
+    { // 1 room
+        {   7, 11, 13, 17 }, //=48
+        { 245,230,225,220 },
+        {  25, 25, 25, 25 },
+        {  50,100,150,200 },
     },
-    {
-        {  13, 17, 19, 23 },
-        { 230,230,230,230 },
-        { 230,230,230,230 },
-        {  15, 15, 15, 10 },
+    { // 2
+        {  11, 13, 17, 19 }, //=60
+        { 230,230,235,240 },
+        {  35, 35, 33, 30 },
+        { 200,180,160,140 },
     },
-    {
-        {   5, 13, 23, 29 },
-        { 230,230,230,230 },
-        { 230,230,230,230 },
-        {  19, 17, 15, 12 },
+    { // 3
+        {  13, 17, 19, 23 }, //=72
+        { 230,230,230,235 },
+        {  40, 40, 40, 40 },
+        {  20, 30, 40, 40 },
     },
-    { // hall
-        {  13, 19, 23, 31 },
-        { 245,245,245,245 },
-        {  80, 80, 80, 80 },
-        {  25, 25, 20, 20 },
+    { // 4 hall
+        {  13, 19, 23, 31 }, //=86
+        { 250,245,245,245 },
+        {  20, 20, 25, 30 },
+        { 200,190, 60, 30 },
     },
-    {
-        {  11, 19, 29, 37 },
-        { 170,180,190,200 },
-        {  80, 80, 80, 80 },
-        { 250,200,150,100 },
+    { // 5 hall 2
+        {  11, 19, 29, 37 }, //=96
+        { 245,230,230,240 },
+        {  20, 20, 35, 45 },
+        {  50,100, 40, 10 },
+    },
+    { // 6 nice (use full buffer)
+        {  11, 17, 47, 53 }, //=128
+        { 235,230,175,160 },
+        {  50, 45, 40, 35 },
+        {  25, 75,150,200 },
+    },
+    { // 7 simple feedback delay
+        { 127,  0,  0,  0 },
+        { 150,  0,  0,  0 },
+        { 100,  0,  0,  0 },
+        {  50,  0,  0,  0 },
     },
 };
 
