@@ -244,7 +244,7 @@ void C352_update(C352 *c)
     int16_t s;
     uint16_t flags;
 
-    c->out[0]=c->out[1]=c->out[2]=c->out[3]=0;
+    int32_t out[4] = {0,0,0,0};
 
     for(i=0;i<C352_VOICES;i++)
     {
@@ -255,11 +255,23 @@ void C352_update(C352 *c)
             flags = c->v[i].latch_flags;
 
             // Left
-            c->out[0] += ((flags & C352_FLG_PHASEFL) ? -s : s) * (c->v[i].curr_vol[0]) >> 10;
-            c->out[2] += ((flags & C352_FLG_PHASERL) ? -s : s) * (c->v[i].curr_vol[2]) >> 10;
+            out[0] += ((flags & C352_FLG_PHASEFL) ? -s : s) * (c->v[i].curr_vol[0]) >> 10;
+            out[2] += ((flags & C352_FLG_PHASERL) ? -s : s) * (c->v[i].curr_vol[2]) >> 10;
             // Right
-            c->out[1] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[1]) >> 10;
-            c->out[3] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[3]) >> 10;
+            out[1] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[1]) >> 10;
+            out[3] += ((flags & C352_FLG_PHASEFR) ? -s : s ) * (c->v[i].curr_vol[3]) >> 10;
         }
+    }
+
+    // clipping protection. (probably the real C352 does this too,
+    // i guess that's what the 'PEAK' LED on the arcade board is for)
+    for(i=0;i<4;i++)
+    {
+        if(out[i]>32767)
+            c->out[i] = 32767;
+        else if(out[i]<-32768)
+            c->out[i] = -32768;
+        else
+            c->out[i] = out[i];
     }
 }
