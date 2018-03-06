@@ -15,14 +15,14 @@
     03 : Output LPF cutoff
 
     Preset setting (Writes here will reset the delay line configuration):
-    20 : Preset setting (0=No preset)
+    20 : preset config setting (0=No preset)
     21 : Delay base
     22 : L/R delay offset
     23 : Feedback volume
     24 : Output volume
     25 : Output filter cutoff
     26 : -
-    27 : -
+    27 : set preset
 */
 
 #include <stdio.h>
@@ -41,15 +41,7 @@ int DelayDSP_init(DelayDSP *c)
     c->in_count = 0;
     c->enable_count = 0;
 
-    // default settings for a nice room reverb
-    c->preset_set = 1;
-    c->preset_time1 = 170;
-    c->preset_time2 = 1;
-    c->preset_feedback = 250;
-    c->preset_vol = 100;
-    c->preset_filter = 100;
-
-    DelayDSP_set_preset(c);
+    DelayDSP_set_preset(c,2);
 
     return -1;
 }
@@ -121,14 +113,14 @@ static uint16_t DelayRegMap[4] = {
 };
 
 static uint32_t DelayPresetRegMap[8] = {
-    offsetof(DelayDSP,preset_set),
-    offsetof(DelayDSP,preset_time1),
-    offsetof(DelayDSP,preset_time2),
-    offsetof(DelayDSP,preset_feedback),
-    offsetof(DelayDSP,preset_vol),
-    offsetof(DelayDSP,preset_filter),
-    offsetof(DelayDSP,preset_set),
-    offsetof(DelayDSP,preset_set),
+    offsetof(DelayDSP_Preset,config),
+    offsetof(DelayDSP_Preset,time),
+    offsetof(DelayDSP_Preset,time_offset),
+    offsetof(DelayDSP_Preset,feedback),
+    offsetof(DelayDSP_Preset,volume),
+    offsetof(DelayDSP_Preset,filter),
+    offsetof(DelayDSP_Preset,config),
+    offsetof(DelayDSP_Preset,config),
 };
 
 void DelayDSP_write(DelayDSP *c, uint16_t addr, uint16_t data)
@@ -138,10 +130,14 @@ void DelayDSP_write(DelayDSP *c, uint16_t addr, uint16_t data)
         *(uint16_t*)((void*)&c->line[addr/4]+DelayRegMap[addr%4]) = data;
         c->line[addr/4].pos = c->line[addr/4].line_start;
     }
-    else if(addr < 0x28)
+    else if(addr < 0x27)
     {
-        *(uint16_t*)((void*)c+DelayPresetRegMap[addr%8]) = data;
-        DelayDSP_set_preset(c);
+        *(uint16_t*)((void*)&c->preset+DelayPresetRegMap[addr%8]) = data;
+        DelayDSP_config_preset(c);
+    }
+    else if(addr == 0x27)
+    {
+        DelayDSP_set_preset(c,data);
     }
 }
 
@@ -149,80 +145,54 @@ uint16_t DelayDSP_read(DelayDSP *c, uint16_t addr)
 {
     if(addr < 0x20)
         return *(uint16_t*)((void*)&c->line[addr/4]+DelayRegMap[addr%4]);
-    else if(addr < 0x28)
-        return *(uint16_t*)((void*)c+DelayPresetRegMap[addr%8]);
+    else if(addr < 0x27)
+        return *(uint16_t*)((void*)&c->preset+DelayPresetRegMap[addr%8]);
+    else if(addr == 0x27)
+        return c->last_preset;
     else
         return 0;
 }
 
-static struct {
-    uint8_t time_base[4];
-    uint8_t feedback[4];
-    uint8_t volume[4];
-    uint8_t filter[4];
-} PresetArray[] = {
-    { // 0
-        { 0, 0, 0, 0 }, // Delay time, should be prime numbers. total should be < 128
-        { 0, 0, 0, 0 }, // Delay feedback
-        { 0, 0, 0, 0 }, // Output volume
-        { 0, 0, 0, 0 }, // Output filter cutoff
-    },
-    { // 1 room
-        {   7, 11, 13, 17 }, //=48
-        { 245,230,225,220 },
-        {  25, 25, 25, 25 },
-        {  50,100,150,200 },
-    },
-    { // 2
-        {  11, 13, 17, 19 }, //=60
-        { 230,230,235,240 },
-        {  35, 35, 33, 30 },
-        { 200,180,160,140 },
-    },
-    { // 3
-        {  13, 17, 19, 23 }, //=72
-        { 230,230,230,235 },
-        {  40, 40, 40, 40 },
-        {  20, 30, 40, 40 },
-    },
-    { // 4 hall
-        {  13, 19, 23, 31 }, //=86
-        { 250,245,245,245 },
-        {  20, 20, 25, 30 },
-        { 200,190, 60, 30 },
-    },
-    { // 5 hall 2
-        {  11, 19, 29, 37 }, //=96
-        { 245,230,230,240 },
-        {  20, 20, 35, 45 },
-        {  50,100, 40, 10 },
-    },
-    { // 6 nice (use full buffer)
-        {  11, 17, 47, 53 }, //=128
-        { 235,230,175,160 },
-        {  50, 45, 40, 35 },
-        {  25, 75,150,200 },
-    },
-    { // 7 simple feedback delay
-        { 127,  0,  0,  0 },
-        { 150,  0,  0,  0 },
-        { 100,  0,  0,  0 },
-        {  50,  0,  0,  0 },
-    },
+static const struct {
+    uint8_t time_base[4];    // Delay time, should be prime numbers. total should be < 128
+    uint8_t feedback[4];     // Delay feedback
+    uint8_t volume[4];       // Output volume
+    uint8_t filter[4];       // Output filter cutoff
+} PresetConfigArray[] = {
+    {{  0,  0,  0,  0},{  0,  0,  0,  0},{  0,  0,  0,  0},{  0,  0,  0,  0}},
+    {{  7, 11, 13, 17},{245,230,225,220},{ 25, 25, 25, 25},{ 50,100,150,200}}, // 48-room
+    {{ 11, 13, 17, 19},{230,230,235,240},{ 35, 35, 33, 30},{200,180,160,140}}, // 60
+    {{ 13, 17, 19, 23},{230,230,230,235},{ 40, 40, 40, 40},{ 20, 30, 40, 40}}, // 72
+    {{ 13, 19, 23, 31},{250,245,245,245},{ 20, 20, 25, 30},{200,190, 60, 30}}, // 86-hall
+    {{ 11, 19, 29, 37},{245,230,230,240},{ 20, 20, 35, 45},{ 50,100, 40, 10}}, // 96
+    {{ 11, 17, 47, 53},{235,230,175,160},{ 50, 45, 40, 35},{ 25, 75,150,200}}, // 128-nice
+    {{127,  0,  0,  0},{150,  0,  0,  0},{100,  0,  0,  0},{ 50,  0,  0,  0}}, // 128-simple delay
 };
 
-void DelayDSP_set_preset(DelayDSP *c)
+static const DelayDSP_Preset PresetArray[] = {
+    { 0,170, 1,250,100,100 }, // default
+    { 1,170, 1,250,100,100 }, // default room
+    { 6,255, 2,255, 70, 15 }, // nice
+    { 7,255, 6,255,100,100 }, // simple feedback delay
+    { 4,210, 1,240,100, 20 }, // hall
+    { 4,225, 1,225, 50,250 }, // hall2
+    { 5,215,10,230, 75,200 }, // hall2
+    { 7,240,25,160,200, 10 }, // feedback delay 2
+};
+
+void DelayDSP_config_preset(DelayDSP *c)
 {
+    DelayDSP_Preset *p = &c->preset;
     int i;
-    int preset = c->preset_set;
+    int config = p->config & 15;
     uint16_t addr = 0;
 
     for(i=0;i<DELAYDSP_LINES;i++)
     {
-        uint16_t delaytime = PresetArray[preset].time_base[i/2] * ((i&1) ? c->preset_time1+c->preset_time2 : c->preset_time1);
-        uint16_t filter = c->preset_filter * PresetArray[preset].filter[i/2];
-        uint16_t feedback = c->preset_feedback * PresetArray[preset].feedback[i/2];
-        uint16_t volume = c->preset_vol * PresetArray[preset].volume[i/2];
+        uint16_t delaytime = PresetConfigArray[config].time_base[i/2] * ((i&1) ? p->time+p->time_offset : p->time);
+        uint16_t filter = p->filter * PresetConfigArray[config].filter[i/2];
+        uint16_t feedback = p->feedback * PresetConfigArray[config].feedback[i/2];
+        uint16_t volume = p->volume * PresetConfigArray[config].volume[i/2];
         c->line[i].line_start = addr;
         c->line[i].line_end = delaytime ? addr+delaytime-1 : addr;
         addr += delaytime;
@@ -230,5 +200,11 @@ void DelayDSP_set_preset(DelayDSP *c)
         c->line[i].feedback = delaytime ? (feedback & 0xff00) + (volume>>8) : 0;
         c->line[i].pos = c->line[i].line_start;
     }
+}
 
+void DelayDSP_set_preset(DelayDSP *c,int preset)
+{
+    c->last_preset = preset;
+    c->preset = PresetArray[preset&7];
+    DelayDSP_config_preset(c);
 }

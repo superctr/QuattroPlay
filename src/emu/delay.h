@@ -19,21 +19,28 @@ typedef struct {
 
 typedef struct {
 
+    uint16_t config;
+    uint16_t time;
+    uint16_t time_offset;
+    uint16_t feedback;
+    uint16_t volume;
+    uint16_t filter;
+
+} DelayDSP_Preset;
+
+typedef struct {
+
     int in_count;
     int enable_count;
 
     int16_t *input;
     int16_t output[4];
 
-    uint16_t preset_set;
-    uint16_t preset_time1;
-    uint16_t preset_time2;
-    uint16_t preset_feedback;
-    uint16_t preset_vol;
-    uint16_t preset_filter;
-
     int16_t delay_memory[0x10000];
     DelayDSP_Line line[DELAYDSP_LINES];
+
+    int last_preset;
+    DelayDSP_Preset preset;
 } DelayDSP;
 
 int DelayDSP_init(DelayDSP *c);
@@ -45,5 +52,6 @@ void DelayDSP_update(DelayDSP *c);
 void DelayDSP_write(DelayDSP *c, uint16_t addr, uint16_t data);
 uint16_t DelayDSP_read(DelayDSP *c, uint16_t addr);
 
-void DelayDSP_set_preset(DelayDSP *c);
+void DelayDSP_config_preset(DelayDSP *c);
+void DelayDSP_set_preset(DelayDSP *c, int preset);
 #endif // DELAY_H_INCLUDED
