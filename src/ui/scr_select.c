@@ -32,6 +32,7 @@ static void scr_select_input()
         select_pos_check();
         break;
     case SDLK_RETURN:
+    case SDLK_KP_ENTER:
         running = 0;
         returncode = select_pos+1;
         select_pos_check();

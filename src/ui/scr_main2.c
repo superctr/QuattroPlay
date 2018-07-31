@@ -232,6 +232,7 @@ static void check_input()
             edit_value = item_set_overflow(&item[select_pos],edit_value+increment);
             break;
         case SDLK_RETURN:
+        case SDLK_KP_ENTER:
             item_set_value(&item[select_pos],edit_value);
         case SDLK_ESCAPE:
             edit_mode=0;
@@ -253,6 +254,7 @@ static void check_input()
             select_pos_check();
             break;
         case SDLK_RETURN:
+        case SDLK_KP_ENTER:
             edit_value=item_get_value(&item[select_pos]);
             if(item_can_be_edited(&item[select_pos]))
                 edit_mode=1;

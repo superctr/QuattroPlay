@@ -107,6 +107,7 @@ void scr_about()
                     cursor++;
                 break;
             case SDLK_RETURN:
+            case SDLK_KP_ENTER:
                 if(cursor<0)
                     strncpy(Game->AudioDevice,"",sizeof(Game->AudioDevice));
                 else if(cursor<max)
