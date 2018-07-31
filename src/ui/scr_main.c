@@ -320,6 +320,7 @@ static void scr_main_input()
         displaysection++;
         break;
     case SDLK_RETURN:
+    case SDLK_KP_ENTER:
         switch(inpstate)
         {
         case STATE_MAIN:

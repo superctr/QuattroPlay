@@ -80,6 +80,7 @@ void scr_playlist_input()
         select_pos_check();
         break;
     case SDLK_RETURN:
+    case SDLK_KP_ENTER:
         // force skip the boot song if RETURN is pressed twice
         // while boot song still playing
         if(Game->PlaylistControl==2 && DriverInterface->Type == DRIVER_QUATTRO)

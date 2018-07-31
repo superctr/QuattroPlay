@@ -190,6 +190,7 @@ void ui_handleinput(SDL_Keysym* ks)
         }
         break;
     case SDLK_RETURN:
+    case SDLK_KP_ENTER:
         if(kbd[SDL_SCANCODE_LALT])
         {
             if(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN)
