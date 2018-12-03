@@ -17,9 +17,9 @@ QuattroPlay is free software licensed under the GPL version 2.
 
 ## Build instructions
 
-Only dependency is SDL2 (sudo apt-get install libsdl2-dev)
+The only dependency is SDL2 (sudo apt-get install libsdl2-dev). Ver 2.0.8 or above is required, 2.0.9 is recommended especially on Linux.
 
-The makefile is tested on Linux Mint, Ubuntu and Windows (using MSYS).
+The makefile is tested on Arch Linux, Linux Mint, Ubuntu and Windows (using MSYS2).
 
 The program works on macOS, but you might have to do modifications to the makefile. I can't help you there.
 
@@ -33,7 +33,7 @@ Then run it from command line/terminal:
 or
 
 	./bin/QuattroPlay <gamename>
- 
+
 Running without the <gamename> argument will allow you to select a game from a menu. It is also possible to load .ini files with associated data and wave files by drag and drop while the program is running.
 
 ## GUI usage
@@ -55,15 +55,15 @@ By highlighting one of the values in the last group you can mute or solo channel
 If Song ID is specified, the song will automatically start. If enabled with
 the -w or -v parameters, the filenames will also contain the game name and
 song ID.
- 
+
 *	`-ini`: Set game config path
 *	`-w`: log to WAV.
 *	`-v`: log to VGM.
- 
+
 ## Key bindings (a mess)
 
 This might not be complete yet.
- 
+
 ###	Global
 
 *	__Q__: exit
