@@ -160,6 +160,8 @@ static char* item_display_name(struct main2_item *i,char* buffer,int len)
     }
     return buffer;
 }
+
+#define CATF(buf,len,fmt,...) snprintf(buffer + strlen(buffer), len - strlen(buffer), fmt, ##__VA_ARGS__)
 static char* item_display_value(struct main2_item *i,char* buffer,int len)
 {
     double songtime;
@@ -168,9 +170,9 @@ static char* item_display_value(struct main2_item *i,char* buffer,int len)
     {
     case ITEM_VOICE:
         if(DriverGetSolo()>>i->index & 1)
-            snprintf(buffer,len,"%s (Solo)",buffer);
+            CATF(buffer,len," (Solo)");
         if(DriverGetMute()>>i->index & 1)
-            snprintf(buffer,len,"%s (Mute)",buffer);
+            CATF(buffer,len," (Mute)");
         break;
     default:
         if(item_can_be_edited(i))
@@ -189,17 +191,17 @@ static char* item_display_value(struct main2_item *i,char* buffer,int len)
             case SONG_STATUS_PLAYING:
                 songtime = DriverGetPlayingTime(i->index);
                 if(status & SONG_STATUS_SUBSONG)
-                    snprintf(buffer,len,"%s (Sub)",buffer);
+                    CATF(buffer,len," (Sub)");
                 else if(loopcnt>0)
-                    snprintf(buffer,len,"%s (Playing %2.0f:%02.0f) L%d",buffer,floor(songtime/60),floor(fmod(songtime,60)),loopcnt);
+                    CATF(buffer,len," (Playing %2.0f:%02.0f) L%d",floor(songtime/60),floor(fmod(songtime,60)),loopcnt);
                 else
-                    snprintf(buffer,len,"%s (Playing %2.0f:%02.0f)",buffer,floor(songtime/60),floor(fmod(songtime,60)));
+                    CATF(buffer,len," (Playing %2.0f:%02.0f)",floor(songtime/60),floor(fmod(songtime,60)));
                 if(status & SONG_STATUS_FADEOUT)
-                    snprintf(buffer,len,"%s (Fading)",buffer);
+                    CATF(buffer,len," (Fading)");
                 break;
             case SONG_STATUS_STARTING|SONG_STATUS_PLAYING:
             case SONG_STATUS_STARTING:
-                snprintf(buffer,len,"%s (Starting)",buffer);
+                CATF(buffer,len," (Starting)");
                 break;
             }
         }
