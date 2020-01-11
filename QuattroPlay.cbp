@@ -12,7 +12,6 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option use_console_runner="0" />
-				<Option parameters="propcycl" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DDEBUG" />
@@ -25,8 +24,34 @@
 				<Option compiler="gcc" />
 				<Option parameters="ncv2" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-O3" />
 					<Add option="-DRELEASE" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="DebugOpl4">
+				<Option output="bin/DebugOpl4/QuattroPlay" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/DebugOpl4/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Option parameters="-v cybsled 0x70" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="DebugDsp">
+				<Option output="bin/DebugDsp/QuattroPlay" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/DebugDsp/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
 				</Compiler>
 			</Target>
 		</Build>
@@ -36,126 +61,250 @@
 		<Linker>
 			<Add option="-lmingw32 -lSDL2main -lSDL2 -static-libgcc" />
 		</Linker>
-		<Unit filename="audio.c">
+		<Unit filename="src/audio.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="audio.h">
+		<Unit filename="src/audio.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="c352.c">
+		<Unit filename="src/driver.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="c352.h">
+		<Unit filename="src/driver.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/enum.h">
+		<Unit filename="src/drv/_interface.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/drv/enum.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/helper.c">
+		<Unit filename="src/drv/helper.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/helper.h">
+		<Unit filename="src/drv/helper.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/quattro.c">
+		<Unit filename="src/drv/quattro.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/quattro.h">
+		<Unit filename="src/drv/quattro.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/struct.h">
+		<Unit filename="src/drv/struct.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/tables.c">
+		<Unit filename="src/drv/tables.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/tables.h">
+		<Unit filename="src/drv/tables.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/track.c">
+		<Unit filename="src/drv/track.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/track.h">
+		<Unit filename="src/drv/track.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/track_cmd.c">
+		<Unit filename="src/drv/track_cmd.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/update.c">
+		<Unit filename="src/drv/update.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/update.h">
+		<Unit filename="src/drv/update.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/voice.c">
+		<Unit filename="src/drv/voice.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/voice.h">
+		<Unit filename="src/drv/voice.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="drv/voice_env.c">
+		<Unit filename="src/drv/voice_env.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/voice_lfo.c">
+		<Unit filename="src/drv/voice_lfo.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/voice_pan.c">
+		<Unit filename="src/drv/voice_pan.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/voice_pitch.c">
+		<Unit filename="src/drv/voice_pitch.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="drv/wave.c">
+		<Unit filename="src/drv/wave.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="fileio.c">
+		<Unit filename="src/emu/c352.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="fileio.h">
+		<Unit filename="src/emu/c352.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="ini.c">
+		<Unit filename="src/emu/delay.c">
 			<Option compilerVar="CC" />
+			<Option target="DebugDsp" />
 		</Unit>
-		<Unit filename="ini.h">
+		<Unit filename="src/emu/delay.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="loader.c">
+		<Unit filename="src/emu/ym2151.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="loader.h">
+		<Unit filename="src/emu/ym2151.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="main.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="qp.h">
+		<Unit filename="src/legacy.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="ui.c">
+		<Unit filename="src/lib/audit.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="ui.h">
+		<Unit filename="src/lib/audit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="ui_infobar.c">
+		<Unit filename="src/lib/fileio.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="ui_menu.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="ui_menu.h">
+		<Unit filename="src/lib/fileio.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="ui_pattern.c">
+		<Unit filename="src/lib/ini.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="vgm.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="vgm.h">
+		<Unit filename="src/lib/ini.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="src/lib/loopdetect.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lib/loopdetect.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/lib/q_detect.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lib/q_detect.h" />
+		<Unit filename="src/lib/q_pattern.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lib/q_pattern.h" />
+		<Unit filename="src/lib/vgm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/lib/vgm.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/loader.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/macro.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/qp.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/_interface.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/enum.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/helper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/helper.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/s2x.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/s2x.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/struct.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/tables.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/tables.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/track.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/track.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/track_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/voice.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/voice.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/s2x/voice_fm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/voice_pcm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/voice_wsg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/wsg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s2x/wsg.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/ui/info.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/info_quattro.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/info_system2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/lib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/lib.h" />
+		<Unit filename="src/ui/quattro.h" />
+		<Unit filename="src/ui/scr_about.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/scr_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/scr_main.h" />
+		<Unit filename="src/ui/scr_main2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/scr_playlist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/scr_select.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/system2.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/ui/ui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ui/ui.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
