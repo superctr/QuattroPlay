@@ -182,7 +182,9 @@ int ui_init()
     FSIZE_X = surface->w/32;
     FSIZE_Y = surface->h/10;
 
+#ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // Don't disable the compositor for X11.
+#endif
     window = SDL_CreateWindow("QuattroPlay",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y,SDL_WINDOW_RESIZABLE);
     rend = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
     SDL_RenderSetLogicalSize(rend,FCOLUMNS*FSIZE_X,FROWS*FSIZE_Y);
