@@ -8,7 +8,8 @@ char* S2X_DriverTypes[S2X_TYPE_MAX] = {
     "System 1 (Older)",
     "System 1 (Newer)",
     "System 86",
-    "NA-1/2"
+    "NA-1/2",
+    "Electromechanical"
 };
 
 // FM keycode table

@@ -113,6 +113,11 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
     {
         S->DriverType=S2X_TYPE_NA;
     }
+    else if(!strcmp(G->Type,"EM"))
+    {
+        S->DriverType=S2X_TYPE_EM;
+        S->ConfigFlags|=S2X_CFG_FM_VOL;
+    }
 
     QP_GameConfig *cfg;
 
@@ -280,6 +285,8 @@ void S2X_InitDriverType(S2X_State *S)
             if(S2X_ReadWord(S,0x10000) == 0x0008)
                 S->PCMBase=0x4000;
         }
+        break;
+    case S2X_TYPE_EM:
         break;
     }
 }

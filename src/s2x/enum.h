@@ -51,6 +51,7 @@ enum {
     S2X_TYPE_SYSTEM1_ALT,
     S2X_TYPE_SYSTEM86,
     S2X_TYPE_NA,
+    S2X_TYPE_EM,
     S2X_TYPE_MAX,
 };
 
