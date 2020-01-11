@@ -11,6 +11,7 @@
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 #define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
+#define SYSTEMEM (S->DriverType == S2X_TYPE_EM)
 #define S1_WSG (S->ConfigFlags & S2X_CFG_SYSTEM1 && TrackNo > 7)
 
 // find song position, taking into account the track type and platform...
@@ -22,6 +23,9 @@ static void GetSongPos(S2X_State *S,int TrackNo,S2X_Track *T)
     // wsg in tracks 8-15
     if(SYSTEM1)
         T->PositionBase = (TrackNo > 7) ? S->PCMBase : S->FMBase;
+    // only FM
+    else if(SYSTEMEM)
+        T->PositionBase = S->FMBase;
     // fm in tracks 8-15
     else if(!SYSTEMNA)
         T->PositionBase = (TrackNo > 7) ? S->FMBase : S->PCMBase;

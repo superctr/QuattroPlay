@@ -13,6 +13,7 @@
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
+#define SYSTEMEM (S->DriverType == S2X_TYPE_EM)
 
 static uint8_t arg_byte(S2X_State *S,int b,uint16_t* d)
 {
@@ -293,7 +294,7 @@ void S2X_ChannelInit(S2X_State* S,S2X_Track* T,int TrackNo,int start,uint8_t mas
 TRACKCOMMAND(tc_InitChannel)
 {
     int i = (Command&1)<<3;
-    if(SYSTEM1 || (TrackNo & 8)) // FM
+    if((SYSTEM1 || SYSTEMEM) || (TrackNo & 8)) // FM
         i = 24;
     else if((Command&0x3f) == 0x1a)
         i = 8;
@@ -780,5 +781,6 @@ struct S2X_TrackCommandEntry* S2X_TrackCommandTable[S2X_TYPE_MAX] =
     S2X_S1TrackCommandTable,
     S2X_S1AltTrackCommandTable,
     S2X_S86TrackCommandTable,
-    S2X_NATrackCommandTable // NA
+    S2X_NATrackCommandTable, // NA
+    S2X_S2TrackCommandTable // Electromechanical
 };

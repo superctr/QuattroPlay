@@ -236,6 +236,8 @@ double S2X_ITickRate(void* d)
         return 60.606; // from C121. YM2151 IRQ hooked up but unused.
     case S2X_TYPE_NA:
         return 120; // probably uses MCU built in timer
+    case S2X_TYPE_EM: // i just guessed.
+        return 64;
     default:
     case S2X_TYPE_SYSTEM2:
         return 368./3.; // (~122.67) C140 timer (+ some CPU overhead?)
