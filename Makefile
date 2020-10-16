@@ -85,6 +85,7 @@ OBJS = \
 	$(OBJ)/s2x/wsg.o \
 	$(OBJ)/emu/c352.o \
 	$(OBJ)/emu/ym2151.o \
+	$(OBJ)/emu/opm.o \
 	$(OBJ)/emu/delay.o \
 	$(OBJ)/lib/audit.o \
 	$(OBJ)/lib/fileio.o \

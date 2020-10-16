@@ -17,6 +17,9 @@
 
 #define S2X_MAX_BANK 15
 
+#define S2X_MAX_FM_QUEUE 2048
+#define S2X_FM_QUEUE_MASK (S2X_MAX_FM_QUEUE - 1)
+
 typedef struct S2X_Channel S2X_Channel;
 typedef struct S2X_WSGChannel S2X_WSGChannel;
 typedef struct S2X_Track S2X_Track;
@@ -310,7 +313,7 @@ struct S2X_State {
 
     uint16_t FMQueueWrite;
     uint16_t FMQueueRead;
-    S2X_FMWrite FMQueue[512];
+    S2X_FMWrite FMQueue[S2X_MAX_FM_QUEUE];
 
     // track vars
     uint16_t SongRequest[S2X_MAX_TRACKS+1];

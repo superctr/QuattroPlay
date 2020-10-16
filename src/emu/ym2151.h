@@ -1,10 +1,6 @@
 #ifndef YM2151_H_INCLUDED
 #define YM2151_H_INCLUDED
 
-// license:GPL-2.0+
-// copyright-holders:Jarek Burczynski,Ernesto Corvi
-// Ported from MAME C++ sources by ctr
-
 // YM2151 Register names
 enum {
     OPM_TEST = 0x01,
@@ -24,171 +20,29 @@ enum {
     OPM_OP_D1L_RR  = 0xe0
 };
 
-/*
-** File: ym2151.h - header file for software implementation of YM2151
-**                                            FM Operator Type-M(OPM)
-**
-** (c) 1997-2002 Jarek Burczynski (s0246@poczta.onet.pl, bujar@mame.net)
-** Some of the optimizing ideas by Tatsuyuki Satoh
-**
-** Version 2.150 final beta May, 11th 2002
-**
-**
-** I would like to thank following people for making this project possible:
-**
-** Beauty Planets - for making a lot of real YM2151 samples and providing
-** additional informations about the chip. Also for the time spent making
-** the samples and the speed of replying to my endless requests.
-**
-** Shigeharu Isoda - for general help, for taking time to scan his YM2151
-** Japanese Manual first of all, and answering MANY of my questions.
-**
-** Nao - for giving me some info about YM2151 and pointing me to Shigeharu.
-** Also for creating fmemu (which I still use to test the emulator).
-**
-** Aaron Giles and Chris Hardy - they made some samples of one of my favourite
-** arcade games so I could compare it to my emulator.
-**
-** Bryan McPhail and Tim (powerjaw) - for making some samples.
-**
-** Ishmair - for the datasheet and motivation.
-*/
+#include "opm.h"
 
-enum {
-    YM2151_TIMER_IRQ_A_OFF,
-    YM2151_TIMER_IRQ_B_OFF,
-    YM2151_TIMER_A,
-    YM2151_TIMER_B
-};
-
-typedef struct YM2151Operator YM2151Operator;
 typedef struct YM2151 YM2151;
-
-/* struct describing a single operator */
-struct YM2151Operator
-{
-    uint32_t      phase;                  /* accumulated operator phase */
-    uint32_t      freq;                   /* operator frequency count */
-    int32_t       dt1;                    /* current DT1 (detune 1 phase inc/decrement) value */
-    uint32_t      mul;                    /* frequency count multiply */
-    uint32_t      dt1_i;                  /* DT1 index * 32 */
-    uint32_t      dt2;                    /* current DT2 (detune 2) value */
-
-    signed int *connect;                /* operator output 'direction' */
-
-    /* only M1 (operator 0) is filled with this data: */
-    signed int *mem_connect;            /* where to put the delayed sample (MEM) */
-    int32_t       mem_value;              /* delayed sample (MEM) value */
-
-    /* channel specific data; note: each operator number 0 contains channel specific data */
-    uint32_t      fb_shift;               /* feedback shift value for operators 0 in each channel */
-    int32_t       fb_out_curr;            /* operator feedback value (used only by operators 0) */
-    int32_t       fb_out_prev;            /* previous feedback value (used only by operators 0) */
-    uint32_t      kc;                     /* channel KC (copied to all operators) */
-    uint32_t      kc_i;                   /* just for speedup */
-    uint32_t      pms;                    /* channel PMS */
-    uint32_t      ams;                    /* channel AMS */
-    /* end of channel specific data */
-
-    uint32_t      AMmask;                 /* LFO Amplitude Modulation enable mask */
-    uint32_t      state;                  /* Envelope state: 4-attack(AR) 3-decay(D1R) 2-sustain(D2R) 1-release(RR) 0-off */
-    uint8_t       eg_sh_ar;               /*  (attack state) */
-    uint8_t       eg_sel_ar;              /*  (attack state) */
-    uint32_t      tl;                     /* Total attenuation Level */
-    int32_t       volume;                 /* current envelope attenuation level */
-    uint8_t       eg_sh_d1r;              /*  (decay state) */
-    uint8_t       eg_sel_d1r;             /*  (decay state) */
-    uint32_t      d1l;                    /* envelope switches to sustain state after reaching this level */
-    uint8_t       eg_sh_d2r;              /*  (sustain state) */
-    uint8_t       eg_sel_d2r;             /*  (sustain state) */
-    uint8_t       eg_sh_rr;               /*  (release state) */
-    uint8_t       eg_sel_rr;              /*  (release state) */
-
-    uint32_t      key;                    /* 0=last key was KEY OFF, 1=last key was KEY ON */
-
-    uint32_t      ks;                     /* key scale    */
-    uint32_t      ar;                     /* attack rate  */
-    uint32_t      d1r;                    /* decay rate   */
-    uint32_t      d2r;                    /* sustain rate */
-    uint32_t      rr;                     /* release rate */
-
-    uint32_t      reserved0;              /**/
-    uint32_t      reserved1;              /**/
-
-};
 
 struct YM2151
 {
-	signed int chanout[8];
-	signed int m2,c1,c2; /* Phase Modulation input for operators 2,3,4 */
-	signed int mem;     /* one sample delay memory */
-
-	YM2151Operator  oper[32];           /* the 32 operators */
-
-	uint32_t      pan[16];                /* channels output masks (0xffffffff = enable) */
-
-	uint32_t      eg_cnt;                 /* global envelope generator counter */
-	uint32_t      eg_timer;               /* global envelope generator counter works at frequency = chipclock/64/3 */
-	uint32_t      eg_timer_add;           /* step of eg_timer */
-	uint32_t      eg_timer_overflow;      /* envelope generator timer overlfows every 3 samples (on real chip) */
-
-	uint32_t      lfo_phase;              /* accumulated LFO phase (0 to 255) */
-	uint32_t      lfo_timer;              /* LFO timer                        */
-	uint32_t      lfo_timer_add;          /* step of lfo_timer                */
-	uint32_t      lfo_overflow;           /* LFO generates new output when lfo_timer reaches this value */
-	uint32_t      lfo_counter;            /* LFO phase increment counter      */
-	uint32_t      lfo_counter_add;        /* step of lfo_counter              */
-	uint8_t       lfo_wsel;               /* LFO waveform (0-saw, 1-square, 2-triangle, 3-random noise) */
-	uint8_t       amd;                    /* LFO Amplitude Modulation Depth   */
-	int8_t        pmd;                    /* LFO Phase Modulation Depth       */
-	uint32_t      lfa;                    /* LFO current AM output            */
-	int32_t       lfp;                    /* LFO current PM output            */
-
-	uint8_t       test;                   /* TEST register */
-	uint8_t       ct;                     /* output control pins (bit1-CT2, bit0-CT1) */
-
-	uint32_t      noise;                  /* noise enable/period register (bit 7 - noise enable, bits 4-0 - noise period */
-	uint32_t      noise_rng;              /* 17 bit noise shift register */
-	uint32_t      noise_p;                /* current noise 'phase'*/
-	uint32_t      noise_f;                /* current noise period */
-
-	uint32_t      csm_req;                /* CSM  KEY ON / KEY OFF sequence request */
-
-	uint32_t      irq_enable;             /* IRQ enable for timer B (bit 3) and timer A (bit 2); bit 7 - CSM mode (keyon to all slots, everytime timer A overflows) */
-	uint32_t      status;                 /* chip status (BUSY, IRQ Flags) */
-	uint8_t       connect[8];             /* channels connections */
-
-	int         irqlinestate;
-
-	uint32_t      timer_A_index;          /* timer A index */
-	uint32_t      timer_B_index;          /* timer B index */
-	uint32_t      timer_A_index_old;      /* timer A previous index */
-	uint32_t      timer_B_index_old;      /* timer B previous index */
+	opm_t chip;
 
     uint32_t mute_mask;
     double out[4];
 
     int rate;
-
 };
 
-void YM2151_init_tables(YM2151* ym);
-void YM2151_envelope_KONKOFF(YM2151* ym,YM2151Operator * op, int v);
-void YM2151_set_connect(YM2151* ym,YM2151Operator *om1, int cha, int v);
-void YM2151_advance(YM2151* ym);
-void YM2151_advance_eg(YM2151* ym);
-void YM2151_write_reg(YM2151* ym,int r, int v);
-void YM2151_chan_calc(YM2151* ym,unsigned int chan);
-void YM2151_chan7_calc(YM2151* ym);
-int YM2151_op_calc(YM2151Operator * OP, unsigned int env, signed int pm);
-int YM2151_op_calc1(YM2151Operator * OP, unsigned int env, signed int pm);
-void YM2151_refresh_EG(YM2151* ym,YM2151Operator * op);
-
-void YM2151Operator_key_on(struct YM2151Operator *op,uint32_t key_set, uint32_t eg_cnt);
-void YM2151Operator_key_off(struct YM2151Operator *op,uint32_t key_set);
+// temp until opm.h exports these functions
+void OPM_Clock(opm_t *chip, int32_t *output);
+void OPM_Write(opm_t* chip, uint32_t port, uint8_t data);
 
 void YM2151_init(YM2151* ym,int clk);
 void YM2151_reset(YM2151* ym);
 void YM2151_update(YM2151* ym);
+void YM2151_write_reg(YM2151* ym,int r, int v);
+
+int YM2151_busy(YM2151* ym);
 
 #endif // YM2151_H_INCLUDED

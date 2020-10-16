@@ -56,21 +56,21 @@ void S2X_OPMWrite(S2X_State *S,int ch,int op,int reg,uint8_t data)
     S2X_FMWrite w = {fmreg,data};
 
     //Q_DEBUG("write queue %02x (%02x %02x)\n",S->FMQueueWrite,fmreg,data);
-    S->FMQueue[(S->FMQueueWrite++)&0x1ff] = w;
+    S->FMQueue[(S->FMQueueWrite++) & S2X_FM_QUEUE_MASK] = w;
 
     // flush the queue!
-    if((S->FMQueueWrite&0x1ff) == (S->FMQueueRead&0x1ff))
+    if((S->FMQueueWrite & S2X_FM_QUEUE_MASK) == (S->FMQueueRead & S2X_FM_QUEUE_MASK))
     {
         Q_DEBUG("flushing queue (OPM is not keeping up!)\n");
         do S2X_OPMReadQueue(S);
-        while ((S->FMQueueWrite&0x1ff) != (S->FMQueueRead&0x1ff));
+        while ((S->FMQueueWrite & S2X_FM_QUEUE_MASK) != (S->FMQueueRead & S2X_FM_QUEUE_MASK));
     }
 }
 
 void S2X_OPMReadQueue(S2X_State *S)
 {
     //Q_DEBUG("read  queue %02x (%02x %02x)\n",S->FMQueueRead,S->FMQueue[S->FMQueueRead].Reg,S->FMQueue[S->FMQueueRead].Data);
-    S2X_FMWrite* w = &S->FMQueue[(S->FMQueueRead++)&0x1ff];
+    S2X_FMWrite* w = &S->FMQueue[(S->FMQueueRead++) & S2X_FM_QUEUE_MASK];
     return YM2151_write_reg(&S->FMChip,w->Reg,w->Data);
 }
 

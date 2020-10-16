@@ -259,8 +259,12 @@ void S2X_IUpdateChip(void* d)
     S->FMWriteTicks += S->FMDelta;
     while(S->FMWriteTicks > S->FMWriteRate)
     {
-        if((S->FMQueueRead&0x1ff) != (S->FMQueueWrite&0x1ff))
+        if((S->FMQueueRead & S2X_FM_QUEUE_MASK) != (S->FMQueueWrite & S2X_FM_QUEUE_MASK))
+        {
+            if(YM2151_busy(&S->FMChip))
+                break;
             S2X_OPMReadQueue(S);
+        }
         S->FMWriteTicks-=S->FMWriteRate;
     }
     while(S->FMTicks > 1.0)
