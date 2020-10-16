@@ -623,7 +623,7 @@ static void OPM_EnvelopePhase4(opm_t *chip)
     uint32_t slot = (chip->cycles + 30) % 32;
     uint8_t inc = 0;
     uint8_t kon, eg_off, eg_zero, slreach;
-    if (chip->eg_clock & 2)
+    if (!chip->eg_zr[1] && (chip->eg_clock & 2))
     {
         if (chip->eg_rate[1] >= 48)
         {
