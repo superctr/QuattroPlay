@@ -568,15 +568,18 @@ void GameDoAction(QP_Game *G,unsigned int id)
 {
     if(id > 255)
         return;
-    int i,reg;
+    int i, reg, data;
     for(i=0;i<G->Action[id].cnt;i++)
     {
         reg = G->Action[id].reg[i];
-        if(reg<0x100)
-            DriverSetParameter(G->Action[id].reg[i],G->Action[id].data[i]);
+        data = G->Action[id].data[i];
+        if(reg < 0x100)
+            DriverSetParameter(reg, data);
         //G->QDrv->Register[G->Action[id].reg[i]&0xff] = G->Action[id].data[i];
-        else if(reg<0x120)
-            DriverRequestSong(G->Action[id].reg[i]&0x1f,G->Action[id].data[i]&0x7ff);
+        else if(reg < 0x120 && data == 0xffff)
+            DriverStopSong(reg & 0x1f);
+        else if(reg < 0x120)
+            DriverRequestSong(reg & 0x1f, data & 0x7ff);
         //G->QDrv->SongRequest[G->Action[id].reg[i]&0x1f] = G->Action[id].data[i];
     }
     return;
