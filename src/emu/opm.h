@@ -21,7 +21,7 @@
  *      siliconpr0n.org(digshadow, John McMaster):
  *          YM2151 and other FM chip decaps and die shots.
  *
- * version: 0.0
+ * version: 0.9 beta
  */
 #ifndef _OPM_H_
 #define _OPM_H_
@@ -51,7 +51,6 @@ typedef struct {
     uint8_t lfo_counter1;
     uint8_t lfo_counter1_of1;
     uint8_t lfo_counter1_of2;
-    // uint8_t lfo_counter2_clock;
     uint16_t lfo_counter2;
     uint8_t lfo_counter2_load;
     uint8_t lfo_counter2_of;
@@ -63,6 +62,7 @@ typedef struct {
     uint8_t lfo_frq_update;
     uint8_t lfo_clock;
     uint8_t lfo_clock_lock;
+    uint8_t lfo_clock_test;
     uint8_t lfo_test;
     uint32_t lfo_val;
     uint8_t lfo_val_carry;
@@ -115,7 +115,6 @@ typedef struct {
     uint8_t pg_reset[32];
     uint8_t pg_reset_latch[32];
     uint32_t pg_serial;
-    uint8_t pg_serial_bit;
 
     // Operator
     uint16_t op_phase_in;
@@ -145,6 +144,20 @@ typedef struct {
     int32_t mix[2];
     int32_t mix2[2];
     int32_t mix_op;
+    uint32_t mix_serial[2];
+    uint32_t mix_bits;
+    uint32_t mix_top_bits_lock;
+    uint8_t mix_sign_lock;
+    uint8_t mix_sign_lock2;
+    uint8_t mix_exp_lock;
+    uint8_t mix_clamp_low[2];
+    uint8_t mix_clamp_high[2];
+    uint8_t mix_out_bit;
+
+    // Output
+    uint8_t smp_so;
+    uint8_t smp_sh1;
+    uint8_t smp_sh2;
 
     // Noise
     uint32_t noise_lfsr;
@@ -186,6 +199,8 @@ typedef struct {
     uint8_t noise_en;
     uint8_t noise_freq;
 
+
+    // Timer
     uint16_t timer_a_reg;
     uint8_t timer_b_reg;
     uint8_t timer_a_temp;
@@ -204,6 +219,7 @@ typedef struct {
     uint8_t timer_b_do_reset, timer_b_do_load;
     uint8_t timer_b_temp;
     uint8_t timer_b_status;
+    uint8_t timer_irq;
 
     uint8_t lfo_freq_hi;
     uint8_t lfo_freq_lo;
@@ -227,6 +243,15 @@ typedef struct {
     uint8_t kon[32];
     uint8_t kon2[32];
     uint8_t mode_kon[32];
+
+    // DAC
+    uint8_t dac_osh1, dac_osh2;
+    uint16_t dac_bits;
+    int32_t dac_output[2];
+
+    // CTR edits:
+    uint32_t mute_mask;
+
 } opm_t;
 
 #endif

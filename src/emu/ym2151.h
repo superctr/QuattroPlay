@@ -35,7 +35,8 @@ struct YM2151
 };
 
 // temp until opm.h exports these functions
-void OPM_Clock(opm_t *chip, int32_t *output);
+void OPM_Clock(opm_t *chip);
+void OPM_GetSample(opm_t *chip, int32_t *output, uint8_t *sh1, uint8_t *sh2, uint8_t *so);
 void OPM_Write(opm_t* chip, uint32_t port, uint8_t data);
 
 void YM2151_init(YM2151* ym,int clk);

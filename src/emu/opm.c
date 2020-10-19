@@ -21,14 +21,16 @@
  *      siliconpr0n.org(digshadow, John McMaster):
  *          YM2151 and other FM chip decaps and die shots.
  *
- * version: 0.0
+ * version: 0.9 beta
  */
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include "opm.h"
 
-extern uint32_t mute_mask; // CTR temp hack
+// ctr edit: Set to 1 to emulate floating point DAC
+// (worse quality, accurate to real chip bitstream)
+#define OPM_DAC_EMULATION 0
 
 enum {
     eg_num_attack = 0,
@@ -370,7 +372,7 @@ static int32_t OPM_CalcKCode(int32_t kcf, int32_t lfo, int32_t lfo_sign, int32_t
     {
         sum = 8127;
     }
-        
+
     t2 = sum & 63;
     if (dt == 2)
         t2 += 20;
@@ -486,7 +488,6 @@ static void OPM_PhaseGenerate(opm_t *chip)
 
 static void OPM_PhaseDebug(opm_t *chip)
 {
-    chip->pg_serial_bit = chip->pg_serial & 1;
     chip->pg_serial >>= 1;
     if (chip->cycles == 5)
     {
@@ -556,7 +557,7 @@ static void OPM_EnvelopePhase2(opm_t *chip)
     {
         rate = 31;
     }
-    
+
     zr = rate == 0;
 
     ksv = chip->pg_kcode[slot] >> (chip->sl_ks[slot] ^ 3);
@@ -623,7 +624,7 @@ static void OPM_EnvelopePhase4(opm_t *chip)
     uint32_t slot = (chip->cycles + 30) % 32;
     uint8_t inc = 0;
     uint8_t kon, eg_off, eg_zero, slreach;
-    if (!chip->eg_zr[1] && (chip->eg_clock & 2))
+    if (chip->eg_clock & 2)
     {
         if (chip->eg_rate[1] >= 48)
         {
@@ -633,7 +634,7 @@ static void OPM_EnvelopePhase4(opm_t *chip)
                 inc = 4;
             }
         }
-        else
+        else if (!chip->eg_zr[1])
         {
             switch (chip->eg_shift)
             {
@@ -875,7 +876,7 @@ static void OPM_OperatorPhase2(opm_t *chip)
     chip->op_phase = (chip->op_phase_in + chip->op_mod_in) & 1023;
 }
 
-static void OPM_OperatorPhase3(opm_t* chip)
+static void OPM_OperatorPhase3(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 30) % 32;
     uint16_t phase = chip->op_phase & 255;
@@ -917,14 +918,14 @@ static void OPM_OperatorPhase7(opm_t *chip)
     chip->op_pow[0] = chip->op_atten >> 8;
 }
 
-static void OPM_OperatorPhase8(opm_t* chip)
+static void OPM_OperatorPhase8(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 25) % 32;
     chip->op_exp[1] = chip->op_exp[0];
     chip->op_pow[1] = chip->op_pow[0];
 }
 
-static void OPM_OperatorPhase9(opm_t* chip)
+static void OPM_OperatorPhase9(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 24) % 32;
     int16_t out = (chip->op_exp[1] << 2) >> (chip->op_pow[1]);
@@ -935,32 +936,32 @@ static void OPM_OperatorPhase9(opm_t* chip)
     chip->op_out[0] = out;
 }
 
-static void OPM_OperatorPhase10(opm_t* chip)
+static void OPM_OperatorPhase10(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 23) % 32;
     chip->op_out[1] = chip->op_out[0];
 }
 
-static void OPM_OperatorPhase11(opm_t* chip)
+static void OPM_OperatorPhase11(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 22) % 32;
     chip->op_out[2] = chip->op_out[1];
 }
 
-static void OPM_OperatorPhase12(opm_t* chip)
+static void OPM_OperatorPhase12(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 21) % 32;
     chip->op_out[3] = chip->op_out[2];
 }
 
-static void OPM_OperatorPhase13(opm_t* chip)
+static void OPM_OperatorPhase13(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 20) % 32;
     chip->op_out[4] = chip->op_out[3];
     chip->op_connect = chip->ch_connect[slot % 8];
 }
 
-static void OPM_OperatorPhase14(opm_t* chip)
+static void OPM_OperatorPhase14(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 19) % 32;
     chip->op_mix = chip->op_out[5] = chip->op_out[4];
@@ -978,7 +979,7 @@ static void OPM_OperatorPhase14(opm_t* chip)
     chip->op_mixr = fm_algorithm[chip->op_counter][5][chip->op_connect] && (chip->ch_rl[slot % 8] & 2) != 0;
 }
 
-static void OPM_OperatorPhase15(opm_t* chip)
+static void OPM_OperatorPhase15(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 18) % 32;
     int16_t mod, mod1 = 0, mod2 = 0;
@@ -1038,12 +1039,252 @@ static void OPM_OperatorCounter(opm_t *chip)
     }
 }
 
+static void OPM_Mixer2(opm_t *chip)
+{
+#if OPM_DAC_EMULATION
+    uint32_t cycles = (chip->cycles + 30) % 32;
+    uint8_t bit;
+    uint8_t top, ex;
+    if (cycles < 16)
+    {
+        bit = chip->mix_serial[0] & 1;
+    }
+    else
+    {
+        bit = chip->mix_serial[1] & 1;
+    }
+    if (chip->cycles % 16 == 1)
+    {
+        chip->mix_sign_lock = bit ^ 1;
+        chip->mix_top_bits_lock = (chip->mix_bits >> 15) & 63;
+    }
+    chip->mix_bits >>= 1;
+    chip->mix_bits |= bit << 20;
+    if (chip->cycles % 16 == 10)
+    {
+        top = chip->mix_top_bits_lock;
+        if (chip->mix_sign_lock)
+        {
+            top ^= 63;
+        }
+        if (top & 32)
+        {
+            ex = 7;
+        }
+        else if (top & 16)
+        {
+            ex = 6;
+        }
+        else if (top & 8)
+        {
+            ex = 5;
+        }
+        else if (top & 4)
+        {
+            ex = 4;
+        }
+        else if (top & 2)
+        {
+            ex = 3;
+        }
+        else if (top & 1)
+        {
+            ex = 2;
+        }
+        else
+        {
+            ex = 1;
+        }
+        chip->mix_sign_lock2 = chip->mix_sign_lock;
+        chip->mix_exp_lock = ex;
+    }
+    chip->mix_out_bit <<= 1;
+    switch ((chip->cycles + 1) % 16)
+    {
+    case 0:
+        chip->mix_out_bit |= chip->mix_sign_lock2 ^ 1;
+        break;
+    case 1:
+        chip->mix_out_bit |= (chip->mix_exp_lock >> 0) & 1;
+        break;
+    case 2:
+        chip->mix_out_bit |= (chip->mix_exp_lock >> 1) & 1;
+        break;
+    case 3:
+        chip->mix_out_bit |= (chip->mix_exp_lock >> 2) & 1;
+        break;
+    default:
+        if (chip->mix_exp_lock)
+        {
+            chip->mix_out_bit |= (chip->mix_bits >> (chip->mix_exp_lock - 1)) & 1;
+        }
+        break;
+    }
+#endif
+}
+
+static void OPM_Output(opm_t *chip)
+{
+#if OPM_DAC_EMULATION
+    uint32_t slot = (chip->cycles + 27) % 32;
+    chip->smp_so = (chip->mix_out_bit & 4) != 0;
+    chip->smp_sh1 = (slot & 24) == 8 && !chip->ic;
+    chip->smp_sh2 = (slot & 24) == 24 && !chip->ic;
+#endif
+}
+
+static void OPM_DAC(opm_t *chip)
+{
+#if OPM_DAC_EMULATION
+    int32_t exp, mant;
+    if (chip->dac_osh1 && !chip->smp_sh1)
+    {
+        exp = (chip->dac_bits >> 10) & 7;
+        mant = (chip->dac_bits >> 0) & 1023;
+        mant -= 512;
+        chip->dac_output[1] = (mant << exp) >> 1;
+    }
+    if (chip->dac_osh2 && !chip->smp_sh2)
+    {
+        exp = (chip->dac_bits >> 10) & 7;
+        mant = (chip->dac_bits >> 0) & 1023;
+        mant -= 512;
+        chip->dac_output[0] = (mant << exp) >> 1;
+    }
+    chip->dac_bits >>= 1;
+    chip->dac_bits |= chip->smp_so << 12;
+    chip->dac_osh1 = chip->smp_sh1;
+    chip->dac_osh2 = chip->smp_sh2;
+#endif
+}
+
 static void OPM_Mixer(opm_t *chip)
 {
     uint32_t slot = (chip->cycles + 18) % 32;
-    uint8_t channel = slot & 7;
-
-    if((mute_mask & (1 << channel)) == 0) // CTR temp hack
+    uint32_t channel = (slot % 8);
+#if OPM_DAC_EMULATION
+    // Right channel
+    chip->mix_serial[1] >>= 1;
+    if (chip->cycles == 13)
+    {
+        chip->mix_serial[1] |= (chip->mix[1] & 1023) << 4;
+    }
+    if (chip->cycles == 14)
+    {
+        chip->mix_serial[1] |= ((chip->mix2[1] >> 10) & 31) << 13;
+        chip->mix_serial[1] |= (((chip->mix2[1] >> 17) & 1) ^ 1) << 18;
+        chip->mix_clamp_low[1] = 0;
+        chip->mix_clamp_high[1] = 0;
+        switch ((chip->mix2[1]>>15) & 7)
+        {
+        case 0:
+        default:
+            break;
+        case 1:
+            chip->mix_clamp_high[1] = 1;
+            break;
+        case 2:
+            chip->mix_clamp_high[1] = 1;
+            break;
+        case 3:
+            chip->mix_clamp_high[1] = 1;
+            break;
+        case 4:
+            chip->mix_clamp_low[1] = 1;
+            break;
+        case 5:
+            chip->mix_clamp_low[1] = 1;
+            break;
+        case 6:
+            chip->mix_clamp_low[1] = 1;
+            break;
+        case 7:
+            break;
+        }
+    }
+    if (chip->mix_clamp_low[1])
+    {
+        chip->mix_serial[1] &= ~2;
+    }
+    if (chip->mix_clamp_high[1])
+    {
+        chip->mix_serial[1] |= 2;
+    }
+    // Left channel
+    chip->mix_serial[0] >>= 1;
+    if (chip->cycles == 29)
+    {
+        chip->mix_serial[0] |= (chip->mix[0] & 1023) << 4;
+    }
+    if (chip->cycles == 30)
+    {
+        chip->mix_serial[0] |= ((chip->mix2[0] >> 10) & 31) << 13;
+        chip->mix_serial[0] |= (((chip->mix2[0] >> 17) & 1) ^ 1) << 18;
+        chip->mix_clamp_low[0] = 0;
+        chip->mix_clamp_high[0] = 0;
+        switch ((chip->mix2[0]>>15) & 7)
+        {
+        case 0:
+        default:
+            break;
+        case 1:
+            chip->mix_clamp_high[0] = 1;
+            break;
+        case 2:
+            chip->mix_clamp_high[0] = 1;
+            break;
+        case 3:
+            chip->mix_clamp_high[0] = 1;
+            break;
+        case 4:
+            chip->mix_clamp_low[0] = 1;
+            break;
+        case 5:
+            chip->mix_clamp_low[0] = 1;
+            break;
+        case 6:
+            chip->mix_clamp_low[0] = 1;
+            break;
+        case 7:
+            break;
+        }
+    }
+    if (chip->mix_clamp_low[0])
+    {
+        chip->mix_serial[0] &= ~2;
+    }
+    if (chip->mix_clamp_high[0])
+    {
+        chip->mix_serial[0] |= 2;
+    }
+    chip->mix2[0] = chip->mix[0];
+    chip->mix2[1] = chip->mix[1];
+#endif
+    if (chip->cycles == 13)
+    {
+#if ~OPM_DAC_EMULATION
+        int32_t out = chip->mix[1];
+        if(out >= 32768)
+            out = 32768;
+        else if(out < -32768)
+            out = -32768;
+        chip->dac_output[1] = out;
+#endif
+        chip->mix[1] = 0;
+    }
+    if (chip->cycles == 29)
+    {
+#if ~OPM_DAC_EMULATION
+        int32_t out = chip->mix[0];
+        if(out >= 32768)
+            out = 32768;
+        else if(out < -32768)
+            out = -32768;
+        chip->dac_output[0] = out;
+#endif
+        chip->mix[0] = 0;
+    }
+    if((chip->mute_mask & (1 << channel)) == 0)
     {
         chip->mix[0] += chip->op_mix * chip->op_mixl;
         chip->mix[1] += chip->op_mix * chip->op_mixr;
@@ -1103,7 +1344,7 @@ static void OPM_DoTimerA(opm_t *chip)
     chip->timer_a_val = value & 1023;
 }
 
-static void OPM_DoTimerA2(opm_t* chip)
+static void OPM_DoTimerA2(opm_t *chip)
 {
     if (chip->cycles == 1)
     {
@@ -1113,7 +1354,7 @@ static void OPM_DoTimerA2(opm_t* chip)
     chip->timer_a_do_load = chip->timer_a_of || (chip->timer_a_load && chip->timer_a_temp);
     chip->timer_a_do_reset = chip->timer_a_temp;
     chip->timer_a_temp = !chip->timer_a_load;
-    if (chip->timer_reseta)
+    if (chip->timer_reseta || chip->ic)
     {
         chip->timer_a_status = 0;
     }
@@ -1153,13 +1394,13 @@ static void OPM_DoTimerB(opm_t *chip)
     }
 }
 
-static void OPM_DoTimerB2(opm_t* chip)
+static void OPM_DoTimerB2(opm_t *chip)
 {
     chip->timer_b_inc = chip->mode_test[2] || (chip->timer_loadb && chip->timer_b_sub_of);
     chip->timer_b_do_load = chip->timer_b_of || (chip->timer_loadb && chip->timer_b_temp);
     chip->timer_b_do_reset = chip->timer_b_temp;
     chip->timer_b_temp = !chip->timer_loadb;
-    if (chip->timer_resetb)
+    if (chip->timer_resetb || chip->ic)
     {
         chip->timer_b_status = 0;
     }
@@ -1168,6 +1409,11 @@ static void OPM_DoTimerB2(opm_t* chip)
         chip->timer_b_status |= chip->timer_irqb && chip->timer_b_of;
     }
     chip->timer_resetb = 0;
+}
+
+static void OPM_DoTimerIRQ(opm_t *chip)
+{
+    chip->timer_irq = chip->timer_a_status || chip->timer_b_status;
 }
 
 static void OPM_DoLFOMult(opm_t *chip)
@@ -1224,10 +1470,9 @@ static void OPM_DoLFO1(opm_t *chip)
 {
     uint16_t counter2 = chip->lfo_counter2;
     uint8_t of_old = chip->lfo_counter2_of;
-    uint8_t lfo_bit, noise, sum, carry, w[20];
+    uint8_t lfo_bit, noise, sum, carry, w[10];
     uint8_t lfo_pm_sign;
     uint8_t ampm_sel = (chip->lfo_bit_counter & 8) != 0;
-    //counter2 += chip->lfo_counter2_clock;
     counter2 += (chip->lfo_counter1_of1 & 2) != 0 || chip->mode_test[3];
     chip->lfo_counter2_of = (counter2 >> 15) & 1;
     if (chip->ic)
@@ -1284,7 +1529,7 @@ static void OPM_DoLFO1(opm_t *chip)
     w[7] = ((chip->cycles + 1) % 16) < 8;
 
     w[6] = w[5] ^ w[3];
-    
+
     w[9] = ampm_sel ? ((chip->cycles % 16) == 6) : !chip->lfo_saw_sign;
 
     w[8] = chip->lfo_wave == 1 ? w[9] : w[6];
@@ -1302,7 +1547,7 @@ static void OPM_DoLFO1(opm_t *chip)
     chip->lfo_val_carry = sum >> 1;
     chip->lfo_val <<= 1;
     chip->lfo_val |= lfo_bit;
-    
+
 
     if (chip->cycles % 16 == 15 && (chip->lfo_bit_counter & 7) == 7)
     {
@@ -1331,8 +1576,8 @@ static void OPM_DoLFO1(opm_t *chip)
 static void OPM_DoLFO2(opm_t *chip)
 {
     uint8_t c3_step = 0;
-    //chip->lfo_counter2_clock = (chip->lfo_counter1_of1 & 2) != 0 || chip->mode_test[3];
 
+    chip->lfo_clock_test = chip->lfo_clock;
     chip->lfo_clock = (chip->lfo_counter2_of || chip->lfo_test || chip->lfo_counter3_step);
     if ((chip->cycles & 15) == 14)
     {
@@ -1405,8 +1650,12 @@ static void OPM_DoIO(opm_t *chip)
 {
     // Busy
     chip->write_busy_cnt += chip->write_busy;
-    chip->write_busy = (!(chip->write_busy_cnt >> 5) && chip->write_busy) | chip->write_d_en;
+    chip->write_busy = (!(chip->write_busy_cnt >> 5) && chip->write_busy && !chip->ic) | chip->write_d_en;
     chip->write_busy_cnt &= 0x1f;
+    if (chip->ic)
+    {
+        chip->write_busy_cnt = 0;
+    }
     // Write signal check
     chip->write_a_en = chip->write_a;
     chip->write_d_en = chip->write_d;
@@ -1569,7 +1818,6 @@ static void OPM_DoRegWrite(opm_t *chip)
 
 static void OPM_DoIC(opm_t *chip)
 {
-    // TODO:
     uint32_t channel = chip->cycles % 8;
     uint32_t slot = chip->cycles;
     if (chip->ic)
@@ -1601,12 +1849,43 @@ static void OPM_DoIC(opm_t *chip)
         chip->timer_loada = 0;
         chip->timer_loadb = 0;
         chip->mode_csm = 0;
+
+        chip->mode_test[0] = 0;
+        chip->mode_test[1] = 0;
+        chip->mode_test[2] = 0;
+        chip->mode_test[3] = 0;
+        chip->mode_test[4] = 0;
+        chip->mode_test[5] = 0;
+        chip->mode_test[6] = 0;
+        chip->mode_test[7] = 0;
+        chip->noise_en = 0;
+        chip->noise_freq = 0;
+
+        chip->mode_kon_channel = 0;
+        chip->mode_kon_operator[0] = 0;
+        chip->mode_kon_operator[1] = 0;
+        chip->mode_kon_operator[2] = 0;
+        chip->mode_kon_operator[3] = 0;
+        chip->mode_kon[(slot + 8) % 32] = 0;
+
+        chip->lfo_pmd = 0;
+        chip->lfo_amd = 0;
+        chip->lfo_wave = 0;
+        chip->lfo_freq_hi = 0;
+        chip->lfo_freq_lo = 0;
+
+        chip->io_ct1 = 0;
+        chip->io_ct2 = 0;
+
+        chip->reg_address = 0;
+        chip->reg_data = 0;
     }
     chip->ic2 = chip->ic;
 }
 
-void OPM_Clock(opm_t *chip, int32_t *output)
+void OPM_Clock(opm_t *chip)
 {
+    OPM_Mixer2(chip);
     OPM_Mixer(chip);
 
     OPM_OperatorPhase16(chip);
@@ -1640,6 +1919,7 @@ void OPM_Clock(opm_t *chip, int32_t *output)
     OPM_PhaseCalcIncrement(chip);
     OPM_PhaseCalcFNumBlock(chip);
 
+    OPM_DoTimerIRQ(chip);
     OPM_DoTimerA(chip);
     OPM_DoTimerB(chip);
     OPM_DoLFOMult(chip);
@@ -1651,27 +1931,45 @@ void OPM_Clock(opm_t *chip, int32_t *output)
     OPM_NoiseTimer(chip);
     OPM_KeyOn1(chip);
     OPM_DoIO(chip);
-    OPM_DoIC(chip);
     OPM_DoTimerA2(chip);
     OPM_DoTimerB2(chip);
     OPM_DoLFO2(chip);
     OPM_CSM(chip);
     OPM_NoiseChannel(chip);
-
-    // temp
-    output[0] = chip->mix[0];
-    output[1] = chip->mix[1];
-    if (chip->cycles == 13)
-    {
-        chip->mix[0] = 0;
-        chip->mix[1] = 0;
-    }
+    OPM_Output(chip);
+    OPM_DAC(chip);
+    OPM_DoIC(chip);
     chip->cycles = (chip->cycles + 1) % 32;
 }
 
-void OPM_Write(opm_t* chip, uint32_t port, uint8_t data)
+void OPM_GetSample(opm_t *chip, int32_t *output, uint8_t *sh1, uint8_t *sh2, uint8_t *so)
+{
+    if (sh1)
+    {
+        *sh1 = chip->smp_sh1;
+    }
+    if (sh2)
+    {
+        *sh2 = chip->smp_sh2;
+    }
+    if (so)
+    {
+        *so = chip->smp_so;
+    }
+    if (output)
+    {
+        output[0] = chip->dac_output[0];
+        output[1] = chip->dac_output[1];
+    }
+}
+
+void OPM_Write(opm_t *chip, uint32_t port, uint8_t data)
 {
     chip->write_data = data;
+    if (chip->ic)
+    {
+        return;
+    }
     if (port & 0x01)
     {
         chip->write_d = 1;
@@ -1684,7 +1982,25 @@ void OPM_Write(opm_t* chip, uint32_t port, uint8_t data)
 
 uint8_t OPM_Read(opm_t *chip, uint32_t port)
 {
-    return 0;
+    uint16_t testdata;
+    if (chip->mode_test[6])
+    {
+        testdata = chip->op_out[5] | ((chip->eg_serial_bit ^ 1) << 14) | ((chip->pg_serial & 1) << 15);
+        if (chip->mode_test[7])
+        {
+            return testdata & 255;
+        }
+        else
+        {
+            return testdata >> 8;
+        }
+    }
+    return (chip->write_busy << 7) | (chip->timer_b_status << 1) | chip->timer_a_status;
+}
+
+uint8_t OPM_ReadIRQ(opm_t *chip, uint32_t port)
+{
+    return chip->timer_irq;
 }
 
 uint8_t OPM_ReadCT1(opm_t *chip)
@@ -1696,7 +2012,31 @@ uint8_t OPM_ReadCT2(opm_t *chip)
 {
     if(chip->mode_test[3])
     {
-        // TODO: return (chip->lfo_counter_inc >> 1) & 0x01;
+        return chip->lfo_clock_test;
     }
     return chip->io_ct2;
+}
+
+void OPM_SetIC(opm_t *chip, uint8_t ic)
+{
+    if (chip->ic != ic)
+    {
+        chip->ic = ic;
+        if (!ic)
+        {
+            chip->cycles = 0;
+        }
+    }
+}
+
+void OPM_Reset(opm_t *chip)
+{
+    uint32_t i;
+    memset(chip, 0, sizeof(opm_t));
+    OPM_SetIC(chip, 1);
+    for (i = 0; i < 32 * 64; i++)
+    {
+        OPM_Clock(chip);
+    }
+    OPM_SetIC(chip, 0);
 }

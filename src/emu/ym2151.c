@@ -12,14 +12,11 @@
 
 #include "ym2151.h"
 
-// Very temporary
-uint32_t mute_mask;
-
 void YM2151_init(YM2151* ym,int clk)
 {
     ym->rate = clk/64;
     memset(&ym->chip, 0, sizeof(ym->chip));
-    ym->mute_mask=0;
+    ym->chip.mute_mask=0;
 
     YM2151_reset(ym);
 }
@@ -27,12 +24,11 @@ void YM2151_init(YM2151* ym,int clk)
 void YM2151_reset(YM2151* ym)
 {
     int i;
-    int32_t dummy[2];
     ym->chip.ic = 1;
     /* initialize hardware registers */
     for (i=0; i<32; i++)
     {
-        OPM_Clock(&ym->chip, dummy);
+        OPM_Clock(&ym->chip);
     }
     ym->chip.ic = 0;
 
@@ -43,10 +39,10 @@ void YM2151_reset(YM2151* ym)
 void YM2151_update(YM2151* ym)
 {
     int32_t output[2];
-    mute_mask = ym->mute_mask;
+    ym->chip.mute_mask = ym->mute_mask;
     do
     {
-        OPM_Clock(&ym->chip, output);
+        OPM_Clock(&ym->chip);
     }
     while(ym->chip.cycles != 14);
 
@@ -54,25 +50,24 @@ void YM2151_update(YM2151* ym)
     ym->out[2] = ym->out[0];
     ym->out[3] = ym->out[1];
 
-    //printf("%d %d\n",outl,outr);
+    OPM_GetSample(&ym->chip, output, NULL, NULL, NULL);
     ym->out[0] = output[0]/32768.0;
     ym->out[1] = output[1]/32768.0;
 }
 
 void YM2151_write_reg(YM2151* ym,int r, int v)
 {
-    int32_t dummy[2];
     uint32_t cyc = ym->chip.cycles;
     uint32_t counter = 100;
     while(YM2151_busy(ym) && counter--);
     {
-        OPM_Clock(&ym->chip, dummy);
+        OPM_Clock(&ym->chip);
     }
 
     OPM_Write(&ym->chip, 0, r);
-    OPM_Clock(&ym->chip, dummy);
-    OPM_Clock(&ym->chip, dummy);
-    OPM_Clock(&ym->chip, dummy);
+    OPM_Clock(&ym->chip);
+    OPM_Clock(&ym->chip);
+    OPM_Clock(&ym->chip);
 
     OPM_Write(&ym->chip, 1, v);
 }
