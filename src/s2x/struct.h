@@ -53,6 +53,13 @@ struct S2X_WSGChannel {
     uint16_t SeqPos;
     uint8_t SeqLoop;
     uint8_t SeqRepeat;
+
+    //S86 WSG
+    uint8_t Volume;
+    uint8_t SeqLoop2;
+    uint8_t RepeatCondition;
+    uint8_t SyncFlag;
+    uint16_t Return;
 };
 
 struct S2X_Channel {
@@ -97,6 +104,7 @@ struct S2X_Track {
     uint8_t LoopCount[S2X_MAX_LOOP_STACK];
 
     uint8_t InitFlag; // bitmask of initialized channels
+    uint8_t SyncFlag; // used by s86 wsg
 };
 
 struct S2X_ChannelPriority {
@@ -285,11 +293,16 @@ struct S2X_State {
     uint32_t ConfigFlags;
     uint32_t PCMBase;
     uint32_t FMBase;
+    uint32_t WSGBase;
+
     uint32_t WaveBase[S2X_MAX_BANK][8];
 
     // song table pointers for System86
     uint32_t FMSongTab;
     uint32_t FMInsTab;
+
+    // WSG table pointers for System86
+    uint16_t WSGHeaders[8];
 
     // sound driver globals
     uint16_t FrameCnt;

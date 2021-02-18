@@ -383,7 +383,11 @@ void ui_info_s2_voice(int id,int ypos)
 
     set_color(ypos,44,43,35,COLOR_D_BLUE,COLOR_L_GREY);
 
-    if(type == S2X_VOICE_TYPE_PCM || type == S2X_VOICE_TYPE_PCMLINK || type ==S2X_VOICE_TYPE_SE || type==S2X_VOICE_TYPE_WSG)
+    if(type == S2X_VOICE_TYPE_PCM ||
+       type == S2X_VOICE_TYPE_PCMLINK ||
+       type == S2X_VOICE_TYPE_SE ||
+       type == S2X_VOICE_TYPE_S1WSG ||
+       type == S2X_VOICE_TYPE_S86WSG)
     {
         //vno = S2X_VOICE_TYPE_SE ? 24+index : index;
 
@@ -504,8 +508,8 @@ void ui_info_s2_voice(int id,int ypos)
         C = FM->Channel;
         trs = 4;
         break;
-    case S2X_VOICE_TYPE_WSG:
-
+    case S2X_VOICE_TYPE_S1WSG:
+    case S2X_VOICE_TYPE_S86WSG:
         if(!WSG->Channel)
             return;
         S2X_WSGChannel *W = &WSG->Channel->WSG;
@@ -522,6 +526,8 @@ void ui_info_s2_voice(int id,int ypos)
                 "EnvelopeL",   W->Env[1].No,W->Env[1].Pos,W->Env[1].Val);
         SCRN(ypos++,45,40,"%-10s%02x (%04x, %02x)",
                 "EnvelopeR",   W->Env[0].No,W->Env[0].Pos,W->Env[0].Val);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "Volume",      W->Volume);
         SCRN(ypos++,45,40,"%-10s%08x",
                 "Freq",        W->Freq);
         SCRN(ypos++,45,40,"%-10s%04x",
@@ -529,9 +535,15 @@ void ui_info_s2_voice(int id,int ypos)
         SCRN(ypos++,45,40,"%-10s%02x",
                 "SeqRepeat",   W->SeqRepeat);
         SCRN(ypos++,45,40,"%-10s%02x",
+                "RepeatCond",  W->RepeatCondition);
+        SCRN(ypos++,45,40,"%-10s%02x",
                 "SeqLoop",     W->SeqLoop);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "SeqLoop2",    W->SeqLoop2);
         SCRN(ypos++,45,40,"%-10s%02x (%02x)",
                 "Tempo",       W->Tempo, W->SeqWait);
+        SCRN(ypos++,45,40,"%-10s%02x",
+                "SyncFlag",    W->SyncFlag);
         return;
     }
 

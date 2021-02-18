@@ -160,6 +160,8 @@ void S2X_ReadConfig(S2X_State *S,QP_Game *G)
             S->FMBase = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"pcm_base"))
             S->PCMBase = strtol(cfg->data,NULL,0);
+        else if(!strcmp(cfg->name,"wsg_base"))
+            S->WSGBase = strtol(cfg->data,NULL,0);
         else if(!strcmp(cfg->name,"bank")) // can be omitted if only a single bank is used
             bankid = strtol(cfg->data,NULL,0) % S2X_MAX_BANK;
         else if(!strcmp(cfg->name,"name")) // bank name
@@ -254,13 +256,15 @@ void S2X_InitDriverType(S2X_State *S)
             S->FMBase = -0x4000;
         if(!S->FMSongTab)
             S->FMBase = 0x4000;
+        S2X_SetVoiceType(S,0,S2X_VOICE_TYPE_S86WSG,8);
+        S2X_FindSystem86WSGTable(S);
         break;
     case S2X_TYPE_SYSTEM1:
     case S2X_TYPE_SYSTEM1_ALT:
         if(!S->FMBase)
             S->FMBase = 0x10000;
-        S->PCMBase=0x4000; // WSG
-        S2X_SetVoiceType(S,0,S2X_VOICE_TYPE_WSG,8);
+        S->WSGBase=0x4000; // WSG
+        S2X_SetVoiceType(S,0,S2X_VOICE_TYPE_S1WSG,8);
         break;
     case S2X_TYPE_NA:
         S->SongCount[0] = S2X_ReadByte(S,S->PCMBase+0x11);
@@ -288,6 +292,38 @@ void S2X_InitDriverType(S2X_State *S)
         break;
     case S2X_TYPE_EM:
         break;
+    }
+}
+
+void S2X_FindSystem86WSGTable(S2X_State *S)
+{
+    if(S2X_ReadByte(S,S->WSGBase + 0x8000) == 0xa6)
+    {
+        uint16_t pos = S->WSGBase + 0x8007;
+        while(1)
+        {
+            uint8_t start = S2X_ReadByte(S, pos++);
+            uint8_t length = S2X_ReadByte(S, pos++);
+            if(start == 0xff)
+            {
+                break;
+            }
+            else if(start >= 0x3a && start <= 0x48)
+            {
+                uint8_t i;
+                uint8_t offset = (start - 0x3a) >> 1;
+                for(i = 0; i < (length << 1); i++)
+                {
+                    if(offset + i < 8)
+                    {
+                        uint16_t data = S2X_ReadWord(S, pos + (i << 1));
+                        Q_DEBUG("WSGHeaders[%d] = %02x\n", offset + i, data);
+                        S->WSGHeaders[offset + i] = data;
+                    }
+                }
+            }
+            pos += length;
+        }
     }
 }
 

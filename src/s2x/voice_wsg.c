@@ -41,7 +41,7 @@ void S2X_WSGUpdate(S2X_State *S,S2X_WSGVoice *V)
 
     S2X_WSGChannel *W = &V->Channel->WSG;
 
-    V->Pitch = (W->Freq * 0x24) >> 7;
+    V->Pitch = ((W->Freq & 0xfffff) * 0x24) >> 7;
     if(V->Pitch > 0xffff)
         S2X_C352_W(S,V->VoiceNo,C352_FREQUENCY,V->Pitch/4);
     else

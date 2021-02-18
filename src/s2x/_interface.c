@@ -14,6 +14,9 @@
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 
+#define S1_WSG (S->DriverType == S2X_CFG_SYSTEM1)
+#define S86_WSG (S->DriverType == S2X_TYPE_SYSTEM86)
+
 int S2X_IInit(void* d,QP_Game *g)
 {
     S2X_State* S = d;
@@ -61,10 +64,15 @@ void S2X_IVgmOpen(void* d)
 {
     S2X_State* S = d;
 
-    if(SYSTEM1)
+    if(S1_WSG)
     {
         S2X_InitDriverType(S);
-        S2X_WSGLoadWave(S);
+        S2X_S1WSGLoadWave(S);
+    }
+    else if(S86_WSG)
+    {
+        S2X_InitDriverType(S);
+        S2X_S86WSGLoadWave(S);
     }
 
     vgm_datablock(0x92,0x1000000,S->PCMChip.wave,0x1000000,S->PCMChip.wave_mask,0);
@@ -448,7 +456,8 @@ int S2X_IGetVoiceInfo(void* d,int id,struct QP_DriverVoiceInfo *V)
             V->Key += PCM->Channel->Vars[S2X_CHN_TRS];
         }
         break;
-    case S2X_VOICE_TYPE_WSG:
+    case S2X_VOICE_TYPE_S1WSG:
+    case S2X_VOICE_TYPE_S86WSG:
         WSG = &S->WSG[index];
         V->Status = 0;
         V->Track = 0;
@@ -507,7 +516,8 @@ uint16_t S2X_IGetVoiceStatus(void* d,int id)
         if(S->SE[index].Type && S2X_C352_R(S,(16+index),C352_FLAGS) & (C352_FLG_BUSY|C352_FLG_KEYON))
             v = 0xf000 | S->SE[index].Wave;
         break;
-    case S2X_VOICE_TYPE_WSG:
+    case S2X_VOICE_TYPE_S1WSG:
+    case S2X_VOICE_TYPE_S86WSG:
         if(S->WSG[index].TrackNo)
             v = 0x8000|(S->WSG[index].TrackNo-1)<<8|(S->WSG[index].ChannelNo);
         break;

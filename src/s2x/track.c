@@ -12,7 +12,8 @@
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 #define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 #define SYSTEMEM (S->DriverType == S2X_TYPE_EM)
-#define S1_WSG (S->ConfigFlags & S2X_CFG_SYSTEM1 && TrackNo > 7)
+#define S1_WSG (S->ConfigFlags == S2X_TYPE_SYSTEM1 && TrackNo > 7)
+#define S86_WSG (S->DriverType == S2X_TYPE_SYSTEM86 && TrackNo > 7)
 
 // find song position, taking into account the track type and platform...
 static void GetSongPos(S2X_State *S,int TrackNo,S2X_Track *T)
@@ -85,7 +86,11 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     int valid=0;
     if(S1_WSG)
     {
-        valid = S2X_WSGTrackStart(S,TrackNo,T,SongNo);
+        valid = S2X_S1WSGTrackStart(S,TrackNo,T,SongNo);
+    }
+    else if(S86_WSG)
+    {
+        valid = S2X_S86WSGTrackStart(S,TrackNo,T,SongNo);
     }
     else
     {
@@ -116,7 +121,7 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
             SongNo,
             T->PositionBase+T->Position);
 
-    if(!S1_WSG)
+    if(!S1_WSG && !S86_WSG)
         QP_LoopDetectStart(&S->LoopDetect,TrackNo,S->ParentSong[TrackNo],SongNo+((TrackNo&8)<<6));
 
     T->SubStackPos=0;
@@ -131,15 +136,22 @@ void S2X_TrackInit(S2X_State* S, int TrackNo)
     T->SubStackPos = 0;
     T->LoopStackPos = 0;
     T->InitFlag = 0;
+    T->SyncFlag = 0;
 
-    T->UpdateTime = S->FrameCnt;
-    T->Tempo = 0;
     T->BaseTempo=1;
 
     if(SYSTEM86)
     {
-        T->UpdateTime = -1;
-        T->Tempo = 1;
+        if(TrackNo < 8)
+        {
+            T->UpdateTime = -1;
+            T->Tempo = 1;
+        }
+    }
+    else
+    {
+        T->UpdateTime = S->FrameCnt;
+        T->Tempo = 0;
     }
 
     int i;
@@ -181,7 +193,9 @@ void S2X_TrackUpdate(S2X_State* S,int TrackNo)
         return S2X_TrackDisable(S,TrackNo);
 
     if(S1_WSG)
-        return S2X_WSGTrackUpdate(S,TrackNo,T);
+        return S2X_S1WSGTrackUpdate(S,TrackNo,T);
+    else if(S86_WSG)
+        return S2X_S86WSGTrackUpdate(S,TrackNo,T);
 
     if(SYSTEM86 && T->Tempo)
     {

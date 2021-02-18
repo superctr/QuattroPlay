@@ -17,7 +17,8 @@ enum {
     S2X_VOICE_TYPE_PCMLINK,
     S2X_VOICE_TYPE_SE, // pcm sound effects
     S2X_VOICE_TYPE_FM,
-    S2X_VOICE_TYPE_WSG,
+    S2X_VOICE_TYPE_S1WSG,
+    S2X_VOICE_TYPE_S86WSG
 };
 
 enum {
