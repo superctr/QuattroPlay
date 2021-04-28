@@ -12,7 +12,7 @@
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 #define SYSTEM86 (S->DriverType == S2X_TYPE_SYSTEM86)
 #define SYSTEMEM (S->DriverType == S2X_TYPE_EM)
-#define S1_WSG (S->DriverType == S2X_TYPE_SYSTEM1 && TrackNo > 7)
+#define S1_WSG ((S->DriverType == S2X_TYPE_SYSTEM1 || S->DriverType == S2X_TYPE_SYSTEM1_ALT) && TrackNo > 7)
 #define S86_WSG (S->DriverType == S2X_TYPE_SYSTEM86 && TrackNo > 7)
 
 // find song position, taking into account the track type and platform...

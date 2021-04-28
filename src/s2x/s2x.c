@@ -13,7 +13,7 @@
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 
-#define S1_WSG (S->DriverType == S2X_TYPE_SYSTEM1)
+#define S1_WSG (S->DriverType == S2X_TYPE_SYSTEM1 || S->DriverType == S2X_TYPE_SYSTEM1_ALT)
 #define S86_WSG (S->DriverType == S2X_TYPE_SYSTEM86)
 
 void S2X_Init(S2X_State *S)
