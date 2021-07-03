@@ -240,6 +240,9 @@ TRACKCOMMAND(tc_WriteChannelDummy)
     int temp=0;
     if(Command&0x40)
         temp = arg_byte(S,T->PositionBase,&T->Position);
+#else
+	if(Command&0x40)
+		T->Position++;
 #endif
     Q_DEBUG("T=%02x cmd %02x=",TrackNo,Command&0x3f);
     for(i=0;i<8;i++)
@@ -251,7 +254,8 @@ TRACKCOMMAND(tc_WriteChannelDummy)
                 temp = arg_byte(S,T->PositionBase,&T->Position);
             Q_DEBUG("%03d%s",temp,(i==7)?"":",");
 #else
-            T->Position++;
+			if(~Command&0x40)
+				T->Position++;
 #endif
         }
         else
