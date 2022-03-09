@@ -163,11 +163,12 @@ void Q_VoicePanSet(Q_State *Q,int VoiceNo,Q_Voice* V)
         else if(d == 0xff)
         {
             // later drivers: reset if pan envelope command was retriggered.
-            if(Q->McuVer >= Q_MCUVER_Q00 && V->PanMode != Q_PANMODE_ENV_SET && V->PanMode != Q_PANMODE_POSENV_SET)
-                break;
-            // always reset on new pan envelope
-            else if(V->PanUpdateFlag == V->Pan)
-                break;
+            if(Q->McuVer < Q_MCUVER_Q00 || (Q->McuVer >= Q_MCUVER_Q00 && V->PanMode != Q_PANMODE_ENV_SET && V->PanMode != Q_PANMODE_POSENV_SET))
+            {
+                // always reset on new pan envelope
+                if(V->PanUpdateFlag == V->Pan)
+                    break;
+            }
 
             if(V->PanMode == Q_PANMODE_ENV_SET)
                 V->PanMode = Q_PANMODE_ENV;
