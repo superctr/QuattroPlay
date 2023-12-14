@@ -13,6 +13,7 @@
 
 #define SYSTEM1 (S->ConfigFlags & S2X_CFG_SYSTEM1)
 #define SYSTEMNA (S->DriverType == S2X_TYPE_NA)
+#define SYSTEMEM (S->DriverType == S2X_TYPE_EM)
 
 int S2X_IInit(void* d,QP_Game *g)
 {
@@ -47,6 +48,8 @@ int S2X_IInit(void* d,QP_Game *g)
     S->SoundRate = S->PCMChip.rate;
     S->FMDelta = S->FMChip.rate / S->SoundRate;
     S->FMWriteRate = SYSTEM1 ? 1.0 : 2.5;
+
+    S->EMTempoDivider = 7;
 
     g->MuteRear = 1;
 
@@ -101,6 +104,8 @@ int S2X_IGetParamCnt(void* d)
     S2X_State* S = d;
     if(SYSTEMNA)
         return 2;
+    else if(SYSTEMEM)
+        return 2;
     return 1;
 }
 void S2X_ISetParam(void* d,int id,int val)
@@ -112,7 +117,10 @@ void S2X_ISetParam(void* d,int id,int val)
         S->CJump = val>0;
         break;
     case 1:
-        S->BankSelect = val%S2X_MAX_BANK;
+        if (SYSTEMNA)
+            S->BankSelect = val%S2X_MAX_BANK;
+        else if (SYSTEMEM)
+            S->EMTempoDivider = val & 255;
         break;
     default:
         return;
@@ -126,20 +134,27 @@ int S2X_IGetParam(void* d,int id)
     case 0:
         return S->CJump;
     case 1:
-        return S->BankSelect;
+        if (SYSTEMNA)
+            return S->BankSelect;
+        else if (SYSTEMEM)
+            return S->EMTempoDivider;
     default:
         return 0;
     }
 }
 int S2X_IGetParamName(void* d,int id,char* buffer,int len)
 {
+    S2X_State* S = d;
     switch(id)
     {
     case 0:
         strncpy(buffer,"Jump Condition",len);
         break;
     case 1:
-        strncpy(buffer,"Bank Select",len);
+        if (SYSTEMNA)
+            strncpy(buffer,"Bank Select",len);
+        else if (SYSTEMEM)
+            strncpy(buffer,"Tempo Divider",len);
         break;
     default:
         return 0;
@@ -236,8 +251,8 @@ double S2X_ITickRate(void* d)
         return 60.606; // from C121. YM2151 IRQ hooked up but unused.
     case S2X_TYPE_NA:
         return 120; // probably uses MCU built in timer
-    case S2X_TYPE_EM: // i just guessed.
-        return 64;
+    case S2X_TYPE_EM:
+        return 2000000./4096./(1 + S->EMTempoDivider);
     default:
     case S2X_TYPE_SYSTEM2:
         return 368./3.; // (~122.67) C140 timer (+ some CPU overhead?)

@@ -312,6 +312,8 @@ struct S2X_State {
     uint16_t FMQueueRead;
     S2X_FMWrite FMQueue[512];
 
+    uint8_t EMTempoDivider; // for CosmoGang
+
     // track vars
     uint16_t SongRequest[S2X_MAX_TRACKS+1];
     uint16_t ParentSong[S2X_MAX_TRACKS];
