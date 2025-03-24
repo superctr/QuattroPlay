@@ -511,7 +511,6 @@ void S2X_S86WSGTrackUpdate(S2X_State *S,int TrackNo,S2X_Track *T)
             {
                 T->SyncFlag = T->Channel[ch].WSG.SyncFlag;
                 S2X_VoiceCommand(S,&T->Channel[ch],0,0);
-                S2X_S86WSGEnvelopeUpdate(S,&T->Channel[ch].WSG.Env[0],&T->Channel[ch]);
                 S2X_S86WSGChannelUpdate(S,TrackNo,&T->Channel[ch],ch);
             }
         }
@@ -847,6 +846,8 @@ void S2X_S86WSGChannelUpdate(S2X_State *S,int TrackNo,S2X_Channel *C,int Channel
 
         S2X_S86WSGEnvelopeStart(S,&C->WSG.Env[0]);
     }
+
+    S2X_S86WSGEnvelopeUpdate(S,&C->WSG.Env[0],C);
 
     C->WSG.Env[1].Val = C->WSG.Env[0].Val;
 
